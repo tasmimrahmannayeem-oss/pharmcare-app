@@ -1,0 +1,306 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+/* ── Design Tokens ─────────────────────────────────────── */
+:root {
+  /* Colors */
+  --primary: #00288e;
+  --primary-container: #1e40af;
+  --on-primary: #ffffff;
+  --primary-fixed: #dde1ff;
+  --primary-fixed-dim: #b8c4ff;
+
+  --secondary: #006c49;
+  --secondary-container: #6cf8bb;
+  --on-secondary: #ffffff;
+  --secondary-fixed: #6ffbbe;
+
+  --tertiary: #611e00;
+  --tertiary-container: #872d00;
+  --tertiary-fixed: #ffdbce;
+
+  --background: #f7f9fb;
+  --surface: #f7f9fb;
+  --surface-lowest: #ffffff;
+  --surface-low: #f2f4f6;
+  --surface-container: #eceef0;
+  --surface-high: #e6e8ea;
+  --surface-highest: #e0e3e5;
+  --surface-dim: #d8dadc;
+
+  --on-surface: #191c1e;
+  --on-surface-variant: #444653;
+  --outline: #757684;
+  --outline-variant: #c4c5d5;
+
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --on-error: #ffffff;
+
+  /* Typography */
+  --font-headline: 'Manrope', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Spacing */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Shadows */
+  --shadow-card: 0px 4px 16px rgba(25, 28, 30, 0.06);
+  --shadow-modal: 0px 12px 32px rgba(25, 28, 30, 0.10);
+  --shadow-nav: 0px 2px 8px rgba(25, 28, 30, 0.06);
+
+  /* Sidebar */
+  --sidebar-width: 260px;
+  --topbar-height: 64px;
+}
+
+/* ── Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: var(--font-body);
+  background: var(--background);
+  color: var(--on-surface);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+/* ── Typography ────────────────────────────────────────── */
+h1,h2,h3,h4,h5,h6 { font-family: var(--font-headline); font-weight: 700; }
+.display-lg { font-size: 3.5rem; line-height: 1.1; }
+.headline-lg { font-size: 2rem; line-height: 1.2; }
+.headline-md { font-size: 1.75rem; }
+.headline-sm { font-size: 1.5rem; }
+.title-lg   { font-size: 1.25rem; font-weight: 600; }
+.title-md   { font-size: 1.125rem; font-weight: 600; }
+.title-sm   { font-size: 1rem; font-weight: 600; }
+.body-lg    { font-size: 1rem; }
+.body-md    { font-size: 0.9375rem; }
+.body-sm    { font-size: 0.875rem; }
+.label-lg   { font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; }
+.label-md   { font-size: 0.8125rem; font-weight: 500; }
+.label-sm   { font-size: 0.75rem; font-weight: 500; }
+
+/* ── Utility classes ───────────────────────────────────── */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: 4px; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.gap-6 { gap: 24px; }
+.gap-8 { gap: 32px; }
+.w-full { width: 100%; }
+.text-center { text-align: center; }
+.text-muted { color: var(--on-surface-variant); }
+
+/* ── Buttons ───────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+.btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  color: var(--on-primary);
+  box-shadow: 0 4px 12px rgba(0,40,142,0.25);
+}
+.btn-secondary {
+  background: var(--secondary-container);
+  color: var(--secondary);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--primary-container);
+  padding: 10px 16px;
+}
+.btn-danger {
+  background: var(--error-container);
+  color: var(--error);
+}
+.btn-sm { padding: 6px 14px; font-size: 0.875rem; border-radius: var(--radius-sm); }
+.btn-lg { padding: 14px 28px; font-size: 1rem; border-radius: var(--radius-lg); }
+
+/* ── Cards ─────────────────────────────────────────────── */
+.card {
+  background: var(--surface-lowest);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+}
+.card-sm { padding: 16px; }
+.card-lg { padding: 32px; }
+
+/* ── Badges / Status ───────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge-success { background: var(--secondary-fixed); color: var(--secondary); }
+.badge-warning { background: var(--tertiary-fixed); color: var(--tertiary-container); }
+.badge-error   { background: var(--error-container); color: var(--error); }
+.badge-info    { background: var(--primary-fixed); color: var(--primary); }
+.badge-neutral { background: var(--surface-high); color: var(--on-surface-variant); }
+
+/* ── Form Inputs ───────────────────────────────────────── */
+.input-group { display: flex; flex-direction: column; gap: 6px; }
+.input-label { font-size: 0.8125rem; font-weight: 500; color: var(--on-surface-variant); }
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--surface-high);
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  font-size: 0.9375rem;
+  color: var(--on-surface);
+  transition: background 0.15s, border-color 0.15s;
+  outline: none;
+}
+.input:focus {
+  background: var(--surface-lowest);
+  border-color: var(--primary-container);
+}
+.input::placeholder { color: var(--outline); }
+
+.input-icon-wrap { position: relative; }
+.input-icon-wrap .input { padding-left: 44px; }
+.input-icon-wrap .icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--outline); font-size: 20px; }
+
+/* ── Tables ────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  background: var(--surface-low);
+  border-bottom: 1px solid var(--outline-variant);
+}
+td {
+  padding: 16px;
+  font-size: 0.9375rem;
+  border-bottom: 1px solid rgba(196,197,213,0.3);
+  vertical-align: middle;
+}
+tr:hover td { background: var(--surface-low); }
+tr:last-child td { border-bottom: none; }
+
+/* ── Stat Cards ────────────────────────────────────────── */
+.stat-card {
+  background: var(--surface-lowest);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stat-card .stat-label { font-size: 0.8125rem; font-weight: 500; color: var(--on-surface-variant); }
+.stat-card .stat-value { font-size: 2rem; font-weight: 800; font-family: var(--font-headline); color: var(--on-surface); }
+.stat-card .stat-delta { font-size: 0.8125rem; color: var(--secondary); font-weight: 500; }
+.stat-card .stat-delta.down { color: var(--error); }
+.stat-card .stat-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+
+/* ── Section header ────────────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title { font-family: var(--font-headline); font-size: 1.125rem; font-weight: 700; }
+
+/* ── Page header ───────────────────────────────────────── */
+.page-header { margin-bottom: 28px; }
+.page-title { font-family: var(--font-headline); font-size: 1.75rem; font-weight: 800; }
+.page-subtitle { font-size: 0.9375rem; color: var(--on-surface-variant); margin-top: 4px; }
+
+/* ── Grid layouts ──────────────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+
+/* ── Tabs ──────────────────────────────────────────────── */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--outline-variant); margin-bottom: 24px; }
+.tab {
+  padding: 10px 18px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab.active { color: var(--primary-container); border-bottom-color: var(--primary-container); }
+.tab:hover:not(.active) { color: var(--on-surface); }
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 999px; }
+
+/* ── App Layout Shell ──────────────────────────────────── */
+.app-shell { display: flex; min-height: 100vh; }
+.app-content { flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column; min-height: 100vh; }
+.page-main { flex: 1; padding: 32px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+/* ── Animations ────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.35s ease forwards; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--secondary);
+  animation: pulse-dot 1.8s ease infinite;
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  :root { --sidebar-width: 0px; }
+  .app-content { margin-left: 0; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .page-main { padding: 16px; }
+}
