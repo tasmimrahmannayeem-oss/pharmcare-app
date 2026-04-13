@@ -11,22 +11,44 @@ const queue = [
 const statusBadge = { 'Ready': 'badge-success', 'In Transit': 'badge-info', 'Packing': 'badge-warning', 'Dispatched': 'badge-info' }
 
 export default function FulfillmentStatus() {
+  const [items, setItems] = useState(queue)
   const [filter, setFilter] = useState('All')
-  const filtered = filter === 'All' ? queue : queue.filter(q => q.method === filter || q.status === filter)
+
+  const filtered = filter === 'All' ? items : items.filter(q => q.method === filter || q.status === filter)
+
+  const handleUpdate = (id) => {
+    setItems(prev => prev.map(o => {
+      if (o.id !== id) return o
+      if (o.status === 'Packing') return { ...o, status: 'Ready', eta: 'Now' }
+      if (o.status === 'Dispatched') return { ...o, status: 'In Transit' }
+      return o
+    }))
+  }
+
+  const handleMarkCollected = (id) => {
+    if (window.confirm('Mark this order as collected/delivered?')) {
+      setItems(prev => prev.filter(o => o.id !== id))
+    }
+  }
 
   return (
     <div className="fade-up">
-      <div className="page-header">
-        <h1 className="page-title">Fulfillment Status & Pickup</h1>
-        <p className="page-subtitle">Real-time order fulfillment tracking — Green Valley Branch</p>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
+        <div className="page-header" style={{ marginBottom:0 }}>
+          <h1 className="page-title">Fulfillment Status & Pickup</h1>
+          <p className="page-subtitle">Real-time order fulfillment tracking — Green Valley Branch</p>
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={() => setItems(queue)}>
+          <span className="material-icons" style={{fontSize:16}}>refresh</span> Reset
+        </button>
       </div>
 
       <div className="grid-4" style={{ marginBottom:24 }}>
         {[
-          { label:'Ready for Pickup', val:7, icon:'storefront', color:'var(--secondary-fixed)', icolor:'var(--secondary)' },
-          { label:'Out for Delivery', val:4, icon:'directions_bike', color:'var(--primary-fixed)', icolor:'var(--primary-container)' },
-          { label:'Currently Packing', val:3, icon:'inventory', color:'var(--tertiary-fixed)', icolor:'var(--tertiary-container)' },
-          { label:'Completed Today', val:62, icon:'task_alt', color:'var(--surface-high)', icolor:'var(--on-surface-variant)' },
+          { label:'Ready for Pickup', val: items.filter(i => i.status === 'Ready').length, icon:'storefront', color:'var(--secondary-fixed)', icolor:'var(--secondary)' },
+          { label:'Active Deliveries', val: items.filter(i => i.method === 'Delivery').length, icon:'directions_bike', color:'var(--primary-fixed)', icolor:'var(--primary-container)' },
+          { label:'Currently Packing', val: items.filter(i => i.status === 'Packing').length, icon:'inventory', color:'var(--tertiary-fixed)', icolor:'var(--tertiary-container)' },
+          { label:'Completed Today', val: 62 + (queue.length - items.length), icon:'task_alt', color:'var(--surface-high)', icolor:'var(--on-surface-variant)' },
         ].map(s => (
           <div className="stat-card" key={s.label}>
             <div style={{ width:40, height:40, borderRadius:10, background:s.color, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -50,7 +72,9 @@ export default function FulfillmentStatus() {
           <table>
             <thead><tr><th>Order ID</th><th>Patient</th><th>Items</th><th>Method</th><th>Pickup Slot</th><th>ETA</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
-              {filtered.map(o => (
+              {filtered.length === 0 ? (
+                <tr><td colSpan="8" style={{ textAlign:'center', padding:40, color:'var(--on-surface-variant)' }}>No active orders found.</td></tr>
+              ) : filtered.map(o => (
                 <tr key={o.id}>
                   <td style={{ fontWeight:600, fontFamily:'monospace', fontSize:'0.875rem' }}>{o.id}</td>
                   <td style={{ fontWeight:600 }}>{o.patient}</td>
@@ -66,12 +90,16 @@ export default function FulfillmentStatus() {
                     {o.eta === 'Now'
                       ? <span style={{ color:'var(--secondary)', fontWeight:700, fontSize:'0.875rem' }}>● Ready Now</span>
                       : <span style={{ color:'var(--on-surface-variant)', fontSize:'0.875rem' }}>{o.eta}</span>}
-                  </td>
+                   </td>
                   <td><span className={`badge ${statusBadge[o.status]}`}>{o.status}</span></td>
                   <td>
-                    <button className="btn btn-primary btn-sm">
-                      {o.status === 'Ready' ? 'Mark Collected' : 'Update'}
-                    </button>
+                    <div style={{ display:'flex', gap:6 }}>
+                      {o.status === 'Ready' || o.status === 'In Transit' ? (
+                        <button className="btn btn-primary btn-sm" onClick={() => handleMarkCollected(o.id)}>Mark Collected</button>
+                      ) : (
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleUpdate(o.id)}>Update</button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

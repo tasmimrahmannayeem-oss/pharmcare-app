@@ -9,18 +9,82 @@ export default function Login() {
   const [tab, setTab] = useState('login')
   const [form, setForm] = useState({ email: '', password: '', name: '', role: 'customer' })
 
-  const handleSubmit = e => {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const roleMap = {
+    superadmin: 'Super Admin',
+    owner: 'Pharmacy Owner',
+    pharmacist: 'Pharmacist',
+    assistant: 'Store Assistant',
+    customer: 'Customer',
+    supplier: 'Supplier'
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setRole(form.role)
-    const dest = { 
-      superadmin: '/superadmin', 
-      owner: '/admin', 
-      pharmacist: '/prescriptions', 
-      assistant: '/pos', 
-      customer: '/home', 
-      supplier: '/supplier/dashboard' 
+    setError('')
+    setLoading(true)
+
+    try {
+      if (tab === 'login') {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: form.email, password: form.password })
+        })
+        const data = await res.json()
+        
+        if (res.ok) {
+          localStorage.setItem('token', data.token)
+          // Map backend role back to frontend keys for the UI logic
+          const backToFrontRole = Object.keys(roleMap).find(key => roleMap[key] === data.role) || 'customer'
+          setRole(backToFrontRole)
+          
+          const dest = { 
+            superadmin: '/superadmin', 
+            owner: '/admin', 
+            pharmacist: '/prescriptions', 
+            assistant: '/pos', 
+            customer: '/home', 
+            supplier: '/supplier/dashboard' 
+          }
+          navigate(dest[backToFrontRole] || '/home')
+        } else {
+          setError(data.message || 'Login failed')
+        }
+      } else {
+        // Registration
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.name,
+            email: form.email,
+            password: form.password,
+            role: roleMap[form.role]
+          })
+        })
+        const data = await res.json()
+        
+        if (res.ok) {
+          if (data.token) {
+            localStorage.setItem('token', data.token)
+            setRole(form.role)
+            navigate('/home')
+          } else {
+            alert(data.message) // Approval message
+            setTab('login')
+          }
+        } else {
+          setError(data.message || 'Registration failed')
+        }
+      }
+    } catch (err) {
+      setError('Connection error')
+    } finally {
+      setLoading(false)
     }
-    navigate(dest[form.role] || '/home')
   }
 
   return (
@@ -77,6 +141,13 @@ export default function Login() {
             <button className={`login-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => setTab('login')}>Sign In</button>
             <button className={`login-tab ${tab === 'register' ? 'active' : ''}`} onClick={() => setTab('register')}>Register</button>
           </div>
+
+          {error && (
+            <div style={{ background: '#fce4e4', color: '#c62828', padding: '10px 14px', borderRadius: 8, fontSize: '0.875rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="material-icons" style={{ fontSize: 18 }}>error</span>
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="login-form">
             {tab === 'register' && (
@@ -143,9 +214,9 @@ export default function Login() {
             </div>
           )}
 
-            <button type="submit" className="btn btn-primary w-full btn-lg" style={{ marginTop: 8 }}>
-              <span className="material-icons">login</span>
-              {tab === 'login' ? 'Sign In to SPMIS' : 'Create Account'}
+            <button type="submit" className="btn btn-primary w-full btn-lg" style={{ marginTop: 8 }} disabled={loading}>
+              <span className="material-icons">{loading ? 'sync' : 'login'}</span>
+              {loading ? 'Authenticating...' : (tab === 'login' ? 'Sign In to SPMIS' : 'Create Account')}
             </button>
           </form>
 

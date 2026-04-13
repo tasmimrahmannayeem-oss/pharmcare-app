@@ -1,9 +1,9 @@
 const topMeds = [
-  { name:'Paracetamol 500mg', dispensed:1240, revenue:'$6,188', pct:88 },
-  { name:'Metformin 850mg', dispensed:890, revenue:'$8,099', pct:74 },
-  { name:'Ibuprofen 400mg', dispensed:720, revenue:'$4,536', pct:60 },
-  { name:'Vitamin C 1000mg', dispensed:650, revenue:'$8,450', pct:54 },
-  { name:'Cetirizine 10mg', dispensed:510, revenue:'$2,958', pct:43 },
+  { name:'Paracetamol 500mg', dispensed:1240, revenue:'৳6,188', pct:88 },
+  { name:'Metformin 850mg', dispensed:890, revenue:'৳8,099', pct:74 },
+  { name:'Ibuprofen 400mg', dispensed:720, revenue:'৳4,536', pct:60 },
+  { name:'Vitamin C 1000mg', dispensed:650, revenue:'৳8,450', pct:54 },
+  { name:'Cetirizine 10mg', dispensed:510, revenue:'৳2,958', pct:43 },
 ]
 
 const expiring = [
@@ -13,26 +13,43 @@ const expiring = [
 ]
 
 export default function InventoryReports() {
+  const handleExport = () => {
+    window.print()
+  }
+
   return (
-    <div className="fade-up">
+    <div className="fade-up print-container">
+      <style>{`
+        @media print {
+          .sidebar, .topbar, .btn, .page-subtitle, .badge-info, .sidebar-bottom { display: none !important; }
+          .app-content { margin-left: 0 !important; padding: 0 !important; }
+          .page-main { padding: 0 !important; }
+          .card { box-shadow: none !important; border: 1px solid #eee !important; break-inside: avoid; }
+          body { background: white !important; }
+          .grid-4, .grid-2 { display: block !important; }
+          .stat-card, .card { margin-bottom: 20px !important; width: 100% !important; }
+          .page-title { color: black !important; font-size: 24pt !important; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+      `}</style>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
         <div className="page-header" style={{ marginBottom:0 }}>
           <h1 className="page-title">Inventory Reports</h1>
-          <p className="page-subtitle">April 2026 · Green Valley Branch</p>
+          <p className="page-subtitle">April 2026 · Dhanmondi Branch</p>
         </div>
-        <div style={{ display:'flex', gap:8 }}>
+        <div style={{ display:'flex', gap:8 }} className="no-print">
           <button className="btn btn-ghost btn-sm"><span className="material-icons" style={{fontSize:16}}>date_range</span> Apr 2026</button>
-          <button className="btn btn-primary btn-sm"><span className="material-icons" style={{fontSize:16}}>download</span> Export PDF</button>
+          <button className="btn btn-primary btn-sm" onClick={handleExport}><span className="material-icons" style={{fontSize:16}}>download</span> Export PDF</button>
         </div>
       </div>
 
       {/* KPI cards */}
       <div className="grid-4" style={{ marginBottom:28 }}>
         {[
-          { label:'Total Stock Value', val:'$48,212', delta:'+5.2%', icon:'account_balance_wallet', bg:'var(--primary-fixed)', ic:'var(--primary-container)' },
+          { label:'Total Stock Value', val:'৳48,212', delta:'+5.2%', icon:'account_balance_wallet', bg:'var(--primary-fixed)', ic:'var(--primary-container)' },
           { label:'Items Dispensed (MTD)', val:'4,182', delta:'+12%', icon:'medication', bg:'var(--secondary-fixed)', ic:'var(--secondary)' },
           { label:'Dead Stock Items', val:'23', delta:'-4', icon:'inventory', bg:'var(--surface-high)', ic:'var(--on-surface-variant)' },
-          { label:'Wastage (Expired)', val:'$1,240', delta: '-8.1%', icon:'delete_sweep', bg:'var(--error-container)', ic:'var(--error)' },
+          { label:'Wastage (Expired)', val:'৳1,240', delta: '-8.1%', icon:'delete_sweep', bg:'var(--error-container)', ic:'var(--error)' },
         ].map(s => (
           <div className="stat-card" key={s.label}>
             <div style={{ width:40, height:40, borderRadius:10, background:s.bg, display:'flex', alignItems:'center', justifyContent:'center' }}>

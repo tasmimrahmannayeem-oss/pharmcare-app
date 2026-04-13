@@ -42,7 +42,13 @@ export const roles = {
 }
 
 export function RoleProvider({ children }) {
-  const [role, setRole] = useState('owner')
+  const [role, _setRole] = useState(localStorage.getItem('userRole') || 'customer')
+
+  const setRole = (newRole) => {
+    localStorage.setItem('userRole', newRole)
+    _setRole(newRole)
+  }
+
   return (
     <RoleContext.Provider value={{ role, setRole, roles }}>
       {children}

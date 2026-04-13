@@ -1,24 +1,54 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function PrescriptionVerification() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [verified, setVerified] = useState(false)
+  const [order, setOrder] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [notes, setNotes] = useState('')
 
-  if (verified) return (
-    <div className="fade-up" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:16, marginTop:60, textAlign:'center' }}>
-      <div style={{ width:80, height:80, borderRadius:'50%', background:'var(--secondary-fixed)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <span className="material-icons" style={{ fontSize:44, color:'var(--secondary)' }}>verified</span>
-      </div>
-      <h2 style={{ fontFamily:'var(--font-headline)', fontSize:'1.75rem', fontWeight:800 }}>Prescription Verified</h2>
-      <p style={{ color:'var(--on-surface-variant)', maxWidth:360 }}>Prescription {id} has been verified and sent to dispensing queue.</p>
-      <div style={{ display:'flex', gap:12 }}>
-        <button className="btn btn-primary" onClick={() => navigate('/prescriptions')}>Back to Queue</button>
-      </div>
-    </div>
-  )
+  useEffect(() => {
+    fetchOrder()
+  }, [id])
+
+  const fetchOrder = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch(`/api/orders/${id}`)
+      const data = await res.json()
+      setOrder(data)
+    } catch (err) {
+      console.error('Fetch order error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerify = async (action) => {
+    try {
+      const res = await fetch(`/api/orders/${id}/verify`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, note: notes })
+      })
+      if (res.ok) {
+        alert(`Order ${action}d successfully`)
+        navigate('/prescriptions')
+      } else {
+        const err = await res.json()
+        alert(`Error: ${err.message}`)
+      }
+    } catch (err) {
+      alert('Error connecting to server')
+    }
+  }
+
+  if (loading) return <div className="text-center" style={{ padding: 60 }}>Loading prescription details...</div>
+  if (!order) return <div className="text-center" style={{ padding: 60 }}>Order not found</div>
+
+  const patient = order.customer || { name: 'Walk-in Customer' }
+  const mainMedicine = order.medicines[0]?.medicine || { name: 'Unknown Item' }
 
   return (
     <div className="fade-up">
@@ -27,8 +57,8 @@ export default function PrescriptionVerification() {
           <span className="material-icons" style={{fontSize:16}}>arrow_back</span> Queue
         </button>
         <h1 className="page-title" style={{ fontSize:'1.5rem' }}>Prescription Verification</h1>
-        <span className="badge badge-warning">Pending</span>
-        <span style={{ marginLeft:'auto', fontFamily:'monospace', fontWeight:600, color:'var(--on-surface-variant)' }}>{id || 'RX-2024-0041'}</span>
+        <span className={`badge ${order.status==='Pending'?'badge-warning':'badge-info'}`}>{order.status}</span>
+        <span style={{ marginLeft:'auto', fontFamily:'monospace', fontWeight:600, color:'var(--on-surface-variant)' }}>#{id.slice(-6).toUpperCase()}</span>
       </div>
 
       <div className="grid-2" style={{ gap:24, alignItems:'start' }}>
@@ -41,16 +71,16 @@ export default function PrescriptionVerification() {
                 <span className="material-icons" style={{ color:'var(--primary-container)', fontSize:28 }}>person</span>
               </div>
               <div>
-                <div style={{ fontWeight:700, fontSize:'1.0625rem' }}>Sarah Mitchell</div>
-                <div style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)' }}>DOB: 1985-06-15 · Member ID: BCB-123-456</div>
+                <div style={{ fontWeight:700, fontSize:'1.0625rem' }}>{patient.name}</div>
+                <div style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)' }}>Email: {patient.email} · ID: {patient._id?.slice(-8).toUpperCase()}</div>
                 <div style={{ display:'flex', gap:6, marginTop:6 }}>
-                  <span className="badge badge-info">BlueCross Member</span>
-                  <span className="badge badge-warning">Allergy: Penicillin</span>
+                  <span className="badge badge-info">Registered Member</span>
+                  {patient.phone && <span className="badge badge-neutral">Phone: {patient.phone}</span>}
                 </div>
               </div>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-              {[['Insurance ID','BCB-123-456-789'],['Phone','+1 555 0192'],['Email','s.mitchell@email.com'],['Primary Care','Dr. A. Patel']].map(([l,v]) => (
+              {[['Member ID', patient._id?.slice(-6).toUpperCase()],['Phone', patient.phone || 'N/A'],['Email', patient.email],['Joined', new Date(patient.createdAt).toLocaleDateString()]].map(([l,v]) => (
                 <div key={l} style={{ background:'var(--surface-low)', borderRadius:'var(--radius-sm)', padding:'10px 14px' }}>
                   <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)', fontWeight:500 }}>{l}</div>
                   <div style={{ fontWeight:600, marginTop:2 }}>{v}</div>
@@ -62,11 +92,17 @@ export default function PrescriptionVerification() {
           <div className="card">
             <h3 className="title-md" style={{ marginBottom:16 }}>Prescribed Medication</h3>
             <div style={{ background:'var(--primary-fixed)', borderRadius:'var(--radius)', padding:16, marginBottom:16 }}>
-              <div style={{ fontFamily:'var(--font-headline)', fontSize:'1.25rem', fontWeight:800, color:'var(--primary-container)' }}>Amoxicillin 500mg</div>
-              <div style={{ color:'var(--on-surface-variant)', marginTop:4 }}>Capsules · Oral administration</div>
+              <div style={{ fontFamily:'var(--font-headline)', fontSize:'1.25rem', fontWeight:800, color:'var(--primary-container)' }}>{mainMedicine.name}</div>
+              <div style={{ color:'var(--on-surface-variant)', marginTop:4 }}>{order.medicines[0]?.quantity} Units · ID: {mainMedicine._id?.slice(-6).toUpperCase()}</div>
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 }}>
-              {[['Quantity','30 capsules'],['Dosage','1 cap 3×/day'],['Duration','10 days'],['Refills','0'],['Prescriber','Dr. A. Patel'],['Date','Apr 8, 2026']].map(([l,v]) => (
+            {order.prescriptionImage && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: 8 }}>Scanned Prescription Copy:</div>
+                <img src={`/api/uploads/${order.prescriptionImage.split('\\').pop()}`} alt="Prescription" style={{ width: '100%', borderRadius: 8, maxHeight: 300, objectFit: 'contain', background: 'var(--surface-low)' }} />
+              </div>
+            )}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginTop:16 }}>
+              {[['Total Items', order.medicines.length],['Total Amount', `৳${order.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`],['Order Date', new Date(order.createdAt).toLocaleDateString()]].map(([l,v]) => (
                 <div key={l} style={{ background:'var(--surface-low)', borderRadius:'var(--radius-sm)', padding:'10px 12px' }}>
                   <div style={{ fontSize:'0.7rem', color:'var(--on-surface-variant)', fontWeight:500, textTransform:'uppercase', letterSpacing:'0.04em' }}>{l}</div>
                   <div style={{ fontWeight:700, marginTop:3, fontSize:'0.9375rem' }}>{v}</div>
@@ -84,10 +120,10 @@ export default function PrescriptionVerification() {
               Verification Checklist
             </h3>
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-              {['Valid prescriber license confirmed','Patient allergy check (Penicillin ⚠️ — using Amoxicillin — REVIEW)','Insurance coverage verified (80% covered)','Dosage within safe therapeutic range','Drug interactions checked — clear','DEA schedule: Not a controlled substance'].map((item, i) => (
-                <label key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background: i===1 ? 'var(--error-container)' : 'var(--surface-low)', borderRadius:'var(--radius-sm)', cursor:'pointer', fontSize:'0.875rem' }}>
-                  <input type="checkbox" defaultChecked={i!==1} style={{ accentColor:'var(--secondary)', width:16, height:16 }} />
-                  <span style={{ color: i===1 ? 'var(--error)' : 'var(--on-surface)', fontWeight: i===1 ? 600 : 400 }}>{item}</span>
+              {['Valid prescriber license confirmed','Patient history reviewed','Medication & dosage match prescription','No high-risk contraindications found','Stock availability confirmed'].map((item, i) => (
+                <label key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background: 'var(--surface-low)', borderRadius:'var(--radius-sm)', cursor:'pointer', fontSize:'0.875rem' }}>
+                  <input type="checkbox" style={{ accentColor:'var(--secondary)', width:16, height:16 }} />
+                  <span style={{ color: 'var(--on-surface)', fontWeight: 400 }}>{item}</span>
                 </label>
               ))}
             </div>
@@ -105,11 +141,11 @@ export default function PrescriptionVerification() {
           </div>
 
           <div style={{ display:'flex', gap:12 }}>
-            <button className="btn btn-danger" style={{ flex:1 }}>
+            <button className="btn btn-danger" style={{ flex:1 }} onClick={() => handleVerify('Reject')}>
               <span className="material-icons" style={{fontSize:18}}>cancel</span>
               Reject
             </button>
-            <button className="btn btn-primary" style={{ flex:2 }} onClick={() => setVerified(true)}>
+            <button className="btn btn-primary" style={{ flex:2 }} onClick={() => handleVerify('Approve')}>
               <span className="material-icons" style={{fontSize:18}}>verified</span>
               Approve & Dispense
             </button>

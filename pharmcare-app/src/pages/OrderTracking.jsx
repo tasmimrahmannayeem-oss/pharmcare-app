@@ -1,13 +1,38 @@
-const orders = [
-  { id:'ORD-2024-001', date:'Apr 8, 2026', items:['Paracetamol 500mg ×2', 'Vitamin C ×1'], total:'$22.97', status:'Out for Delivery', step:3 },
-  { id:'ORD-2024-002', date:'Apr 6, 2026', items:['Metformin 500mg ×3'], total:'$27.30', status:'Delivered', step:4 },
-  { id:'ORD-2024-003', date:'Apr 1, 2026', items:['Ibuprofen 400mg ×1', 'Cetirizine ×2'], total:'$18.40', status:'Delivered', step:4 },
-]
+import { useState, useEffect } from 'react'
 
-const steps = ['Order Placed', 'Confirmed', 'Packed', 'Out for Delivery', 'Delivered']
-const statusBadge = { 'Out for Delivery': 'badge-warning', 'Delivered': 'badge-success', 'Cancelled': 'badge-error', 'Processing': 'badge-info' }
+const statusSteps = {
+  'Pending': 0,
+  'Confirmed': 1,
+  'Being Processed': 2,
+  'Dispatched': 3,
+  'Delivered': 4,
+  'Cancelled': 4,
+  'Rejected': 4
+}
+
+const steps = ['Order Placed', 'Confirmed', 'Processing', 'Out for Delivery', 'Delivered']
+const statusBadge = { 'Pending': 'badge-warning', 'Confirmed': 'badge-info', 'Being Processed': 'badge-info', 'Dispatched': 'badge-warning', 'Delivered': 'badge-success', 'Cancelled': 'badge-error', 'Rejected': 'badge-error' }
 
 export default function OrderTracking() {
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchOrders()
+  }, [])
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/orders')
+      const data = await res.json()
+      setItems(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error('Fetch orders error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
   return (
     <div className="fade-up">
       <div className="page-header">
@@ -16,38 +41,52 @@ export default function OrderTracking() {
       </div>
 
       <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-        {orders.map(o => (
-          <div key={o.id} className="card">
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
-              <div>
-                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-                  <span style={{ fontFamily:'var(--font-headline)', fontWeight:800, fontSize:'1rem' }}>{o.id}</span>
-                  <span className={`badge ${statusBadge[o.status]}`}>{o.status}</span>
-                </div>
-                <div style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)' }}>Placed on {o.date} · {o.items.join(', ')}</div>
-              </div>
-              <div style={{ textAlign:'right' }}>
-                <div style={{ fontFamily:'var(--font-headline)', fontWeight:800, fontSize:'1.125rem', color:'var(--primary-container)' }}>{o.total}</div>
-                <button className="btn btn-ghost btn-sm" style={{ marginTop:4 }}>View Details</button>
-              </div>
-            </div>
-
-            {/* Progress tracker */}
-            <div style={{ display:'flex', alignItems:'center', gap:0 }}>
-              {steps.map((s, i) => (
-                <div key={s} style={{ display:'flex', alignItems:'center', flex: i < steps.length-1 ? 1 : 0 }}>
-                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-                    <div style={{ width:28, height:28, borderRadius:'50%', background: i < o.step ? 'var(--secondary)' : i === o.step ? 'var(--secondary)' : 'var(--surface-high)', color: i <= o.step ? 'white' : 'var(--on-surface-variant)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.8rem', fontWeight:700, flexShrink:0 }}>
-                      {i < o.step ? <span className="material-icons" style={{fontSize:14}}>check</span> : i+1}
-                    </div>
-                    <span style={{ fontSize:'0.65rem', fontWeight: i<=o.step ? 700 : 400, color: i<=o.step ? 'var(--secondary)' : 'var(--on-surface-variant)', whiteSpace:'nowrap', textAlign:'center' }}>{s}</span>
+        {loading ? (
+          <div className="card text-center" style={{ padding:60 }}>Loading your orders...</div>
+        ) : items.length === 0 ? (
+          <div className="card text-center" style={{ padding:60 }}>No orders found.</div>
+        ) : items.map(o => {
+          const currentStep = statusSteps[o.status] ?? 0;
+          return (
+            <div key={o._id} className="card">
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
+                <div>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+                    <span style={{ fontFamily:'var(--font-headline)', fontWeight:800, fontSize:'1rem' }}>ORD-{o._id.slice(-6).toUpperCase()}</span>
+                    <span className={`badge ${statusBadge[o.status] || 'badge-neutral'}`}>{o.status}</span>
                   </div>
-                  {i < steps.length-1 && <div style={{ flex:1, height:2, background: i < o.step ? 'var(--secondary)' : 'var(--outline-variant)', margin:'0 4px', marginBottom:18 }} />}
+                  <div style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)' }}>
+                    Placed on {new Date(o.createdAt).toLocaleDateString()} · 
+                    {o.medicines.map(m => ` ${m.medicine?.name || 'Item'} ×${m.quantity}`).join(', ')}
+                  </div>
                 </div>
-              ))}
+                <div style={{ textAlign:'right' }}>
+                  <div style={{ fontFamily:'var(--font-headline)', fontWeight:800, fontSize:'1.125rem', color:'var(--primary-container)' }}>৳{o.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                </div>
+              </div>
+
+              {/* Progress tracker */}
+              <div style={{ display:'flex', alignItems:'center', gap:0 }}>
+                {steps.map((s, i) => (
+                  <div key={s} style={{ display:'flex', alignItems:'center', flex: i < steps.length-1 ? 1 : 0 }}>
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                      <div style={{ 
+                        width:28, height:28, borderRadius:'50%', 
+                        background: i < currentStep ? 'var(--secondary)' : i === currentStep ? 'var(--secondary)' : 'var(--surface-high)', 
+                        color: i <= currentStep ? 'white' : 'var(--on-surface-variant)', 
+                        display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.8rem', fontWeight:700, flexShrink:0 
+                      }}>
+                        {i < currentStep ? <span className="material-icons" style={{fontSize:14}}>check</span> : i+1}
+                      </div>
+                      <span style={{ fontSize:'0.65rem', fontWeight: i<=currentStep ? 700 : 400, color: i<=currentStep ? 'var(--secondary)' : 'var(--on-surface-variant)', whiteSpace:'nowrap', textAlign:'center' }}>{s}</span>
+                    </div>
+                    {i < steps.length-1 && <div style={{ flex:1, height:2, background: i < currentStep ? 'var(--secondary)' : 'var(--outline-variant)', margin:'0 4px', marginBottom:18 }} />}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
