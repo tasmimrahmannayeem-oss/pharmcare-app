@@ -36,42 +36,49 @@ import UserManagement from './pages/UserManagement'
 import PharmacyManagement from './pages/PharmacyManagement'
 import SystemAuditLog from './pages/SystemAuditLog'
 
+import { RoleProvider } from './context/RoleContext'
+import { CartProvider } from './context/CartContext'
+
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route element={<AppLayout />}>
-          {/* Customer */}
-          <Route path="/home"        element={<Home />} />
-          <Route path="/search"      element={<MedicineSearch />} />
-          <Route path="/catalogue"   element={<ProductCatalogue />} />
-          <Route path="/checkout"    element={<Checkout />} />
-          <Route path="/orders"      element={<OrderTracking />} />
-          <Route path="/profile"     element={<CustomerProfile />} />
-          {/* Staff */}
-          <Route path="/fulfillment"        element={<FulfillmentStatus />} />
-          <Route path="/prescriptions"      element={<PrescriptionQueue />} />
-          <Route path="/prescriptions/:id"  element={<PrescriptionVerification />} />
-          {/* Pharmacy Admin */}
-          <Route path="/admin"              element={<PharmacyAdminDashboard />} />
-          <Route path="/inventory"          element={<Inventory />} />
-          <Route path="/inventory/reports"  element={<InventoryReports />} />
-          <Route path="/pos"                element={<POSBilling />} />
-          <Route path="/analytics"          element={<SalesAnalytics />} />
-          <Route path="/staff"              element={<StaffManagement />} />
-          <Route path="/suppliers"          element={<SupplierManagement />} />
-          {/* Supplier */}
-          <Route path="/supplier/dashboard" element={<SupplierDashboard />} />
-          <Route path="/supplier/orders"    element={<SupplierPurchaseOrders />} />
-          {/* Super Admin */}
-          <Route path="/superadmin"                   element={<SuperAdminDashboard />} />
-          <Route path="/superadmin/users"             element={<UserManagement />} />
-          <Route path="/superadmin/pharmacies"        element={<PharmacyManagement />} />
-          <Route path="/superadmin/audit"             element={<SystemAuditLog />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <RoleProvider>
+      <CartProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route element={<AppLayout />}>
+              {/* Customer */}
+              <Route path="/home" element={<Home />} />
+              <Route path="/search" element={<MedicineSearch />} />
+              <Route path="/catalogue" element={<ProductCatalogue />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/orders" element={<OrderTracking />} />
+              <Route path="/profile" element={<CustomerProfile />} />
+              {/* Staff */}
+              <Route path="/fulfillment" element={<FulfillmentStatus />} />
+              <Route path="/prescriptions" element={<PrescriptionQueue />} />
+              <Route path="/prescriptions/:id" element={<PrescriptionVerification />} />
+              {/* Pharmacy Admin */}
+              <Route path="/admin" element={<PharmacyAdminDashboard />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/inventory/reports" element={<InventoryReports />} />
+              <Route path="/pos" element={<POSBilling />} />
+              <Route path="/analytics" element={<SalesAnalytics />} />
+              <Route path="/staff" element={<StaffManagement />} />
+              <Route path="/suppliers" element={<SupplierManagement />} />
+              {/* Supplier */}
+              <Route path="/supplier/dashboard" element={<SupplierDashboard />} />
+              <Route path="/supplier/orders" element={<SupplierPurchaseOrders />} />
+              {/* Super Admin */}
+              <Route path="/superadmin" element={<SuperAdminDashboard />} />
+              <Route path="/superadmin/users" element={<UserManagement />} />
+              <Route path="/superadmin/pharmacies" element={<PharmacyManagement />} />
+              <Route path="/superadmin/audit" element={<SystemAuditLog />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </CartProvider>
+    </RoleProvider>
   )
 }

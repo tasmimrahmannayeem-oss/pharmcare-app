@@ -12,10 +12,10 @@ const weeklyData = [
 const maxRevenue = Math.max(...weeklyData.map(d => d.revenue))
 
 const topProducts = [
-  { name:'Paracetamol 500mg', units:1240, revenue:'$6,188', pct:92 },
-  { name:'Metformin 850mg', units:890, revenue:'$8,099', pct:74 },
-  { name:'Vitamin C 1000mg', units:650, revenue:'$8,450', pct:60 },
-  { name:'Ibuprofen 400mg', units:720, revenue:'$4,536', pct:54 },
+  { name:'Paracetamol 500mg', units:1240, revenue:'৳6,188', pct:92 },
+  { name:'Metformin 850mg', units:890, revenue:'৳8,099', pct:74 },
+  { name:'Vitamin C 1000mg', units:650, revenue:'৳8,450', pct:60 },
+  { name:'Ibuprofen 400mg', units:720, revenue:'৳4,536', pct:54 },
 ]
 
 export default function SalesAnalytics() {
@@ -26,7 +26,7 @@ export default function SalesAnalytics() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
         <div className="page-header" style={{ marginBottom:0 }}>
           <h1 className="page-title">Sales Analytics</h1>
-          <p className="page-subtitle">Revenue intelligence · Green Valley Branch</p>
+          <p className="page-subtitle">Revenue intelligence · Dhanmondi Branch</p>
         </div>
         <div style={{ display:'flex', gap:8 }}>
           {['Day','Week','Month','Year'].map(p => (
@@ -39,9 +39,9 @@ export default function SalesAnalytics() {
       {/* KPIs */}
       <div className="grid-4" style={{ marginBottom:28 }}>
         {[
-          { label:'Total Revenue', val:'$28,420', delta:'+12.4%', icon:'trending_up', bg:'linear-gradient(135deg,var(--primary),var(--primary-container))', textColor:'white' },
+          { label:'Total Revenue', val:'৳28,420', delta:'+12.4%', icon:'trending_up', bg:'linear-gradient(135deg,var(--primary),var(--primary-container))', textColor:'white' },
           { label:'Prescriptions Filled', val:'419', delta:'+8.2%', icon:'description', bg:'var(--secondary-fixed)', icolor:'var(--secondary)', textColor:'var(--on-surface)' },
-          { label:'Avg. Transaction', val:'$67.82', delta:'+3.8%', icon:'receipt', bg:'var(--primary-fixed)', icolor:'var(--primary-container)', textColor:'var(--on-surface)' },
+          { label:'Avg. Transaction', val:'৳67.82', delta:'+3.8%', icon:'receipt', bg:'var(--primary-fixed)', icolor:'var(--primary-container)', textColor:'var(--on-surface)' },
           { label:'New Customers', val:'38', delta:'+15%', icon:'person_add', bg:'var(--tertiary-fixed)', icolor:'var(--tertiary-container)', textColor:'var(--on-surface)' },
         ].map(s => (
           <div className="stat-card" key={s.label} style={{ background: s.textColor==='white' ? s.bg : 'var(--surface-lowest)' }}>
@@ -67,7 +67,7 @@ export default function SalesAnalytics() {
           <div style={{ display:'flex', alignItems:'flex-end', gap:12, height:180, paddingBottom:8 }}>
             {weeklyData.map(d => (
               <div key={d.day} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:6, height:'100%', justifyContent:'flex-end' }}>
-                <span style={{ fontSize:'0.7rem', fontWeight:700, color:'var(--primary-container)' }}>${(d.revenue/1000).toFixed(1)}k</span>
+                <span style={{ fontSize:'0.7rem', fontWeight:700, color:'var(--primary-container)' }}>৳{(d.revenue/1000).toFixed(1)}k</span>
                 <div style={{ width:'100%', position:'relative', borderRadius:'var(--radius-sm) var(--radius-sm) 0 0', overflow:'hidden' }}>
                   <div style={{ height: `${(d.revenue/maxRevenue)*140}px`, background:'linear-gradient(180deg, var(--primary-container), var(--primary))', borderRadius:'var(--radius-sm) var(--radius-sm) 0 0', transition:'height 0.4s ease', minHeight:8 }} />
                 </div>
@@ -109,9 +109,9 @@ export default function SalesAnalytics() {
           <h3 className="section-title" style={{ marginBottom:14 }}>Payment Methods</h3>
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
             {[
-              { label:'Insurance', pct:42, color:'var(--primary-container)', amount:'$11,936' },
-              { label:'Credit/Debit Card', pct:35, color:'var(--secondary)', amount:'$9,947' },
-              { label:'Cash', pct:23, color:'var(--outline)', amount:'$6,537' },
+              { label:'bKash', pct:42, color:'var(--primary-container)', amount:'৳11,936' },
+              { label:'Nagad', pct:35, color:'var(--secondary)', amount:'৳9,947' },
+              { label:'Cash/Card', pct:23, color:'var(--outline)', amount:'৳6,537' },
             ].map(m => (
               <div key={m.label} style={{ display:'flex', alignItems:'center', gap:12 }}>
                 <div style={{ width:12, height:12, borderRadius:3, background:m.color, flexShrink:0 }} />

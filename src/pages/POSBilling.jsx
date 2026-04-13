@@ -1,28 +1,85 @@
-import { useState } from 'react'
-
-const cartItems = [
-  { name:'Paracetamol 500mg', price:4.99, qty:2 },
-  { name:'Vitamin C 1000mg', price:12.99, qty:1 },
-]
-
-const recentTx = [
-  { id:'TX-001', customer:'Walk-in', items:'Paracetamol ×2', total:'$9.98', method:'Cash', time:'09:45 AM' },
-  { id:'TX-002', customer:'Sarah M.', items:'Amoxicillin ×1', total:'$8.50', method:'Card', time:'09:32 AM' },
-  { id:'TX-003', customer:'John C.', items:'Metformin ×3', total:'$27.30', method:'Insurance', time:'09:18 AM' },
-  { id:'TX-004', customer:'Walk-in', items:'Ibuprofen ×1, Cetirizine ×2', total:'$17.90', method:'Cash', time:'09:05 AM' },
-]
+import { useState, useEffect } from 'react'
 
 export default function POSBilling() {
-  const [cart, setCart] = useState(cartItems)
+  const [cart, setCart] = useState([])
+  const [history, setHistory] = useState([])
+  const [medicines, setMedicines] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [payMethod, setPayMethod] = useState('Cash')
   const [search, setSearch] = useState('')
-  const subtotal = cart.reduce((s,i) => s+i.price*i.qty, 0)
+
+  useEffect(() => {
+    fetchMedicines()
+    fetchHistory()
+  }, [])
+
+  const fetchMedicines = async () => {
+    try {
+      const res = await fetch('/api/medicines')
+      const data = await res.json()
+      setMedicines(Array.isArray(data) ? data : [])
+    } catch (err) { console.error('Error fetching medicines', err) }
+  }
+
+  const fetchHistory = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/orders')
+      const data = await res.json()
+      // Filter for recent POS-like orders (e.g. status Confirmed/Paid)
+      const formatted = Array.isArray(data) ? data.slice(0, 5).map(o => ({
+        id: o._id.slice(-6).toUpperCase(),
+        customer: o.customer ? o.customer.name : 'Walk-in',
+        items: o.medicines.map(m => `${m.medicine?.name || 'Item'} ×${m.quantity}`).join(', '),
+        total: `৳${o.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+        method: o.statusTimeline[0]?.note.split('via ')[1] || 'Cash',
+        time: new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      })) : []
+      setHistory(formatted)
+    } catch (err) { console.error('Error fetching history', err) } finally { setLoading(false) }
+  }
+
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
   const tax = subtotal * 0.08
+  const total = subtotal + tax
+
+  const handleProcessPayment = async () => {
+    if (cart.length === 0) return alert('Cart is empty')
+
+    try {
+      const res = await fetch('/api/orders/pos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pharmacy: '66168e826f00c5001e000001', // Local placeholder
+          medicines: cart.map(i => ({ medicine: i._id, quantity: i.qty, price: i.price })),
+          totalAmount: total,
+          paymentMethod: payMethod
+        })
+      })
+
+      if (res.ok) {
+        alert('Payment processed successfully!')
+        setCart([])
+        fetchHistory()
+        fetchMedicines() // Refresh stock
+      } else {
+        const err = await res.json()
+        alert(`Error: ${err.message}`)
+      }
+    } catch (err) {
+      alert('Error connecting to server')
+    }
+  }
 
   return (
     <div className="fade-up">
-      <div className="page-header">
-        <h1 className="page-title">POS Billing Interface</h1>
-        <p className="page-subtitle">Point-of-sale terminal · Green Valley Branch · Cashier: Maria S.</p>
+      <div className="page-header" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 className="page-title">POS Billing Interface</h1>
+          <p className="page-subtitle">Terminal #01 · Dhanmondi Branch · Maria S.</p>
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={() => setHistory(recentTx)}>Reset History</button>
       </div>
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 380px', gap:24, alignItems:'start' }}>
@@ -35,19 +92,26 @@ export default function POSBilling() {
               <input className="input" placeholder="Scan barcode or search medicine…" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginTop:14 }}>
-              {['Paracetamol 500mg','Ibuprofen 400mg','Amoxicillin 500mg','Cetirizine 10mg','Vitamin C','Metformin','Omeprazole','Lisinopril'].filter(n => n.toLowerCase().includes(search.toLowerCase())).map(name => (
-                <button key={name}
-                  style={{ background:'var(--surface-low)', border:'none', borderRadius:'var(--radius)', padding:'12px 10px', cursor:'pointer', fontSize:'0.8rem', fontWeight:500, textAlign:'center', transition:'background 0.15s', fontFamily:'inherit' }}
-                  onMouseEnter={e => e.currentTarget.style.background='var(--primary-fixed)'}
-                  onMouseLeave={e => e.currentTarget.style.background='var(--surface-low)'}
+              {medicines.filter(n => n.name.toLowerCase().includes(search.toLowerCase()) || n.genericName.toLowerCase().includes(search.toLowerCase())).slice(0, 12).map(med => (
+                <button key={med._id}
+                  disabled={med.stockQuantity <= 0}
+                  style={{ 
+                    background: med.stockQuantity <= 0 ? 'var(--surface-container-highest)' : 'var(--surface-low)', 
+                    opacity: med.stockQuantity <= 0 ? 0.6 : 1,
+                    border:'none', borderRadius:'var(--radius)', padding:'12px 10px', cursor: med.stockQuantity <= 0 ? 'default' : 'pointer', 
+                    fontSize:'0.8rem', fontWeight:500, textAlign:'center', transition:'background 0.15s', fontFamily:'inherit', position: 'relative' 
+                  }}
+                  onMouseEnter={e => med.stockQuantity > 0 && (e.currentTarget.style.background='var(--primary-fixed)')}
+                  onMouseLeave={e => med.stockQuantity > 0 && (e.currentTarget.style.background='var(--surface-low)')}
                   onClick={() => setCart(prev => {
-                    const ex = prev.find(i => i.name === name)
-                    if (ex) return prev.map(i => i.name===name ? {...i, qty:i.qty+1} : i)
-                    return [...prev, { name, price: 5 + Math.random()*10, qty:1 }]
+                    const ex = prev.find(i => i._id === med._id)
+                    if (ex) return prev.map(i => i._id === med._id ? {...i, qty:i.qty+1} : i)
+                    return [...prev, { _id: med._id, name: med.name, price: med.sellPrice, qty: 1 }]
                   })}
                 >
                   <span className="material-icons" style={{fontSize:20,color:'var(--primary-container)',display:'block',marginBottom:4}}>medication</span>
-                  {name}
+                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{med.name}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)' }}>{med.stockQuantity} in stock</div>
                 </button>
               ))}
             </div>
@@ -62,7 +126,7 @@ export default function POSBilling() {
               <table>
                 <thead><tr><th>TX ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Method</th><th>Time</th></tr></thead>
                 <tbody>
-                  {recentTx.map(t => (
+                  {history.map(t => (
                     <tr key={t.id}>
                       <td style={{ fontFamily:'monospace', fontSize:'0.8rem', fontWeight:600 }}>{t.id}</td>
                       <td>{t.customer}</td>
@@ -97,35 +161,39 @@ export default function POSBilling() {
               <div key={item.name} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'var(--surface-low)', borderRadius:'var(--radius-sm)' }}>
                 <div style={{ flex:1 }}>
                   <div style={{ fontWeight:600, fontSize:'0.875rem' }}>{item.name}</div>
-                  <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)' }}>${item.price.toFixed(2)} each</div>
+                  <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)' }}>৳{item.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })} each</div>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   <button className="btn btn-ghost btn-sm" style={{padding:'2px 8px'}} onClick={() => setCart(prev => prev.map((c,idx) => idx===i ? {...c, qty:Math.max(1,c.qty-1)} : c))}>−</button>
                   <span style={{ fontWeight:700, minWidth:20, textAlign:'center' }}>{item.qty}</span>
                   <button className="btn btn-ghost btn-sm" style={{padding:'2px 8px'}} onClick={() => setCart(prev => prev.map((c,idx) => idx===i ? {...c, qty:c.qty+1} : c))}>+</button>
                 </div>
-                <span style={{ fontWeight:700, color:'var(--primary-container)', minWidth:52, textAlign:'right' }}>${(item.price*item.qty).toFixed(2)}</span>
+                <span style={{ fontWeight:700, color:'var(--primary-container)', minWidth:52, textAlign:'right' }}>৳{(item.price*item.qty).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
             ))}
           </div>
 
           {/* Totals */}
           <div style={{ borderTop:'1px solid var(--outline-variant)', paddingTop:12, display:'flex', flexDirection:'column', gap:8 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.875rem' }}><span className="text-muted">Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.875rem' }}><span className="text-muted">Tax (8%)</span><span>${tax.toFixed(2)}</span></div>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.875rem' }}><span className="text-muted">Subtotal</span><span>৳{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.875rem' }}><span className="text-muted">Tax (8%)</span><span>৳{tax.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
             <div style={{ display:'flex', justifyContent:'space-between', fontFamily:'var(--font-headline)', fontSize:'1.25rem', fontWeight:800, marginTop:4 }}>
-              <span>Total</span><span style={{ color:'var(--primary-container)' }}>${(subtotal+tax).toFixed(2)}</span>
+              <span>Total</span><span style={{ color:'var(--primary-container)' }}>৳{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
 
           {/* Payment buttons */}
           <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
-              {['Cash','Card','Insurance'].map(m => (
-                <button key={m} className="btn btn-ghost btn-sm" style={{ border:'1.5px solid var(--outline-variant)', fontWeight:600 }}>{m}</button>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:8 }}>
+              {['Cash','Card','bKash','Nagad'].map(m => (
+                <button key={m}
+                  className={`btn btn-sm ${payMethod === m ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{ border: payMethod === m ? 'none' : '1.5px solid var(--outline-variant)', fontWeight:600, fontSize:'0.75rem', padding:'8px 4px' }}
+                  onClick={() => setPayMethod(m)}
+                >{m}</button>
               ))}
             </div>
-            <button className="btn btn-primary" style={{ width:'100%', justifyContent:'center', marginTop:4 }}>
+            <button className="btn btn-primary" style={{ width:'100%', justifyContent:'center', marginTop:4 }} onClick={handleProcessPayment}>
               <span className="material-icons">receipt_long</span>
               Process Payment
             </button>

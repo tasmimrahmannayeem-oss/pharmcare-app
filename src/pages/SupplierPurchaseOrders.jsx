@@ -1,11 +1,11 @@
 import { useState } from 'react'
 
 const orders = [
-  { id: 'PO-2024-088', pharmacy: 'Aura — Green Valley', items: 'Paracetamol 500mg ×500, Ibuprofen 400mg ×200', value: '$2,450', date: 'Apr 6, 2026', dueDate: 'Apr 9, 2026', status: 'Delivered', priority: 'Standard' },
-  { id: 'PO-2024-082', pharmacy: 'MedCenter — North', items: 'Amoxicillin 500mg ×300, Metformin 850mg ×400', value: '$3,820', date: 'Apr 4, 2026', dueDate: 'Apr 8, 2026', status: 'In Transit', priority: 'Urgent' },
-  { id: 'PO-2024-075', pharmacy: 'CityPharm — Downtown', items: 'Atorvastatin 40mg ×200', value: '$1,640', date: 'Apr 1, 2026', dueDate: 'Apr 7, 2026', status: 'Processing', priority: 'Standard' },
-  { id: 'PO-2024-071', pharmacy: 'Aura — Westside', items: 'Cetirizine 10mg ×500, Omeprazole ×300', value: '$4,200', date: 'Mar 28, 2026', dueDate: 'Apr 4, 2026', status: 'Delivered', priority: 'Standard' },
-  { id: 'PO-2024-066', pharmacy: 'HealthCare Plus', items: 'Lisinopril 10mg ×400, Vitamin D ×200', value: '$2,980', date: 'Mar 25, 2026', dueDate: 'Mar 30, 2026', status: 'Delivered', priority: 'Urgent' },
+  { id: 'PO-2024-088', pharmacy: 'Aura — Dhanmondi', items: 'Paracetamol 500mg ×500, Ibuprofen 400mg ×200', value: '৳2,450', date: 'Apr 6, 2026', dueDate: 'Apr 9, 2026', status: 'Delivered', priority: 'Standard' },
+  { id: 'PO-2024-082', pharmacy: 'MedCenter — Uttara', items: 'Amoxicillin 500mg ×300, Metformin 850mg ×400', value: '৳3,820', date: 'Apr 4, 2026', dueDate: 'Apr 8, 2026', status: 'In Transit', priority: 'Urgent' },
+  { id: 'PO-2024-075', pharmacy: 'CityPharm — Banani', items: 'Atorvastatin 40mg ×200', value: '৳1,640', date: 'Apr 1, 2026', dueDate: 'Apr 7, 2026', status: 'Processing', priority: 'Standard' },
+  { id: 'PO-2024-071', pharmacy: 'Aura — Chattogram', items: 'Cetirizine 10mg ×500, Omeprazole ×300', value: '৳4,200', date: 'Mar 28, 2026', dueDate: 'Apr 4, 2026', status: 'Delivered', priority: 'Standard' },
+  { id: 'PO-2024-066', pharmacy: 'HealthCare Plus — Sylhet', items: 'Lisinopril 10mg ×400, Vitamin D ×200', value: '৳2,980', date: 'Mar 25, 2026', dueDate: 'Mar 30, 2026', status: 'Delivered', priority: 'Urgent' },
 ]
 
 const statusBadge = { Delivered: 'badge-success', 'In Transit': 'badge-info', Processing: 'badge-warning' }
@@ -32,7 +32,7 @@ export default function SupplierPurchaseOrders() {
           { label: 'Total Orders', val: orders.length, icon: 'receipt_long', bg: 'var(--primary-fixed)', ic: 'var(--primary-container)' },
           { label: 'In Transit', val: 1, icon: 'local_shipping', bg: 'var(--primary-fixed)', ic: 'var(--primary-container)' },
           { label: 'Processing', val: 1, icon: 'pending', bg: 'var(--tertiary-fixed)', ic: 'var(--tertiary-container)' },
-          { label: 'Total Value (MTD)', val: '$15,090', icon: 'payments', bg: 'var(--secondary-fixed)', ic: 'var(--secondary)' },
+          { label: 'Total Value (MTD)', val: '৳15,090', icon: 'payments', bg: 'var(--secondary-fixed)', ic: 'var(--secondary)' },
         ].map(s => (
           <div className="stat-card" key={s.label}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
