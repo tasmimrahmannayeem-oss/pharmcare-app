@@ -96,7 +96,7 @@ export default function MedicineSearch() {
                   <tr key={m._id}>
                     <td style={{ fontWeight:600 }}>{m.name}</td>
                     <td style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)' }}>{m.genericName || '—'}</td>
-                    <td style={{ fontWeight:700, color:'var(--primary-container)' }}>${m.sellPrice.toFixed(2)}</td>
+                    <td style={{ fontWeight:700, color:'var(--primary-container)' }}>৳{(m.sellPrice * 110).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td><span className={`badge ${status.class}`}>{status.label}</span></td>
                     <td>{m.requiresPrescription ? <span className="badge badge-error">Required</span> : <span className="badge badge-success">OTC</span>}</td>
                     <td>

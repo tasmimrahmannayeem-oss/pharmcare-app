@@ -182,7 +182,7 @@ export default function PharmacyManagement() {
               </div>
               <div className="input-group" style={{ marginTop:12 }}>
                 <label className="input-label">Full Address</label>
-                <input className="input" required placeholder="123 Health Ave, Suite 100" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+                <input className="input" required placeholder="Ahmad Plaza, Mirpur, Dhaka" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
               </div>
               <div style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>

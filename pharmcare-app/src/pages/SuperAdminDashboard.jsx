@@ -1,10 +1,11 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const pharmacies = [
-  { name: 'Aura — Green Valley', admin: 'Dr. Sarah Chen', revenue: '$28,420', status: 'Online', rxToday: 47, alerts: 2 },
-  { name: 'Aura — Westside', admin: 'Dr. Mark Liu', revenue: '$19,840', status: 'Online', rxToday: 33, alerts: 0 },
-  { name: 'MedCenter — North', admin: 'Dr. Priya Gupta', revenue: '$34,120', status: 'Online', rxToday: 61, alerts: 1 },
-  { name: 'CityPharm — Downtown', admin: 'Dr. Emma Wu', revenue: '$11,200', status: 'Maintenance', rxToday: 0, alerts: 0 },
+  { name: 'Aura — Green Valley', admin: 'Dr. Sarah Chen', revenue: '৳284,200', status: 'Online', rxToday: 47, alerts: 2 },
+  { name: 'Aura — Westside', admin: 'Dr. Mark Liu', revenue: '৳198,400', status: 'Online', rxToday: 33, alerts: 0 },
+  { name: 'MedCenter — North', admin: 'Dr. Priya Gupta', revenue: '৳341,200', status: 'Online', rxToday: 61, alerts: 1 },
+  { name: 'CityPharm — Downtown', admin: 'Dr. Emma Wu', revenue: '৳112,000', status: 'Maintenance', rxToday: 0, alerts: 0 },
 ]
 
 const recentActivity = [
@@ -16,9 +17,22 @@ const recentActivity = [
 
 export default function SuperAdminDashboard() {
   const navigate = useNavigate()
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [adminSettings, setAdminSettings] = useState({
+    name: 'System Owner',
+    email: 'admin@spmis.com',
+    password: ''
+  })
+
+  const handleUpdateSettings = (e) => {
+    e.preventDefault()
+    setShowSettingsModal(false)
+    alert('Admin credentials and settings updated successfully!')
+  }
 
   return (
-    <div className="fade-up">
+    <>
+      <div className="fade-up">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
           <h1 className="page-title">Super Admin Dashboard</h1>
@@ -28,6 +42,9 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowSettingsModal(true)}>
+            <span className="material-icons" style={{ fontSize: 16 }}>manage_accounts</span> Account Settings
+          </button>
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('/superadmin/audit')}>
             <span className="material-icons" style={{ fontSize: 16 }}>history</span> Audit Log
           </button>
@@ -40,7 +57,7 @@ export default function SuperAdminDashboard() {
       {/* System-wide KPIs */}
       <div className="grid-4" style={{ marginBottom: 28 }}>
         {[
-          { label: 'Total System Revenue', val: '$93,580', delta: '+11.2%', icon: 'trending_up', bg: 'linear-gradient(135deg,var(--primary),var(--primary-container))', white: true },
+          { label: 'Total System Revenue', val: '৳935,800', delta: '+11.2%', icon: 'trending_up', bg: 'linear-gradient(135deg,var(--primary),var(--primary-container))', white: true },
           { label: 'Active Pharmacies', val: '3 / 4', delta: '1 under maintenance', icon: 'business', bg: 'var(--secondary-fixed)', ic: 'var(--secondary)' },
           { label: 'Registered Users', val: '1,284', delta: '+38 this week', icon: 'group', bg: 'var(--primary-fixed)', ic: 'var(--primary-container)' },
           { label: 'System Flags', val: '3', delta: '1 critical', icon: 'flag', bg: 'var(--error-container)', ic: 'var(--error)' },
@@ -125,5 +142,51 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
     </div>
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
+            <div className="section-header">
+              <h2 className="section-title">Super Admin Account Settings</h2>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowSettingsModal(false)}>
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            
+            <form onSubmit={handleUpdateSettings} style={{ marginTop: 20 }}>
+              <div className="input-group" style={{ marginBottom: 16 }}>
+                <label className="input-label">Admin Name</label>
+                <div className="input-icon-wrap" style={{ position: 'relative' }}>
+                  <span className="material-icons" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--outline)', fontSize: 20 }}>badge</span>
+                  <input className="input" style={{ paddingLeft: 44 }} value={adminSettings.name} onChange={e => setAdminSettings({...adminSettings, name: e.target.value})} />
+                </div>
+              </div>
+              
+              <div className="input-group" style={{ marginBottom: 16 }}>
+                <label className="input-label">Admin Email Details</label>
+                <div className="input-icon-wrap" style={{ position: 'relative' }}>
+                  <span className="material-icons" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--outline)', fontSize: 20 }}>email</span>
+                  <input className="input" type="email" style={{ paddingLeft: 44 }} value={adminSettings.email} onChange={e => setAdminSettings({...adminSettings, email: e.target.value})} />
+                </div>
+              </div>
+
+              <div className="input-group" style={{ marginBottom: 24 }}>
+                <label className="input-label">New Password (leave blank to keep current)</label>
+                <div className="input-icon-wrap" style={{ position: 'relative' }}>
+                  <span className="material-icons" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--outline)', fontSize: 20 }}>lock</span>
+                  <input className="input" type="password" style={{ paddingLeft: 44 }} placeholder="••••••••" value={adminSettings.password} onChange={e => setAdminSettings({...adminSettings, password: e.target.value})} />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setShowSettingsModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

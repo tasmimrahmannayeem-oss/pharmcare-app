@@ -10,12 +10,12 @@ const categories = [
 ]
 
 const featured = [
-  { name: 'Paracetamol 500mg', desc: 'Effective pain relief & fever reduction', pack: '20 Tablets', price: '$4.99', tag: 'Best Seller', tagColor: 'badge-success' },
-  { name: 'Vitamin C Immune+', desc: 'Daily support for immune system health', pack: '60 Gummies', price: '$12.99', tag: 'Popular', tagColor: 'badge-info' },
-  { name: 'Ibuprofen 200mg', desc: 'Fast-acting relief for headache & body ache', pack: '50 Softgels', price: '$7.49', tag: 'Sale', tagColor: 'badge-warning' },
-  { name: 'Blood Glucose Monitor', desc: 'Precise readings in 5 seconds', pack: 'Includes 10 strips', price: '$29.99', tag: 'New', tagColor: 'badge-info' },
-  { name: 'Amoxicillin 500mg', desc: 'Broad-spectrum antibiotic — Rx Required', pack: '30 Capsules', price: '$8.50', tag: 'Rx', tagColor: 'badge-error' },
-  { name: 'Omega-3 Fish Oil', desc: 'Heart & brain health supplement', pack: '90 Softgels', price: '$15.99', tag: 'Popular', tagColor: 'badge-success' },
+  { name: 'Paracetamol 500mg', desc: 'Effective pain relief & fever reduction', pack: '20 Tablets', price: '৳45', tag: 'Best Seller', tagColor: 'badge-success' },
+  { name: 'Vitamin C Immune+', desc: 'Daily support for immune system health', pack: '60 Gummies', price: '৳1,200', tag: 'Popular', tagColor: 'badge-info' },
+  { name: 'Ibuprofen 400mg', desc: 'Fast-acting relief for headache & body ache', pack: '50 Softgels', price: '৳120', tag: 'Sale', tagColor: 'badge-warning' },
+  { name: 'Blood Glucose Monitor', desc: 'Precise readings in 5 seconds', pack: 'Includes 10 strips', price: '৳2,500', tag: 'New', tagColor: 'badge-info' },
+  { name: 'Amoxicillin 500mg', desc: 'Broad-spectrum antibiotic — Rx Required', pack: '30 Capsules', price: '৳350', tag: 'Rx', tagColor: 'badge-error' },
+  { name: 'Omega-3 Fish Oil', desc: 'Heart & brain health supplement', pack: '90 Softgels', price: '৳1,800', tag: 'Popular', tagColor: 'badge-success' },
 ]
 
 export default function Home() {
