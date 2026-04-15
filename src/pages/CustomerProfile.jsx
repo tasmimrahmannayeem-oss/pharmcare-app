@@ -12,7 +12,7 @@ export default function CustomerProfile() {
   const [profile, setProfile] = useState({
     name: 'Alex Johnson',
     email: 'alex.johnson@email.com',
-    phone: '+1 555 0100',
+    phone: '+880 1711 555010',
     dob: 'March 15, 1985',
     bloodType: 'A+',
     weight: '72 kg',
@@ -51,7 +51,7 @@ export default function CustomerProfile() {
         {/* Tabs */}
         <div className="tabs">
           {[['profile','person','Profile'],['prescriptions','description','Prescriptions'],['orders','shopping_bag','Orders'],['health','favorite','Health Record']].map(([k,icon,label]) => (
-            <button key={k} className={`tab ${activeTab===k?'active':''}`} onClick={() => setActiveTab(k)}>
+            <button key={k} className={`tab ${activeTab===k?'active':''}`} onClick={() => { console.log('Handling tab click for:', k); setActiveTab(k); }}>
               <span className="material-icons" style={{fontSize:18,verticalAlign:'middle',marginRight:6}}>{icon}</span>{label}
             </button>
           ))}
@@ -80,7 +80,7 @@ export default function CustomerProfile() {
             <div className="card">
               <h3 className="title-md" style={{ marginBottom:16 }}>Insurance & Delivery</h3>
               <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-                {[['Insurance','BlueCross BlueShield'],['Member ID','BCB-123-456-789'],['Coverage','80% Prescription'],['Default Address','123 Medical Ave, HC'],['Preferred Pharmacy','Green Valley Branch']].map(([l,v]) => (
+                {[['Insurance','Pragati Life Insurance'],['Member ID','PLI-123-456-789'],['Coverage','80% Prescription'],['Default Address','House 45, Road 11, Banani, Dhaka'],['Preferred Pharmacy','Dhanmondi Branch']].map(([l,v]) => (
                   <div key={l} style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid rgba(196,197,213,0.25)' }}>
                     <span style={{ color:'var(--on-surface-variant)', fontSize:'0.875rem' }}>{l}</span>
                     <span style={{ fontWeight:600, textAlign:'right', maxWidth:200 }}>{v}</span>
@@ -104,9 +104,40 @@ export default function CustomerProfile() {
                   <div style={{ fontSize:'0.75rem', color:'var(--outline)' }}>Since {p.date} · {p.refills} refills remaining</div>
                 </div>
                 <span className={`badge ${p.status==='Active'?'badge-success':'badge-warning'}`}>{p.status}</span>
-                <button className="btn btn-secondary btn-sm">Refill</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => alert(`Refill request for ${p.drug} submitted! Your pharmacist will contact you shortly.`)}>Refill</button>
               </div>
             ))}
+          </div>
+        )}
+
+        {activeTab === 'health' && (
+          <div className="grid-2">
+            <div className="card">
+              <h3 className="title-md" style={{ marginBottom:16 }}>Health Vitals</h3>
+              <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                {[['Blood Pressure', '120/80 mmHg'],['Blood Sugar', '98 mg/dL'],['Heart Rate', '72 bpm'],['Weight', profile.weight],['Height', profile.height],['BMI', '22.7']].map(([l,v]) => (
+                  <div key={l} style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid rgba(196,197,213,0.25)' }}>
+                    <span style={{ color:'var(--on-surface-variant)', fontSize:'0.875rem' }}>{l}</span>
+                    <span style={{ fontWeight:600 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="card">
+              <h3 className="title-md" style={{ marginBottom:16 }}>Allergy & Conditions</h3>
+              <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                <div style={{ background:'var(--error-container)', borderRadius:'var(--radius-sm)', padding:'12px 14px' }}>
+                  <div style={{ fontWeight:700, color:'var(--error)', fontSize:'0.875rem', marginBottom:4 }}>Known Allergies</div>
+                  <div style={{ fontSize:'0.875rem' }}>{profile.allergies}</div>
+                </div>
+                {[['Chronic Conditions', 'Type 2 Diabetes, Hypertension'],['Current Medications', 'Metformin, Lisinopril, Atorvastatin'],['Last Checkup', 'March 15, 2026'],['Next Appointment','May 10, 2026']].map(([l,v]) => (
+                  <div key={l} style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid rgba(196,197,213,0.25)' }}>
+                    <span style={{ color:'var(--on-surface-variant)', fontSize:'0.875rem' }}>{l}</span>
+                    <span style={{ fontWeight:600, textAlign:'right', maxWidth:200 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -116,7 +147,7 @@ export default function CustomerProfile() {
               <table>
                 <thead><tr><th>Order ID</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
                 <tbody>
-                  {[['ORD-001','Apr 8','Paracetamol, Vitamin C','$22.97','Delivered'],['ORD-002','Apr 1','Metformin 500mg','$27.30','Delivered'],['ORD-003','Mar 22','Ibuprofen, Cetirizine','$18.40','Delivered']].map(r => (
+                  {[['ORD-001','Apr 8','Paracetamol, Vitamin C','৳230','Delivered'],['ORD-002','Apr 1','Metformin 500mg','৳275','Delivered'],['ORD-003','Mar 22','Ibuprofen, Cetirizine','৳185','Delivered']].map(r => (
                     <tr key={r[0]}><td style={{fontWeight:600}}>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td style={{fontWeight:700}}>{r[3]}</td><td><span className="badge badge-success">{r[4]}</span></td></tr>
                   ))}
                 </tbody>

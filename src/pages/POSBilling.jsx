@@ -79,7 +79,7 @@ export default function POSBilling() {
           <h1 className="page-title">POS Billing Interface</h1>
           <p className="page-subtitle">Terminal #01 · Dhanmondi Branch · Maria S.</p>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={() => setHistory(recentTx)}>Reset History</button>
+        <button className="btn btn-ghost btn-sm" onClick={fetchHistory}>Reset History</button>
       </div>
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 380px', gap:24, alignItems:'start' }}>

@@ -141,7 +141,7 @@ export default function PrescriptionVerification() {
           </div>
 
           <div style={{ display:'flex', gap:12 }}>
-            <button className="btn btn-danger" style={{ flex:1 }} onClick={() => handleVerify('Reject')}>
+            <button className="btn btn-ghost" style={{ flex:1, color:'var(--error)', border:'1.5px solid var(--error)' }} onClick={() => handleVerify('Reject')}>
               <span className="material-icons" style={{fontSize:18}}>cancel</span>
               Reject
             </button>

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 
 const alerts = [
   { msg:'Ibuprofen 400mg is out of stock — 3 pending orders affected', color:'var(--error-container)', ic:'var(--error)', icon:'error' },
@@ -7,10 +8,10 @@ const alerts = [
 ]
 
 const recentSales = [
-  { id:'TX-048', customer:'Walk-in', items:'Paracetamol ×2, Vitamin C ×1', total:'$22.97', time:'09:45', method:'Cash' },
-  { id:'TX-047', customer:'Sarah Mitchell', items:'Amoxicillin ×1', total:'$8.50', time:'09:32', method:'Insurance' },
-  { id:'TX-046', customer:'John Chen', items:'Metformin 850mg ×90', total:'$27.30', time:'09:18', method:'Card' },
-  { id:'TX-045', customer:'Walk-in', items:'Ibuprofen ×2, Cetirizine ×1', total:'$18.40', time:'09:05', method:'Cash' },
+  { id:'TX-048', customer:'Walk-in', items:'Paracetamol ×2, Vitamin C ×1', total:'৳230', time:'09:45', method:'Cash' },
+  { id:'TX-047', customer:'Sarah Mitchell', items:'Amoxicillin ×1', total:'৳85', time:'09:32', method:'Insurance' },
+  { id:'TX-046', customer:'John Chen', items:'Metformin 850mg ×90', total:'৳275', time:'09:18', method:'Card' },
+  { id:'TX-045', customer:'Walk-in', items:'Ibuprofen ×2, Cetirizine ×1', total:'৳185', time:'09:05', method:'Cash' },
 ]
 
 const staff = [
@@ -22,6 +23,12 @@ const staff = [
 
 export default function PharmacyAdminDashboard() {
   const navigate = useNavigate()
+  const [lastRefresh, setLastRefresh] = useState(new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }))
+
+  const handleRefresh = () => {
+    setLastRefresh(new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }))
+    alert('Dashboard refreshed!')
+  }
   return (
     <div className="fade-up">
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
@@ -33,7 +40,7 @@ export default function PharmacyAdminDashboard() {
           </div>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <button className="btn btn-ghost btn-sm"><span className="material-icons" style={{fontSize:16}}>refresh</span></button>
+          <button className="btn btn-ghost btn-sm" onClick={handleRefresh}><span className="material-icons" style={{fontSize:16}}>refresh</span></button>
           <button className="btn btn-primary btn-sm" onClick={() => navigate('/pos')}>
             <span className="material-icons" style={{fontSize:16}}>point_of_sale</span> Open POS
           </button>
@@ -43,7 +50,7 @@ export default function PharmacyAdminDashboard() {
       {/* KPI stats */}
       <div className="grid-4" style={{ marginBottom:24 }}>
         {[
-          { label:"Today's Sales", val:'$4,820.50', delta:'vs $4,284 yesterday', icon:'payments', bg:'linear-gradient(135deg,var(--primary),var(--primary-container))', white:true },
+          { label:"Today's Sales", val:'৳48,205', delta:'vs ৳42,840 yesterday', icon:'payments', bg:'linear-gradient(135deg,var(--primary),var(--primary-container))', white:true },
           { label:'Critical Low Stock', val:'12 Items', delta:'Action required for 3 life-saving meds', icon:'warning', bg:'var(--error-container)', ic:'var(--error)' },
           { label:'Pending Prescriptions', val:'24', delta:'8 urgent / 16 standard queue', icon:'description', bg:'var(--tertiary-fixed)', ic:'var(--tertiary-container)' },
           { label:'Near Expiry (7 Days)', val:'08', delta:'Clearance markdown suggested', icon:'schedule', bg:'var(--primary-fixed)', ic:'var(--primary-container)' },
@@ -67,7 +74,10 @@ export default function PharmacyAdminDashboard() {
           <div key={i} style={{ background:a.color, borderRadius:'var(--radius)', padding:'12px 16px', display:'flex', gap:10, alignItems:'center' }}>
             <span className="material-icons" style={{ color:a.ic, fontSize:20 }}>{a.icon}</span>
             <span style={{ color:a.ic, fontWeight:500, fontSize:'0.875rem', flex:1 }}>{a.msg}</span>
-            <button className="btn btn-sm" style={{ background:a.ic, color:'white', padding:'4px 12px' }}>Take Action</button>
+            <button className="btn btn-sm" style={{ background:a.ic, color:'white', padding:'4px 12px' }}
+              onClick={() => navigate(i === 0 ? '/inventory' : i === 1 ? '/inventory' : '/prescriptions')}>
+              Take Action
+            </button>
           </div>
         ))}
       </div>

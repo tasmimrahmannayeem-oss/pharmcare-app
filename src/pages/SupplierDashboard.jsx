@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 
 const recentOrders = [
-  { id:'PO-2024-088', items:'Paracetamol 500mg ×500, Ibuprofen 400mg ×200', status:'Delivered', date:'Apr 6, 2026', value:'$2,450' },
-  { id:'PO-2024-082', items:'Amoxicillin 500mg ×300, Metformin 850mg ×400', status:'In Transit', date:'Apr 4, 2026', value:'$3,820' },
-  { id:'PO-2024-075', items:'Atorvastatin 40mg ×200', status:'Processing', date:'Apr 1, 2026', value:'$1,640' },
+  { id:'PO-2024-088', items:'Paracetamol 500mg ×500, Ibuprofen 400mg ×200', status:'Delivered', date:'Apr 6, 2026', value:'৳24,500' },
+  { id:'PO-2024-082', items:'Amoxicillin 500mg ×300, Metformin 850mg ×400', status:'In Transit', date:'Apr 4, 2026', value:'৳38,200' },
+  { id:'PO-2024-075', items:'Atorvastatin 40mg ×200', status:'Processing', date:'Apr 1, 2026', value:'৳16,400' },
 ]
 
 const stockAlerts = [
@@ -14,6 +15,7 @@ const stockAlerts = [
 
 export default function SupplierDashboard() {
   const navigate = useNavigate()
+  const [alerts, setAlerts] = useState(stockAlerts)
 
   return (
     <div className="fade-up">
@@ -24,7 +26,7 @@ export default function SupplierDashboard() {
 
       <div className="grid-4" style={{ marginBottom: 28 }}>
         {[
-          { label: 'Revenue (MTD)', val: '$48,220', delta: '+8.4%', icon: 'trending_up', bg: 'linear-gradient(135deg,var(--primary),var(--primary-container))', white: true },
+          { label: 'Revenue (MTD)', val: '৳482,200', delta: '+8.4%', icon: 'trending_up', bg: 'linear-gradient(135deg,var(--primary),var(--primary-container))', white: true },
           { label: 'Active Orders', val: '14', delta: '3 urgent', icon: 'receipt_long', bg: 'var(--tertiary-fixed)', ic: 'var(--tertiary-container)' },
           { label: 'Client Pharmacies', val: '8', delta: '2 new this month', icon: 'business', bg: 'var(--secondary-fixed)', ic: 'var(--secondary)' },
           { label: 'Avg. Delivery Time', val: '1.8d', delta: '-0.3d vs last month', icon: 'local_shipping', bg: 'var(--primary-fixed)', ic: 'var(--primary-container)' },
@@ -47,14 +49,17 @@ export default function SupplierDashboard() {
           <h3 className="title-md">Client Low-Stock Alerts — Action Required</h3>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {stockAlerts.map(a => (
+          {alerts.map(a => (
             <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', background: 'var(--error-container)', borderRadius: 'var(--radius-sm)' }}>
               <span className="material-icons" style={{ color: 'var(--error)', fontSize: 18 }}>inventory_2</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{a.name}</div>
                 <div style={{ fontSize: '0.775rem', color: 'var(--error)' }}>{a.client} · Stock: {a.stock} (Min: {a.threshold})</div>
               </div>
-              <button className="btn btn-sm" style={{ background: 'var(--error)', color: 'white' }}>Fulfill Now</button>
+              <button className="btn btn-sm" style={{ background: 'var(--error)', color: 'white' }}
+                onClick={() => { alert(`Fulfillment order created for ${a.name} → ${a.client}`); setAlerts(prev => prev.filter(x => x.name !== a.name)) }}>
+                Fulfill Now
+              </button>
             </div>
           ))}
         </div>
