@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import InvoiceModal from '../components/InvoiceModal'
 
 const statusSteps = {
   'Pending': 0,
@@ -16,6 +17,7 @@ const statusBadge = { 'Pending': 'badge-warning', 'Confirmed': 'badge-info', 'Be
 export default function OrderTracking() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showInvoice, setShowInvoice] = useState(null)
 
   useEffect(() => {
     fetchOrders()
@@ -32,6 +34,19 @@ export default function OrderTracking() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePay = async (id) => {
+    try {
+      const res = await fetch(`/api/orders/${id}/confirm`, { method: 'PATCH' })
+      if (res.ok) {
+        alert('Payment successful!')
+        fetchOrders()
+      } else {
+        const err = await res.json()
+        alert(`Payment failed: ${err.message}`)
+      }
+    } catch (err) { alert('Error connecting to server') }
   }
   return (
     <div className="fade-up">
@@ -62,6 +77,17 @@ export default function OrderTracking() {
                 </div>
                 <div style={{ textAlign:'right' }}>
                   <div style={{ fontFamily:'var(--font-headline)', fontWeight:800, fontSize:'1.125rem', color:'var(--primary-container)' }}>৳{o.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                  <div style={{ marginTop:8, display:'flex', gap:8, justifyContent:'flex-end' }}>
+                    {o.status === 'Pending' && (
+                      <button className="btn btn-primary btn-sm" onClick={() => handlePay(o._id)}>Pay Now</button>
+                    )}
+                    {['Confirmed', 'Being Processed', 'Dispatched', 'Delivered'].includes(o.status) && (
+                      <button className="btn btn-ghost btn-sm" onClick={() => setShowInvoice(o)}>
+                        <span className="material-icons" style={{fontSize:16}}>receipt_long</span>
+                        Invoice
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -88,6 +114,13 @@ export default function OrderTracking() {
           )
         })}
       </div>
+      
+      {showInvoice && (
+        <InvoiceModal 
+          order={showInvoice} 
+          onClose={() => setShowInvoice(null)} 
+        />
+      )}
     </div>
   )
 }

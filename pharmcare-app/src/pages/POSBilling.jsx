@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { useRole } from '../context/RoleContext'
+import InvoiceModal from '../components/InvoiceModal'
 
 export default function POSBilling() {
   const [cart, setCart] = useState([])
@@ -7,11 +9,24 @@ export default function POSBilling() {
   const [loading, setLoading] = useState(true)
   const [payMethod, setPayMethod] = useState('Cash')
   const [search, setSearch] = useState('')
+  const [showInvoice, setShowInvoice] = useState(null) // Stores the successful order object
+  const [activePharmacy, setActivePharmacy] = useState(null)
+  const { userData } = useRole()
 
   useEffect(() => {
     fetchMedicines()
     fetchHistory()
+    if (userData.assignedPharmacy) fetchPharmacy()
   }, [])
+
+  const fetchPharmacy = async () => {
+    try {
+      const res = await fetch('/api/pharmacies')
+      const data = await res.json()
+      const branch = data.find(p => p._id === userData.assignedPharmacy)
+      if (branch) setActivePharmacy(branch)
+    } catch (err) { console.error('Error fetching branch details', err) }
+  }
 
   const fetchMedicines = async () => {
     try {
@@ -51,7 +66,7 @@ export default function POSBilling() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pharmacy: '66168e826f00c5001e000001', // Local placeholder
+          pharmacy: userData.assignedPharmacy, 
           medicines: cart.map(i => ({ medicine: i._id, quantity: i.qty, price: i.price })),
           totalAmount: total,
           paymentMethod: payMethod
@@ -59,8 +74,9 @@ export default function POSBilling() {
       })
 
       if (res.ok) {
-        alert('Payment processed successfully!')
+        const orderData = await res.json()
         setCart([])
+        setShowInvoice({...orderData, pharmacy: activePharmacy}) // Pass full pharmacy details for printing
         fetchHistory()
         fetchMedicines() // Refresh stock
       } else {
@@ -77,7 +93,9 @@ export default function POSBilling() {
       <div className="page-header" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 className="page-title">POS Billing Interface</h1>
-          <p className="page-subtitle">Terminal #01 · Dhanmondi Branch · Maria S.</p>
+          <p className="page-subtitle">
+            Terminal #01 · {activePharmacy ? `${activePharmacy.name} (${activePharmacy.location})` : 'Loading Branch...'} · {userData.name}
+          </p>
         </div>
         <button className="btn btn-ghost btn-sm" onClick={fetchHistory}>Reset History</button>
       </div>
@@ -200,6 +218,13 @@ export default function POSBilling() {
           </div>
         </div>
       </div>
+      
+      {showInvoice && (
+        <InvoiceModal 
+          order={showInvoice} 
+          onClose={() => setShowInvoice(null)} 
+        />
+      )}
     </div>
   )
 }

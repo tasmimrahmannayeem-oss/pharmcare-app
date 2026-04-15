@@ -8,7 +8,19 @@ export default function Checkout() {
   const [step, setStep] = useState(1)
   const [ordered, setOrdered] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [pharmacies, setPharmacies] = useState([])
+  const [selectedPharmacy, setSelectedPharmacy] = useState('')
   const [shippingAddress, setShippingAddress] = useState("House 12, Road 5, Dhanmondi, Dhaka 1205")
+
+  useState(() => {
+    fetch('/api/pharmacies')
+      .then(res => res.json())
+      .then(data => {
+        setPharmacies(data)
+        if (data.length > 0) setSelectedPharmacy(data[0]._id)
+      })
+      .catch(err => console.error('Error fetching pharmacies', err))
+  }, [])
 
   const subtotal = cartTotal
   const delivery = 3.99
@@ -27,7 +39,7 @@ export default function Checkout() {
     try {
       setLoading(true)
       const formData = new FormData()
-      formData.append('pharmacy', '66168e826f00c5001e000001') // Placeholder local branch
+      formData.append('pharmacy', selectedPharmacy)
       formData.append('totalAmount', total)
       formData.append('medicines', JSON.stringify(cartItems.map(i => ({
         medicine: i._id,
@@ -137,6 +149,14 @@ export default function Checkout() {
             <div className="card">
               <h3 className="title-md" style={{ marginBottom:20 }}>Delivery Information</h3>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+                <div className="input-group" style={{ gridColumn:'span 2' }}>
+                  <label className="input-label">Select Pharmacy Branch</label>
+                  <select className="input" value={selectedPharmacy} onChange={e => setSelectedPharmacy(e.target.value)}>
+                    {pharmacies.map(p => (
+                      <option key={p._id} value={p._id}>{p.name} - {p.location}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="input-group" style={{ gridColumn:'span 2' }}><label className="input-label">Delivery Address</label><input className="input" defaultValue="House 12, Road 5, Dhanmondi, Dhaka 1205" onChange={e => setShippingAddress(e.target.value)} /></div>
                 <div className="input-group"><label className="input-label">Contact Phone</label><input className="input" defaultValue="+880 1711-000000" /></div>
                 <div className="input-group"><label className="input-label">Delivery Notes</label><input className="input" placeholder="Optional" /></div>

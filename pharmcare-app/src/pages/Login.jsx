@@ -41,7 +41,7 @@ export default function Login() {
           localStorage.setItem('token', data.token)
           // Map backend role back to frontend keys for the UI logic
           const backToFrontRole = Object.keys(roleMap).find(key => roleMap[key] === data.role) || 'customer'
-          setRole(backToFrontRole)
+          setRole(backToFrontRole, data.user)
           
           const dest = { 
             superadmin: '/superadmin', 

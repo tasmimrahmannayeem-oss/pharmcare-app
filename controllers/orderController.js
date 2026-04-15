@@ -19,8 +19,17 @@ exports.getOrders = async (req, res) => {
 // @desc    Checkout / Place Order
 exports.createOrder = async (req, res) => {
   try {
-    const { pharmacy, medicines, totalAmount } = req.body;
+    let { pharmacy, medicines, totalAmount } = req.body;
     
+    // Parse medicines if it's a string (happens with multipart/form-data)
+    if (typeof medicines === 'string') {
+      try {
+        medicines = JSON.parse(medicines);
+      } catch (e) {
+        return res.status(400).json({ message: 'Invalid medicines data format' });
+      }
+    }
+
     // Check if any medicine requires a prescription
     const medsRequiringRx = await Medicine.find({
       _id: { $in: medicines.map(m => m.medicine) },
@@ -50,7 +59,16 @@ exports.createOrder = async (req, res) => {
 // @desc    POS Sale (Staff Walk-in)
 exports.createPOSOrder = async (req, res) => {
   try {
-    const { pharmacy, medicines, totalAmount, paymentMethod } = req.body;
+    let { pharmacy, medicines, totalAmount, paymentMethod } = req.body;
+    
+    // Auto-assign pharmacy from staff if not provided hrdcoded
+    if (!pharmacy && req.user.assignedPharmacy) {
+      pharmacy = req.user.assignedPharmacy;
+    }
+
+    if (!pharmacy) {
+      return res.status(400).json({ message: 'No pharmacy branch assigned to this transaction' });
+    }
     
     // Decrement stock immediately
     for (const item of medicines) {

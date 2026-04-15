@@ -8,7 +8,7 @@ router.use(protect); // All order routes require login
 
 router.get('/', orderController.getOrders);
 router.post('/', upload.single('prescriptionImage'), orderController.createOrder);
-router.post('/pos', orderController.createPOSOrder);
+router.post('/pos', authorize('Pharmacist', 'Store Assistant', 'Pharmacy Owner'), orderController.createPOSOrder);
 router.get('/:id', orderController.getOrderById);
 
 // Order Lifecycle

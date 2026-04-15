@@ -43,14 +43,19 @@ export const roles = {
 
 export function RoleProvider({ children }) {
   const [role, _setRole] = useState(localStorage.getItem('userRole') || 'customer')
+  const [userData, _setUserData] = useState(JSON.parse(localStorage.getItem('userData') || '{}'))
 
-  const setRole = (newRole) => {
+  const setRole = (newRole, data = null) => {
     localStorage.setItem('userRole', newRole)
     _setRole(newRole)
+    if (data) {
+      localStorage.setItem('userData', JSON.stringify(data))
+      _setUserData(data)
+    }
   }
 
   return (
-    <RoleContext.Provider value={{ role, setRole, roles }}>
+    <RoleContext.Provider value={{ role, setRole, roles, userData }}>
       {children}
     </RoleContext.Provider>
   )
