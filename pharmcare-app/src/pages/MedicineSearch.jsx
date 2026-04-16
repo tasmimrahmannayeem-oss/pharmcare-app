@@ -4,13 +4,14 @@ import { useCart } from '../context/CartContext'
 
 export default function MedicineSearch() {
   const navigate = useNavigate()
-  const { addToCart } = useCart()
+  const { addToCart, setPrescriptionFile, prescriptionFile } = useCart()
   const [medicines, setMedicines] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('All')
   const [sort, setSort] = useState('name-asc')
   const [showRxModal, setShowRxModal] = useState(false)
+  const [pendingItem, setPendingItem] = useState(null)
 
   useEffect(() => {
     fetchMedicines()
@@ -29,9 +30,39 @@ export default function MedicineSearch() {
     }
   }
 
-  const handleAddToCart = (item) => {
+  const handleAddToCart = (item, isBuyNow = false) => {
+    if (item.requiresPrescription && !prescriptionFile) {
+      setPendingItem({ ...item, isBuyNow })
+      setShowRxModal(true)
+      return
+    }
     addToCart(item)
-    alert(`${item.name} added to cart!`)
+    if (isBuyNow) {
+      navigate('/checkout')
+    } else {
+      alert(`${item.name} added to cart!`)
+    }
+  }
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setPrescriptionFile(file)
+      alert(`Prescription "${file.name}" uploaded successfully!`)
+    }
+  }
+
+  const completePendingAdd = () => {
+    if (pendingItem) {
+      addToCart(pendingItem)
+      if (pendingItem.isBuyNow) {
+        navigate('/checkout')
+      } else {
+        alert(`${pendingItem.name} added to cart!`)
+      }
+      setPendingItem(null)
+    }
+    setShowRxModal(false)
   }
 
   const filtered = medicines.filter(m =>
@@ -96,15 +127,16 @@ export default function MedicineSearch() {
                   <tr key={m._id}>
                     <td style={{ fontWeight:600 }}>{m.name}</td>
                     <td style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)' }}>{m.genericName || '—'}</td>
-                    <td style={{ fontWeight:700, color:'var(--primary-container)' }}>৳{(m.sellPrice * 110).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td style={{ fontWeight:700, color:'var(--primary-container)' }}>৳{(m.sellPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td><span className={`badge ${status.class}`}>{status.label}</span></td>
                     <td>{m.requiresPrescription ? <span className="badge badge-error">Required</span> : <span className="badge badge-success">OTC</span>}</td>
                     <td>
                       <div style={{ display:'flex', gap:8 }}>
                         <button className="btn btn-secondary btn-sm" disabled={m.stockQuantity === 0} onClick={() => handleAddToCart(m)}>
-                          <span className="material-icons" style={{fontSize:14}}>add_shopping_cart</span> Add
+                          <span className="material-icons" style={{fontSize:14}}>add_shopping_cart</span> 
+                          {m.requiresPrescription ? 'Add Rx' : 'Add'}
                         </button>
-                        <button className="btn btn-ghost btn-sm" onClick={() => navigate('/checkout')}>Buy Now</button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => handleAddToCart(m, true)}>Buy Now</button>
                       </div>
                     </td>
                   </tr>
@@ -120,20 +152,30 @@ export default function MedicineSearch() {
         <div className="modal-overlay" onClick={() => setShowRxModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
             <div className="section-header">
-              <h2 className="section-title">Upload New Prescription</h2>
+              <h2 className="section-title">Upload Prescription</h2>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowRxModal(false)}>
                 <span className="material-icons">close</span>
               </button>
             </div>
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <div style={{ border: '2px dashed var(--outline-variant)', borderRadius: 12, padding: 40, background: 'var(--surface-low)', cursor: 'pointer' }}>
-                <span className="material-icons" style={{ fontSize: 48, color: 'var(--primary-container)' }}>upload_file</span>
-                <p style={{ marginTop: 12, fontWeight: 500 }}>Drag & drop your prescription image here</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Supports JPG, PNG (Max 5MB)</p>
-              </div>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: 24 }} onClick={() => setShowRxModal(false)}>
-                Continue Ordering
+              <input type="file" id="rx-upload-search" hidden onChange={handleFileChange} accept="image/*,application/pdf" />
+              <label htmlFor="rx-upload-search" style={{ border: prescriptionFile ? '2px solid var(--secondary)' : '2px dashed var(--outline-variant)', borderRadius: 12, padding: 40, background: 'var(--surface-low)', cursor: 'pointer', display: 'block' }}>
+                <span className="material-icons" style={{ fontSize: 48, color: prescriptionFile ? 'var(--secondary)' : 'var(--primary-container)' }}>{prescriptionFile ? 'task' : 'upload_file'}</span>
+                <p style={{ marginTop: 12, fontWeight: 500 }}>{prescriptionFile ? prescriptionFile.name : 'Click to upload prescription'}</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>JPG, PNG or PDF (Max 5MB)</p>
+              </label>
+              
+              <button className={`btn ${prescriptionFile ? 'btn-secondary' : 'btn-primary'}`} style={{ width: '100%', marginTop: 24 }} onClick={() => prescriptionFile ? completePendingAdd() : document.getElementById('rx-upload-search').click()}>
+                {prescriptionFile 
+                  ? (pendingItem ? `Add ${pendingItem.name} & Continue` : 'Continue Shopping')
+                  : 'Browse Files'}
               </button>
+              
+              {prescriptionFile && pendingItem && (
+                <button className="btn btn-ghost" style={{ width: '100%', marginTop: 8 }} onClick={() => setShowRxModal(false)}>
+                  Cancel
+                </button>
+              )}
             </div>
           </div>
         </div>

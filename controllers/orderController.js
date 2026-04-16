@@ -19,7 +19,7 @@ exports.getOrders = async (req, res) => {
 // @desc    Checkout / Place Order
 exports.createOrder = async (req, res) => {
   try {
-    let { pharmacy, medicines, totalAmount } = req.body;
+    let { pharmacy, medicines, totalAmount, paymentMethod } = req.body;
     
     // Parse medicines if it's a string (happens with multipart/form-data)
     if (typeof medicines === 'string') {
@@ -45,6 +45,7 @@ exports.createOrder = async (req, res) => {
       pharmacy,
       medicines,
       totalAmount,
+      paymentMethod: paymentMethod || 'Cash on Delivery',
       prescriptionImage: req.file ? req.file.path : null,
       statusTimeline: [{ status: 'Pending', note: 'Order placed by customer' }]
     });
@@ -86,8 +87,9 @@ exports.createPOSOrder = async (req, res) => {
       medicines,
       totalAmount,
       status: 'Confirmed',
+      paymentMethod: paymentMethod || 'Cash',
       paymentStatus: 'Paid',
-      statusTimeline: [{ status: 'Confirmed', note: `POS Sale completed via ${paymentMethod}` }]
+      statusTimeline: [{ status: 'Confirmed', note: `POS Sale completed via ${paymentMethod || 'Cash'}` }]
     });
 
     const savedOrder = await order.save();

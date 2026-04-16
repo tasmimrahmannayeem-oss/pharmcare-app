@@ -9,6 +9,7 @@ export default function ProductCatalogue() {
   const [loading, setLoading] = useState(true)
   const [cat, setCat] = useState('All')
   const [showRxModal, setShowRxModal] = useState(false)
+  const [pendingItem, setPendingItem] = useState(null)
 
   useEffect(() => {
     fetchProducts()
@@ -29,11 +30,21 @@ export default function ProductCatalogue() {
 
   const handleAddToCart = (p) => {
     if (p.requiresPrescription && !prescriptionFile) {
+      setPendingItem(p)
       setShowRxModal(true)
       return
     }
     addToCart(p)
     alert(`${p.name} added to cart!`)
+  }
+
+  const completePendingAdd = () => {
+    if (pendingItem) {
+      addToCart(pendingItem)
+      alert(`${pendingItem.name} added to cart!`)
+      setPendingItem(null)
+    }
+    setShowRxModal(false)
   }
 
   const handleFileChange = (e) => {
@@ -93,7 +104,7 @@ export default function ProductCatalogue() {
                     <div style={{ fontWeight:700, fontSize:'0.9375rem', marginTop:2 }}>{p.name}</div>
                   </div>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                    <span style={{ fontFamily:'var(--font-headline)', fontSize:'1.25rem', fontWeight:800, color:'var(--primary-container)' }}>৳{p.sellPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span style={{ fontFamily:'var(--font-headline)', fontSize:'1.25rem', fontWeight:800, color:'var(--primary-container)' }}>৳{(p.sellPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                     <button className="btn btn-secondary btn-sm" disabled={p.stockQuantity === 0} onClick={() => handleAddToCart(p)}>
                       <span className="material-icons" style={{fontSize:15}}>add_shopping_cart</span>
                       {p.stockQuantity === 0 ? 'Out of Stock' : (p.requiresPrescription ? 'Add Rx' : 'Add to Cart')}
@@ -123,12 +134,14 @@ export default function ProductCatalogue() {
                 <p style={{ marginTop: 12, fontWeight: 500 }}>{prescriptionFile ? prescriptionFile.name : 'Upload your prescription to continue'}</p>
                 <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>JPG, PNG or PDF (Max 5MB)</p>
               </label>
-              <button className={`btn ${prescriptionFile ? 'btn-secondary' : 'btn-primary'}`} style={{ width: '100%', marginTop: 24 }} onClick={() => document.getElementById('rx-upload').click()}>
-                {prescriptionFile ? 'Change File' : 'Browse Files'}
+              <button className={`btn ${prescriptionFile ? 'btn-secondary' : 'btn-primary'}`} style={{ width: '100%', marginTop: 24 }} onClick={() => prescriptionFile ? completePendingAdd() : document.getElementById('rx-upload').click()}>
+                {prescriptionFile 
+                  ? (pendingItem ? `Add ${pendingItem.name} & Continue` : 'Continue Shopping')
+                  : 'Browse Files'}
               </button>
-              {prescriptionFile && (
+              {prescriptionFile && pendingItem && (
                 <button className="btn btn-ghost" style={{ width: '100%', marginTop: 8 }} onClick={() => setShowRxModal(false)}>
-                  Continue Shopping
+                  Cancel
                 </button>
               )}
             </div>

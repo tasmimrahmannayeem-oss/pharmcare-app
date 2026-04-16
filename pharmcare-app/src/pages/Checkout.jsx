@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '../context/CartContext'
 import { useNavigate } from 'react-router-dom'
 
@@ -11,15 +11,20 @@ export default function Checkout() {
   const [pharmacies, setPharmacies] = useState([])
   const [selectedPharmacy, setSelectedPharmacy] = useState('')
   const [shippingAddress, setShippingAddress] = useState("House 12, Road 5, Dhanmondi, Dhaka 1205")
+  const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery')
 
-  useState(() => {
+  useEffect(() => {
     fetch('/api/pharmacies')
       .then(res => res.json())
       .then(data => {
-        setPharmacies(data)
-        if (data.length > 0) setSelectedPharmacy(data[0]._id)
+        const branches = Array.isArray(data) ? data : []
+        setPharmacies(branches)
+        if (branches.length > 0) setSelectedPharmacy(branches[0]._id)
       })
-      .catch(err => console.error('Error fetching pharmacies', err))
+      .catch(err => {
+        console.error('Error fetching pharmacies', err)
+        setPharmacies([])
+      })
   }, [])
 
   const subtotal = cartTotal
@@ -41,6 +46,7 @@ export default function Checkout() {
       const formData = new FormData()
       formData.append('pharmacy', selectedPharmacy)
       formData.append('totalAmount', total)
+      formData.append('paymentMethod', paymentMethod)
       formData.append('medicines', JSON.stringify(cartItems.map(i => ({
         medicine: i._id,
         quantity: i.quantity,
@@ -122,7 +128,7 @@ export default function Checkout() {
               <div style={{ padding:'16px 24px', borderBottom:'1px solid var(--outline-variant)' }}>
                 <h3 className="title-md">Cart Items ({cartItems.length})</h3>
               </div>
-              {cartItems.map((item, i) => (
+              {Array.isArray(cartItems) && cartItems.map((item, i) => (
                 <div key={item._id} style={{ display:'flex', alignItems:'center', gap:16, padding:'16px 24px', borderBottom: i < cartItems.length-1 ? '1px solid rgba(196,197,213,0.3)' : 'none' }}>
                   <div style={{ width:48, height:48, borderRadius:10, background:'var(--primary-fixed)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     <span className="material-icons" style={{ color:'var(--primary-container)', fontSize:24 }}>medication</span>
@@ -136,7 +142,7 @@ export default function Checkout() {
                     <span style={{ fontWeight:600, minWidth:20, textAlign:'center' }}>{item.quantity}</span>
                     <button className="btn btn-ghost btn-sm" onClick={() => updateQuantity(item._id, item.quantity + 1)}>+</button>
                   </div>
-                  <div style={{ fontWeight:700, color:'var(--primary-container)', minWidth:60, textAlign:'right' }}>৳{(item.sellPrice * item.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                  <div style={{ fontWeight:700, color:'var(--primary-container)', minWidth:60, textAlign:'right' }}>৳{((item.sellPrice || 0) * item.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                   <button className="btn btn-ghost btn-sm" style={{ color:'var(--error)' }} onClick={() => removeFromCart(item._id)}>
                     <span className="material-icons" style={{fontSize:18}}>delete</span>
                   </button>
@@ -152,12 +158,27 @@ export default function Checkout() {
                 <div className="input-group" style={{ gridColumn:'span 2' }}>
                   <label className="input-label">Select Pharmacy Branch</label>
                   <select className="input" value={selectedPharmacy} onChange={e => setSelectedPharmacy(e.target.value)}>
-                    {pharmacies.map(p => (
+                    <option value="" disabled>Choose a pharmacy branch...</option>
+                    {Array.isArray(pharmacies) && pharmacies.map(p => (
                       <option key={p._id} value={p._id}>{p.name} - {p.location}</option>
                     ))}
                   </select>
                 </div>
                 <div className="input-group" style={{ gridColumn:'span 2' }}><label className="input-label">Delivery Address</label><input className="input" defaultValue="House 12, Road 5, Dhanmondi, Dhaka 1205" onChange={e => setShippingAddress(e.target.value)} /></div>
+
+                <div className="input-group" style={{ gridColumn: 'span 2' }}>
+                  <label className="input-label">Payment Method</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                    {['Cash on Delivery', 'bKash', 'Card'].map(m => (
+                      <button key={m}
+                        className={`btn btn-sm ${paymentMethod === m ? 'btn-primary' : 'btn-ghost'}`}
+                        style={{ border: paymentMethod === m ? 'none' : '1.5px solid var(--outline-variant)' }}
+                        onClick={() => setPaymentMethod(m)}
+                      >{m}</button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="input-group"><label className="input-label">Contact Phone</label><input className="input" defaultValue="+880 1711-000000" /></div>
                 <div className="input-group"><label className="input-label">Delivery Notes</label><input className="input" placeholder="Optional" /></div>
               </div>
@@ -169,9 +190,9 @@ export default function Checkout() {
               <h3 className="title-md" style={{ marginBottom:16 }}>Order Confirmation</h3>
               <p style={{ color:'var(--on-surface-variant)' }}>Please review your order. Clicking "Place Order" will confirm your purchase.</p>
               <div style={{ background:'var(--surface-low)', borderRadius:'var(--radius)', padding:16, marginTop:16 }}>
-                {cartItems.map(i => (
+                {Array.isArray(cartItems) && cartItems.map(i => (
                   <div key={i._id} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0' }}>
-                    <span>{i.name} × {i.quantity}</span><span style={{ fontWeight:600 }}>৳{(i.sellPrice * i.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span>{i.name} × {i.quantity}</span><span style={{ fontWeight:600 }}>৳{((i.sellPrice || 0) * i.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                 ))}
               </div>
@@ -180,7 +201,20 @@ export default function Checkout() {
 
           <div style={{ display:'flex', gap:12, justifyContent:'flex-end' }}>
             {step > 1 && <button className="btn btn-ghost" onClick={() => setStep(s => s-1)}>Back</button>}
-            <button className="btn btn-primary" disabled={loading} onClick={() => step < 3 ? setStep(s => s+1) : handlePlaceOrder()}>
+            <button 
+              className="btn btn-primary" 
+              disabled={loading} 
+              onClick={() => {
+                if (step === 1) {
+                  const needsRx = cartItems.some(i => i.requiresPrescription)
+                  if (needsRx && !prescriptionFile) {
+                    alert("This order contains prescription-only medication. Please upload a prescription first.")
+                    return
+                  }
+                }
+                step < 3 ? setStep(s => s+1) : handlePlaceOrder()
+              }}
+            >
               {loading ? 'Processing...' : step < 3 ? 'Continue' : 'Place Order'}
             </button>
           </div>
@@ -189,13 +223,13 @@ export default function Checkout() {
         <div className="card" style={{ height:'fit-content', position:'sticky', top: 100 }}>
           <h3 className="title-md" style={{ marginBottom:16 }}>Order Total</h3>
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-            <div style={{ display:'flex', justifyContent:'space-between' }}><span className="text-muted">Subtotal</span><span>৳{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-            <div style={{ display:'flex', justifyContent:'space-between' }}><span className="text-muted">Delivery</span><span>৳{delivery.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-            <div style={{ display:'flex', justifyContent:'space-between' }}><span className="text-muted">Tax</span><span>৳{tax.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+            <div style={{ display:'flex', justifyContent:'space-between' }}><span className="text-muted">Subtotal</span><span>৳{(subtotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+            <div style={{ display:'flex', justifyContent:'space-between' }}><span className="text-muted">Delivery</span><span>৳{(delivery || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+            <div style={{ display:'flex', justifyContent:'space-between' }}><span className="text-muted">Tax</span><span>৳{(tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
             <div style={{ height:1, background:'var(--outline-variant)', margin:'4px 0' }} />
             <div style={{ display:'flex', justifyContent:'space-between', fontSize:'1.25rem', fontWeight:800 }}>
               <span>Total</span>
-              <span style={{ color:'var(--primary-container)' }}>৳{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              <span style={{ color:'var(--primary-container)' }}>৳{(total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
         </div>

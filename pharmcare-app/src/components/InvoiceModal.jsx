@@ -48,6 +48,8 @@ export default function InvoiceModal({ order, onClose }) {
             <div style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--on-surface-variant)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>Billed To</div>
             <div style={{ fontWeight:700, fontSize:'1rem' }}>{order.customer?.name || 'Walk-in Customer'}</div>
             <div style={{ fontSize:'0.875rem' }}>{order.customer?.email || 'N/A'}</div>
+            <div style={{ fontSize:'0.75rem', marginTop:8, textTransform:'uppercase', fontWeight:700, color:'var(--on-surface-variant)', letterSpacing:'0.05em' }}>Payment Method</div>
+            <div style={{ fontWeight:700, fontSize:'0.875rem' }}>{order.paymentMethod || 'Cash on Delivery'}</div>
           </div>
 
           {/* Items Table */}

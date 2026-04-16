@@ -72,7 +72,8 @@ export default function OrderTracking() {
                   </div>
                   <div style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)' }}>
                     Placed on {new Date(o.createdAt).toLocaleDateString()} · 
-                    {o.medicines.map(m => ` ${m.medicine?.name || 'Item'} ×${m.quantity}`).join(', ')}
+                    {o.medicines.map(m => ` ${m.medicine?.name || 'Item'} ×${m.quantity}`).join(', ')} · 
+                    Method: {o.paymentMethod || 'N/A'}
                   </div>
                 </div>
                 <div style={{ textAlign:'right' }}>

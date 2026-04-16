@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useCart } from '../context/CartContext'
 
 const categories = [
   { icon: 'thermostat', label: 'Fever', sub: 'Antipyretics & Relief', color: '#ffdad6', icolor: '#ba1a1a' },
@@ -9,17 +11,30 @@ const categories = [
   { icon: 'child_care', label: 'Pediatrics', sub: 'Baby & Child Care', color: '#ffdbce', icolor: '#611e00' },
 ]
 
-const featured = [
-  { name: 'Paracetamol 500mg', desc: 'Effective pain relief & fever reduction', pack: '20 Tablets', price: '৳45', tag: 'Best Seller', tagColor: 'badge-success' },
-  { name: 'Vitamin C Immune+', desc: 'Daily support for immune system health', pack: '60 Gummies', price: '৳1,200', tag: 'Popular', tagColor: 'badge-info' },
-  { name: 'Ibuprofen 400mg', desc: 'Fast-acting relief for headache & body ache', pack: '50 Softgels', price: '৳120', tag: 'Sale', tagColor: 'badge-warning' },
-  { name: 'Blood Glucose Monitor', desc: 'Precise readings in 5 seconds', pack: 'Includes 10 strips', price: '৳2,500', tag: 'New', tagColor: 'badge-info' },
-  { name: 'Amoxicillin 500mg', desc: 'Broad-spectrum antibiotic — Rx Required', pack: '30 Capsules', price: '৳350', tag: 'Rx', tagColor: 'badge-error' },
-  { name: 'Omega-3 Fish Oil', desc: 'Heart & brain health supplement', pack: '90 Softgels', price: '৳1,800', tag: 'Popular', tagColor: 'badge-success' },
-]
-
 export default function Home() {
   const navigate = useNavigate()
+  const { addToCart } = useCart()
+  const [featured, setFeatured] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/medicines')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setFeatured(data.slice(0, 6).map(m => ({
+            ...m,
+            price: `৳${(m?.sellPrice ?? 0)?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+            desc: m.genericName || 'Certified Clinical Medicine',
+            pack: 'Standard Packaging',
+            tag: m.requiresPrescription ? 'Rx' : 'Best Seller',
+            tagColor: m.requiresPrescription ? 'badge-error' : 'badge-success'
+          })))
+        }
+      })
+      .catch(err => console.error('Error fetching featured:', err))
+      .finally(() => setLoading(false))
+  }, [])
 
   return (
     <div className="fade-up">
@@ -138,7 +153,11 @@ export default function Home() {
             </div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:'auto' }}>
               <span style={{ fontFamily:'var(--font-headline)', fontSize:'1.25rem', fontWeight:800, color:'var(--primary-container)' }}>{p.price}</span>
-              <button className="btn btn-secondary btn-sm" onClick={() => navigate('/checkout')}>
+              <button className="btn btn-secondary btn-sm" onClick={(e) => {
+                e.stopPropagation()
+                addToCart(p)
+                navigate('/checkout')
+              }}>
                 <span className="material-icons" style={{fontSize:15}}>add_shopping_cart</span>
                 Add
               </button>
