@@ -41,7 +41,10 @@ export default function Login() {
           localStorage.setItem('token', data.token)
           // Map backend role back to frontend keys for the UI logic
           const backToFrontRole = Object.keys(roleMap).find(key => roleMap[key] === data.role) || 'customer'
-          setRole(backToFrontRole, data.user)
+          
+          // CRITICAL: Merge token into user data so it is available in useRole().userData
+          const userWithToken = { ...data.user, token: data.token }
+          setRole(backToFrontRole, userWithToken)
           
           const dest = { 
             superadmin: '/superadmin', 
@@ -94,7 +97,12 @@ export default function Login() {
       else if (form.email.includes('supp')) simRole = 'supplier'
       else simRole = form.role // Fallback to whatever chip is selected
       
-      setRole(simRole)
+      setRole(simRole, { 
+        name: form.name || roles[simRole]?.name || 'Demo User',
+        email: form.email,
+        role: roles[simRole]?.label,
+        assignedPharmacy: roles[simRole]?.assignedPharmacy || '69dfdba29b7248a1a8bf4ae9'
+      })
       const dest = { 
         superadmin: '/superadmin', 
         owner: '/admin', 

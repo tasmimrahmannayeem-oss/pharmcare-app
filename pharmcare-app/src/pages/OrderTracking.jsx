@@ -26,7 +26,11 @@ export default function OrderTracking() {
   const fetchOrders = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/orders')
+      const res = await fetch('/api/orders', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
       const data = await res.json()
       setItems(Array.isArray(data) ? data : [])
     } catch (err) {
@@ -38,7 +42,12 @@ export default function OrderTracking() {
 
   const handlePay = async (id) => {
     try {
-      const res = await fetch(`/api/orders/${id}/confirm`, { method: 'PATCH' })
+      const res = await fetch(`/api/orders/${id}/confirm`, { 
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
       if (res.ok) {
         alert('Payment successful!')
         fetchOrders()

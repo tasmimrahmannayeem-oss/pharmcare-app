@@ -30,7 +30,7 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/users')
+      const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
       const data = await res.json()
       setUsers(Array.isArray(data) ? data : [])
     } catch (err) {
@@ -42,7 +42,7 @@ export default function UserManagement() {
 
   const fetchPharmacies = async () => {
     try {
-      const res = await fetch('/api/pharmacies')
+      const res = await fetch('/api/pharmacies', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
       const data = await res.json()
       setPharmacies(Array.isArray(data) ? data : [])
     } catch (err) {}
@@ -57,7 +57,10 @@ export default function UserManagement() {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({ ...formData, password: isEdit ? undefined : 'temp123', isApproved: true })
       })
       if (res.ok) {
@@ -88,10 +91,37 @@ export default function UserManagement() {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return
     try {
-      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/users/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
       if (res.ok) fetchUsers()
       else alert('Failed to delete user')
     } catch (err) { alert('Connection error') }
+  }
+
+  const handleResetPassword = async () => {
+    const newPassword = prompt('Enter the new password (min. 6 characters):');
+    if (!newPassword) return;
+    if (newPassword.length < 6) return alert('Password must be at least 6 characters long.');
+    
+    try {
+      const res = await fetch(`/api/users/${formData._id}/password`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` 
+        },
+        body: JSON.stringify({ newPassword })
+      });
+      if (res.ok) alert('Password reset successfully!');
+      else {
+        const error = await res.json();
+        alert(`Error: ${error.message}`);
+      }
+    } catch (err) {
+      alert('Error connecting to server');
+    }
   }
 
   const handleExport = () => {
@@ -246,9 +276,14 @@ export default function UserManagement() {
                   </select>
                 </div>
               </div>
-              <div style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <div style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'flex-end', alignItems: 'center' }}>
+                {formData._id && (
+                  <button type="button" className="btn btn-ghost" style={{ marginRight: 'auto', color: 'var(--error)' }} onClick={handleResetPassword}>
+                    <span className="material-icons" style={{ fontSize: 18 }}>lock_reset</span> Reset Password
+                  </button>
+                )}
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Create User</button>
+                <button type="submit" className="btn btn-primary">{formData._id ? 'Save Changes' : 'Create User'}</button>
               </div>
             </form>
           </div>

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useRole } from '../context/RoleContext'
 import { exportToCSV } from '../utils/csvExport'
 
 export default function Inventory() {
-  const { role } = useRole()
+  const { role, userData } = useRole()
   const [inventory, setInventory] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -21,7 +22,9 @@ export default function Inventory() {
   const fetchInventory = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/medicines')
+      const res = await fetch('/api/medicines', {
+        headers: { 'Authorization': `Bearer ${userData?.token}` }
+      })
       const data = await res.json()
       setInventory(Array.isArray(data) ? data : [])
     } catch (err) {
@@ -43,7 +46,10 @@ export default function Inventory() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this medicine?')) return
     try {
-      const res = await fetch(`/api/medicines/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/medicines/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${userData?.token}` }
+      })
       if (res.ok) fetchInventory()
     } catch (err) { alert('Failed to delete') }
   }
@@ -52,7 +58,10 @@ export default function Inventory() {
     try {
       const res = await fetch(`/api/medicines/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userData?.token}`
+        },
         body: JSON.stringify({ stockQuantity: Math.max(0, newQty) })
       })
       if (res.ok) fetchInventory()
@@ -79,12 +88,20 @@ export default function Inventory() {
       const url = isEdit ? `/api/medicines/${formData._id}` : '/api/medicines'
       const method = isEdit ? 'PATCH' : 'POST'
       
+      if (!userData?.assignedPharmacy && role !== 'superadmin') {
+        alert('You must be assigned to a pharmacy branch to manage inventory.')
+        return
+      }
+
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userData?.token}`
+        },
         body: JSON.stringify({
           ...formData,
-          pharmacy: '66168e826f00c5001e000001' // Placeholder
+          pharmacy: userData?.assignedPharmacy
         })
       })
       if (res.ok) {
@@ -135,7 +152,9 @@ export default function Inventory() {
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
           <div className="page-header" style={{ marginBottom:0 }}>
             <h1 className="page-title">Inventory Management</h1>
-            <p className="page-subtitle">Branch Overview · {inventory.length} SKUs tracked</p>
+            <p className="page-subtitle">
+              Branch: {userData?.assignedPharmacy ? 'Dhanmondi (Assigned)' : 'Not Assigned'} · {inventory.length} SKUs tracked
+            </p>
           </div>
           <div style={{ display:'flex', gap:8 }}>
             <button className="btn btn-ghost btn-sm" onClick={handleExport}><span className="material-icons" style={{fontSize:16}}>download</span> Export CSV</button>
@@ -150,7 +169,6 @@ export default function Inventory() {
           </div>
         </div>
 
-        {/* Basic Stats */}
         <div className="grid-4" style={{ marginBottom:24 }}>
           {[
             { label:'Total SKUs', val: inventory.length, icon:'inventory_2', bg:'var(--primary-fixed)', ic:'var(--primary-container)' },
@@ -171,7 +189,6 @@ export default function Inventory() {
           ))}
         </div>
 
-        {/* Search */}
         <div style={{ marginBottom:16 }}>
           <div className="input-icon-wrap">
             <span className="material-icons icon">search</span>
@@ -225,69 +242,154 @@ export default function Inventory() {
         </div>
       </div>
 
-      {/* Add Item Modal */}
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
-            <div className="section-header">
-              <h2 className="section-title">Add New Medicine</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)}>
+      {showModal && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div 
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)' }} 
+            onClick={() => setShowModal(false)} 
+          />
+          <div style={{ 
+            position: 'relative', background: 'white', borderRadius: 12, padding: 32, 
+            width: '90%', maxWidth: 600, maxHeight: '90vh', overflowY: 'auto', 
+            zIndex: 100000, color: '#1a1c1e', boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>{formData?._id ? 'Edit Medicine' : 'Add New Medicine'}</h2>
+              <button 
+                onClick={() => setShowModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}
+              >
                 <span className="material-icons">close</span>
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="login-form" style={{ marginTop: 20 }}>
-              <div className="grid-2">
-                <div className="input-group">
-                  <label className="input-label">Medicine Name</label>
-                  <input className="input" required placeholder="e.g. Paracetamol" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Medicine Name</label>
+                  <input 
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: 6 }}
+                    required 
+                    placeholder="e.g. Napa" 
+                    value={formData.name} 
+                    onChange={e => setFormData({...formData, name: e.target.value})} 
+                  />
                 </div>
-                <div className="input-group">
-                  <label className="input-label">Generic Name</label>
-                  <input className="input" placeholder="e.g. Acetaminophen" value={formData.genericName} onChange={e => setFormData({...formData, genericName: e.target.value})} />
-                </div>
-              </div>
-              <div className="grid-2" style={{ marginTop: 12 }}>
-                <div className="input-group">
-                  <label className="input-label">Batch Number</label>
-                  <input className="input" required placeholder="BN-10293" value={formData.batchNumber} onChange={e => setFormData({...formData, batchNumber: e.target.value})} />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Stock Quantity</label>
-                  <input className="input" type="number" required value={formData.stockQuantity} onChange={e => setFormData({...formData, stockQuantity: parseInt(e.target.value)})} />
-                </div>
-              </div>
-              <div className="grid-2" style={{ marginTop: 12 }}>
-                <div className="input-group">
-                  <label className="input-label">Purchase Price (৳)</label>
-                  <input className="input" type="number" step="0.01" required value={formData.purchasePrice} onChange={e => setFormData({...formData, purchasePrice: parseFloat(e.target.value)})} />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Selling Price (৳)</label>
-                  <input className="input" type="number" step="0.01" required value={formData.sellPrice} onChange={e => setFormData({...formData, sellPrice: parseFloat(e.target.value)})} />
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Generic Name</label>
+                  <input 
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: 6 }}
+                    placeholder="e.g. Paracetamol" 
+                    value={formData.genericName} 
+                    onChange={e => setFormData({...formData, genericName: e.target.value})} 
+                  />
                 </div>
               </div>
-              <div className="grid-2" style={{ marginTop: 12 }}>
-                <div className="input-group">
-                  <label className="input-label">Manufacturing Date</label>
-                  <input className="input" type="date" required value={formData.mfgDate} onChange={e => setFormData({...formData, mfgDate: e.target.value})} />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Batch #</label>
+                  <input 
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: 6 }}
+                    required 
+                    value={formData.batchNumber} 
+                    onChange={e => setFormData({...formData, batchNumber: e.target.value})} 
+                  />
                 </div>
-                <div className="input-group">
-                  <label className="input-label">Expiry Date</label>
-                  <input className="input" type="date" required value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} />
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Stock Quantity</label>
+                  <input 
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: 6 }}
+                    type="number" 
+                    required 
+                    value={formData.stockQuantity} 
+                    onChange={e => setFormData({...formData, stockQuantity: Number(e.target.value)})} 
+                  />
                 </div>
               </div>
-              <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="checkbox" id="rx" checked={formData.requiresPrescription} onChange={e => setFormData({...formData, requiresPrescription: e.target.checked})} />
-                <label htmlFor="rx" style={{ fontSize: '0.875rem' }}>Requires Prescription</label>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Purchase Price (৳)</label>
+                  <input 
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: 6 }}
+                    type="number" 
+                    required 
+                    value={formData.purchasePrice} 
+                    onChange={e => setFormData({...formData, purchasePrice: Number(e.target.value)})} 
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Sell Price (৳)</label>
+                  <input 
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: 6 }}
+                    type="number" 
+                    required 
+                    value={formData.sellPrice} 
+                    onChange={e => setFormData({...formData, sellPrice: Number(e.target.value)})} 
+                  />
+                </div>
               </div>
-              
-              <div style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Medicine</button>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Manufacturer</label>
+                <input 
+                  style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: 6 }}
+                  value={formData.manufacturer} 
+                  onChange={e => setFormData({...formData, manufacturer: e.target.value})} 
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Mfg Date</label>
+                  <input 
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: 6 }}
+                    type="date" 
+                    value={formData.mfgDate} 
+                    onChange={e => setFormData({...formData, mfgDate: e.target.value})} 
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Expiry Date</label>
+                  <input 
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: 6 }}
+                    type="date" 
+                    required 
+                    value={formData.expiryDate} 
+                    onChange={e => setFormData({...formData, expiryDate: e.target.value})} 
+                  />
+                </div>
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                <input 
+                  type="checkbox" 
+                  checked={formData.requiresPrescription} 
+                  onChange={e => setFormData({...formData, requiresPrescription: e.target.checked})} 
+                />
+                <span style={{ fontSize: '0.9rem' }}>Requires Prescription</span>
+              </label>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowModal(false)} 
+                  style={{ flex: 1, padding: '12px', background: '#f5f5f5', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  style={{ flex: 1, padding: '12px', background: '#00288e', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                >
+                  Save Medicine
+                </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )

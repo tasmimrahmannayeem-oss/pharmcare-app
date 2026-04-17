@@ -14,7 +14,11 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery')
 
   useEffect(() => {
-    fetch('/api/pharmacies')
+    fetch('/api/pharmacies', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
       .then(res => res.json())
       .then(data => {
         const branches = Array.isArray(data) ? data : []
@@ -59,6 +63,9 @@ export default function Checkout() {
 
       const res = await fetch('/api/orders', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: formData // Fetch automatically sets multipart/form-data for FormData
       })
       

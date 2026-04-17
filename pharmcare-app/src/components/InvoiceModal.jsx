@@ -4,119 +4,161 @@ export default function InvoiceModal({ order, onClose }) {
   if (!order) return null
 
   const handlePrint = () => {
-    window.print()
+    // Create a hidden iframe for clean printing without affecting the main UI
+    const printWindow = window.open('', '_blank', 'width=800,height=900')
+    const invoiceHtml = document.getElementById('printable-invoice').outerHTML
+    
+    // Get all system styles to ensure the invoice looks right in the print window
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map(s => s.outerHTML)
+      .join('')
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Invoice - ${order._id?.slice(-8).toUpperCase()}</title>
+          ${styles}
+          <style>
+            body { padding: 40px; background: white !important; font-family: 'Inter', sans-serif; }
+            #printable-invoice { width: 100% !important; margin: 0 !important; }
+            @page { margin: 0; }
+          </style>
+        </head>
+        <body>
+          ${invoiceHtml}
+          <script>
+            setTimeout(() => {
+              window.print();
+              window.close();
+            }, 500);
+          </script>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
   }
 
   return (
-    <div className="modal-overlay" style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:20 }}>
-      <div className="modal-content fade-up" style={{ background:'white', width:'100%', maxWidth:500, borderRadius:16, overflow:'hidden', boxShadow:'0 20px 40px rgba(0,0,0,0.2)' }}>
+    <div className="modal-overlay" style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.65)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:20 }}>
+      <div className="modal-content fade-up" style={{ background:'white', width:'100%', maxWidth:540, borderRadius:16, overflow:'hidden', boxShadow:'0 25px 50px -12px rgba(0,0,0,0.5)' }}>
         
-        {/* Header - Not printed */}
-        <div style={{ padding:'20px 24px', background:'var(--surface-low)', display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'1px solid var(--outline-variant)' }} className="no-print">
-          <h2 style={{ fontSize:'1.25rem', fontWeight:800 }}>Digital Invoice</h2>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>
+        {/* Top Navbar (UI Only) */}
+        <div style={{ padding:'16px 24px', background:'#f8f9fa', display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'1px solid #eee' }} className="no-print">
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <span className="material-icons" style={{ color:'#00288e' }}>receipt</span>
+            <span style={{ fontWeight:700, color:'#1a1c1e' }}>Invoice Preview</span>
+          </div>
+          <button 
+            onClick={onClose}
+            style={{ background:'none', border:'none', cursor:'pointer', color:'#666', display:'flex', alignItems:'center' }}
+          >
             <span className="material-icons">close</span>
           </button>
         </div>
 
-        {/* Invoice Body - The Printable Part */}
-        <div id="printable-invoice" style={{ padding:40, fontFamily:'Inter, sans-serif', color:'#1a1c1e' }}>
+        {/* Invoice Body (The Printable Part) */}
+        <div id="printable-invoice" style={{ padding:'40px 48px', background:'white', color:'#1a1c1e', width:'100%' }}>
           
-          {/* Pharmacy Branding */}
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:32 }}>
+          {/* Header Section */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:40 }}>
             <div>
-              <div style={{ display:'flex', alignItems:'center', gap:8, color:'var(--primary-container)', marginBottom:8 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, color:'#00288e', marginBottom:12 }}>
                 <span className="material-icons" style={{ fontSize:32 }}>medical_services</span>
-                <span style={{ fontSize:'1.5rem', fontWeight:900, letterSpacing:'-0.03em' }}>PharMCare</span>
+                <span style={{ fontSize:'1.75rem', fontWeight:900, letterSpacing:'-0.04em' }}>PharMCare</span>
               </div>
-              <div style={{ fontSize:'0.875rem', lineHeight:1.5 }}>
-                {order.pharmacy?.name || 'Local Branch'}<br />
+              <div style={{ fontSize:'0.875rem', color:'#444', lineHeight:1.6 }}>
+                <strong>{order.pharmacy?.name || 'Dhanmondi Branch'}</strong><br />
                 {order.pharmacy?.address || 'House 12, Road 5, Dhanmondi'}<br />
                 Dhaka, Bangladesh<br />
-                P: {order.pharmacy?.contactPhone || '+880 1711-000000'}
+                P: {order.pharmacy?.contactPhone || '+880 1711-111111'}
               </div>
             </div>
             <div style={{ textAlign:'right' }}>
-              <div style={{ fontSize:'1.25rem', fontWeight:800, color:'var(--primary-container)', marginBottom:4 }}>INVOICE</div>
-              <div style={{ fontSize:'0.875rem', fontWeight:600 }}>#{order._id?.slice(-8).toUpperCase()}</div>
-              <div style={{ fontSize:'0.875rem', color:'var(--on-surface-variant)', marginTop:4 }}>{new Date(order.createdAt).toLocaleDateString()}</div>
+              <h1 style={{ fontSize:'2.5rem', margin:0, fontWeight:900, color:'#eee', letterSpacing:'-0.02em', lineHeight:0.8 }}>INVOICE</h1>
+              <div style={{ marginTop:12 }}>
+                <div style={{ fontSize:'0.8125rem', fontWeight:700, color:'#666', textTransform:'uppercase' }}>Receipt #</div>
+                <div style={{ fontSize:'1.125rem', fontWeight:800, color:'#1a1c1e' }}>{order._id?.slice(-8).toUpperCase()}</div>
+                <div style={{ fontSize:'0.875rem', color:'#666', marginTop:4 }}>{new Date(order.createdAt).toLocaleDateString('en-GB')}</div>
+              </div>
             </div>
           </div>
 
-          {/* Customer Info */}
-          <div style={{ marginBottom:32 }}>
-            <div style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--on-surface-variant)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>Billed To</div>
-            <div style={{ fontWeight:700, fontSize:'1rem' }}>{order.customer?.name || 'Walk-in Customer'}</div>
-            <div style={{ fontSize:'0.875rem' }}>{order.customer?.email || 'N/A'}</div>
-            <div style={{ fontSize:'0.75rem', marginTop:8, textTransform:'uppercase', fontWeight:700, color:'var(--on-surface-variant)', letterSpacing:'0.05em' }}>Payment Method</div>
-            <div style={{ fontWeight:700, fontSize:'0.875rem' }}>{order.paymentMethod || 'Cash on Delivery'}</div>
+          <div style={{ height:'1px', background:'#eee', width:'100%', marginBottom:32 }}></div>
+
+          {/* Billing Info */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:24, marginBottom:40 }}>
+            <div>
+              <div style={{ fontSize:'0.75rem', fontWeight:800, color:'#999', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>Billed To</div>
+              <div style={{ fontWeight:800, fontSize:'1rem', color:'#1a1c1e' }}>{order.customer?.name || 'Walk-in Customer'}</div>
+              <div style={{ fontSize:'0.875rem', color:'#666' }}>{order.customer?.email || 'N/A'}</div>
+            </div>
+            <div style={{ textAlign:'right' }}>
+              <div style={{ fontSize:'0.75rem', fontWeight:800, color:'#999', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>Payment Details</div>
+              <div style={{ fontWeight:700, fontSize:'0.875rem', color:'#1a1c1e' }}>Method: {order.paymentMethod || 'Cash'}</div>
+              <div style={{ fontSize:'0.875rem', color:'#666' }}>Status: PAID</div>
+            </div>
           </div>
 
-          {/* Items Table */}
-          <table style={{ width:'100%', borderCollapse:'collapse', marginBottom:32 }}>
-            <thead>
-              <tr style={{ borderBottom:'2px solid #000', textAlign:'left' }}>
-                <th style={{ padding:'12px 0', fontSize:'0.75rem', fontWeight:800, textTransform:'uppercase' }}>Item Description</th>
-                <th style={{ padding:'12px 0', fontSize:'0.75rem', fontWeight:800, textTransform:'uppercase', textAlign:'center' }}>Qty</th>
-                <th style={{ padding:'12px 0', fontSize:'0.75rem', fontWeight:800, textTransform:'uppercase', textAlign:'right' }}>Price</th>
-                <th style={{ padding:'12px 0', fontSize:'0.75rem', fontWeight:800, textTransform:'uppercase', textAlign:'right' }}>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.medicines.map((item, i) => (
-                <tr key={i} style={{ borderBottom:'1px solid #eee' }}>
-                  <td style={{ padding:'12px 0', fontSize:'0.875rem' }}>
-                    <div style={{ fontWeight:700 }}>{item.medicine?.name || 'Medicine'}</div>
-                  </td>
-                  <td style={{ padding:'12px 0', fontSize:'0.875rem', textAlign:'center' }}>{item.quantity}</td>
-                  <td style={{ padding:'12px 0', fontSize:'0.875rem', textAlign:'right' }}>৳{item.price.toLocaleString('en-IN')}</td>
-                  <td style={{ padding:'12px 0', fontSize:'0.875rem', fontWeight:700, textAlign:'right' }}>৳{(item.price * item.quantity).toLocaleString('en-IN')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {/* Table with strict alignment */}
+          <div style={{ width:'100%', marginBottom:40 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 60px 100px 100px', padding:'12px 0', borderBottom:'2px solid #1a1c1e', fontSize:'0.75rem', fontWeight:800, textTransform:'uppercase', color:'#999' }}>
+              <div>Item Description</div>
+              <div style={{ textAlign:'center' }}>Qty</div>
+              <div style={{ textAlign:'right' }}>Price</div>
+              <div style={{ textAlign:'right' }}>Total</div>
+            </div>
+            
+            {order.medicines.map((item, i) => (
+              <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr 60px 100px 100px', padding:'16px 0', borderBottom:'1px solid #f0f0f0', fontSize:'0.9375rem', alignItems:'center' }}>
+                <div style={{ fontWeight:700, color:'#1a1c1e' }}>{item.medicine?.name || 'Medicine'}</div>
+                <div style={{ textAlign:'center', color:'#444' }}>{item.quantity}</div>
+                <div style={{ textAlign:'right', color:'#444' }}>৳{item.price.toLocaleString('en-IN')}</div>
+                <div style={{ textAlign:'right', fontWeight:800, color:'#1a1c1e' }}>৳{(item.price * item.quantity).toLocaleString('en-IN')}</div>
+              </div>
+            ))}
+          </div>
 
-          {/* Totals */}
+          {/* Footer Totals */}
           <div style={{ display:'flex', justifyContent:'flex-end' }}>
-            <div style={{ width:200 }}>
-              <div style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', fontSize:'0.875rem' }}>
+            <div style={{ width:240 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', fontSize:'0.9375rem', color:'#666' }}>
                 <span>Subtotal</span>
                 <span>৳{(order.totalAmount / 1.08).toLocaleString('en-IN', { maximumFractionDigits:2 })}</span>
               </div>
-              <div style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', fontSize:'0.875rem' }}>
-                <span>VAT (8%)</span>
+              <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', fontSize:'0.9375rem', color:'#666' }}>
+                <span>Tax (VAT 8%)</span>
                 <span>৳{(order.totalAmount - (order.totalAmount / 1.08)).toLocaleString('en-IN', { maximumFractionDigits:2 })}</span>
               </div>
-              <div style={{ display:'flex', justifyContent:'space-between', padding:'12px 0', borderTop:'2px solid #000', marginTop:8, fontSize:'1.125rem', fontWeight:900 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', padding:'16px 0', borderTop:'2px solid #00288e', marginTop:12, fontSize:'1.5rem', fontWeight:900, color:'#00288e' }}>
                 <span>Total</span>
-                <span style={{ color:'var(--primary-container)' }}>৳{order.totalAmount.toLocaleString('en-IN')}</span>
+                <span>৳{order.totalAmount.toLocaleString('en-IN')}</span>
               </div>
             </div>
           </div>
 
-          <div style={{ borderTop:'1px solid #eee', marginTop:40, paddingTop:20, textAlign:'center', fontSize:'0.75rem', color:'var(--on-surface-variant)' }}>
-            Thank you for choosing PharMCare. This is a computer-generated invoice.
+          <div style={{ borderTop:'1px solid #eee', marginTop:60, paddingTop:24, textAlign:'center' }}>
+            <div style={{ fontSize:'0.875rem', fontWeight:700, color:'#1a1c1e', marginBottom:4 }}>Thank you for your trust!</div>
+            <div style={{ fontSize:'0.75rem', color:'#999' }}>This is a computer-generated digital receipt. No signature required.</div>
           </div>
         </div>
 
-        {/* Footer actions - Not printed */}
-        <div style={{ padding:'16px 24px', background:'var(--surface-low)', display:'flex', gap:12, justifyContent:'flex-end' }} className="no-print">
-          <button className="btn btn-ghost" onClick={onClose}>Close</button>
-          <button className="btn btn-primary" onClick={handlePrint}>
-            <span className="material-icons">print</span>
+        {/* Action Buttons (UI Only) */}
+        <div style={{ padding:'20px 24px', background:'#f8f9fa', display:'flex', gap:12, justifyContent:'flex-end', borderTop:'1px solid #eee' }} className="no-print">
+          <button 
+            onClick={onClose}
+            style={{ padding:'10px 20px', background:'white', border:'1px solid #ddd', borderRadius:8, fontWeight:600, cursor:'pointer' }}
+          >
+            Close
+          </button>
+          <button 
+            onClick={handlePrint}
+            style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 24px', background:'#00288e', color:'white', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(0,40,142,0.2)' }}
+          >
+            <span className="material-icons" style={{ fontSize:18 }}>print</span>
             Print Invoice
           </button>
         </div>
       </div>
-
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          body * { visibility: hidden; }
-          #printable-invoice, #printable-invoice * { visibility: visible; }
-          #printable-invoice { position: absolute; left: 0; top: 0; width: 100%; }
-        }
-      `}</style>
     </div>
   )
 }

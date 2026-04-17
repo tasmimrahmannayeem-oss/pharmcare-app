@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { createPortal } from 'react-dom'
+import { useRole } from '../context/RoleContext'
 import { useCart } from '../context/CartContext'
 
 export default function MedicineSearch() {
   const navigate = useNavigate()
+  const { userData } = useRole()
   const { addToCart, setPrescriptionFile, prescriptionFile } = useCart()
   const [medicines, setMedicines] = useState([])
   const [loading, setLoading] = useState(true)
@@ -20,7 +23,9 @@ export default function MedicineSearch() {
   const fetchMedicines = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/medicines')
+      const res = await fetch('/api/medicines', {
+        headers: { 'Authorization': `Bearer ${userData?.token}` }
+      })
       const data = await res.json()
       setMedicines(Array.isArray(data) ? data : [])
     } catch (err) {
@@ -63,6 +68,11 @@ export default function MedicineSearch() {
       setPendingItem(null)
     }
     setShowRxModal(false)
+  }
+
+  const closeRxModal = () => {
+    setShowRxModal(false)
+    setPendingItem(null)
   }
 
   const filtered = medicines.filter(m =>
@@ -148,37 +158,54 @@ export default function MedicineSearch() {
       </div>
 
       {/* New Prescription Modal */}
-      {showRxModal && (
-        <div className="modal-overlay" onClick={() => setShowRxModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
-            <div className="section-header">
-              <h2 className="section-title">Upload Prescription</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowRxModal(false)}>
+      {showRxModal && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div 
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)' }} 
+            onClick={closeRxModal} 
+          />
+          <div style={{ 
+            position: 'relative', background: 'white', borderRadius: 12, padding: 32, 
+            width: '90%', maxWidth: 500, maxHeight: '90vh', overflowY: 'auto', 
+            zIndex: 100000, color: '#1a1c1e', boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>Upload Prescription</h2>
+              <button 
+                onClick={closeRxModal}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}
+              >
                 <span className="material-icons">close</span>
               </button>
             </div>
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+
+            <div style={{ textAlign: 'center' }}>
               <input type="file" id="rx-upload-search" hidden onChange={handleFileChange} accept="image/*,application/pdf" />
-              <label htmlFor="rx-upload-search" style={{ border: prescriptionFile ? '2px solid var(--secondary)' : '2px dashed var(--outline-variant)', borderRadius: 12, padding: 40, background: 'var(--surface-low)', cursor: 'pointer', display: 'block' }}>
-                <span className="material-icons" style={{ fontSize: 48, color: prescriptionFile ? 'var(--secondary)' : 'var(--primary-container)' }}>{prescriptionFile ? 'task' : 'upload_file'}</span>
-                <p style={{ marginTop: 12, fontWeight: 500 }}>{prescriptionFile ? prescriptionFile.name : 'Click to upload prescription'}</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>JPG, PNG or PDF (Max 5MB)</p>
+              <label htmlFor="rx-upload-search" style={{ border: prescriptionFile ? '2px solid #006c49' : '2px dashed #ddd', borderRadius: 12, padding: 40, background: '#f8f9fa', cursor: 'pointer', display: 'block' }}>
+                <span className="material-icons" style={{ fontSize: 48, color: prescriptionFile ? '#006c49' : '#00288e' }}>{prescriptionFile ? 'task' : 'upload_file'}</span>
+                <p style={{ marginTop: 12, fontWeight: 500, color: '#1a1c1e' }}>{prescriptionFile ? prescriptionFile.name : 'Click to upload prescription'}</p>
+                <p style={{ fontSize: '0.75rem', color: '#666' }}>JPG, PNG or PDF (Max 5MB)</p>
               </label>
               
-              <button className={`btn ${prescriptionFile ? 'btn-secondary' : 'btn-primary'}`} style={{ width: '100%', marginTop: 24 }} onClick={() => prescriptionFile ? completePendingAdd() : document.getElementById('rx-upload-search').click()}>
+              <button 
+                style={{ width: '100%', marginTop: 24, padding: '14px', background: '#00288e', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                onClick={() => prescriptionFile ? completePendingAdd() : document.getElementById('rx-upload-search').click()}
+              >
                 {prescriptionFile 
                   ? (pendingItem ? `Add ${pendingItem.name} & Continue` : 'Continue Shopping')
                   : 'Browse Files'}
               </button>
               
-              {prescriptionFile && pendingItem && (
-                <button className="btn btn-ghost" style={{ width: '100%', marginTop: 8 }} onClick={() => setShowRxModal(false)}>
-                  Cancel
-                </button>
-              )}
+              <button 
+                style={{ width: '100%', marginTop: 8, padding: '12px', background: 'none', border: 'none', cursor: 'pointer', color: '#666', fontWeight: 500 }}
+                onClick={closeRxModal}
+              >
+                Cancel
+              </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

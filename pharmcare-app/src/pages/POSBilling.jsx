@@ -21,7 +21,9 @@ export default function POSBilling() {
 
   const fetchPharmacy = async () => {
     try {
-      const res = await fetch('/api/pharmacies')
+      const res = await fetch('/api/pharmacies', {
+        headers: { 'Authorization': `Bearer ${userData.token}` }
+      })
       const data = await res.json()
       const branch = data.find(p => p._id === userData.assignedPharmacy)
       if (branch) setActivePharmacy(branch)
@@ -30,7 +32,9 @@ export default function POSBilling() {
 
   const fetchMedicines = async () => {
     try {
-      const res = await fetch('/api/medicines')
+      const res = await fetch('/api/medicines', {
+        headers: { 'Authorization': `Bearer ${userData.token}` }
+      })
       const data = await res.json()
       setMedicines(Array.isArray(data) ? data : [])
     } catch (err) { console.error('Error fetching medicines', err) }
@@ -39,7 +43,9 @@ export default function POSBilling() {
   const fetchHistory = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/orders')
+      const res = await fetch('/api/orders', {
+        headers: { 'Authorization': `Bearer ${userData.token}` }
+      })
       const data = await res.json()
       // Filter for recent POS-like orders (e.g. status Confirmed/Paid)
       const formatted = Array.isArray(data) ? data.slice(0, 5).map(o => ({
@@ -64,7 +70,10 @@ export default function POSBilling() {
     try {
       const res = await fetch('/api/orders/pos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userData.token}`
+        },
         body: JSON.stringify({
           pharmacy: userData.assignedPharmacy, 
           medicines: cart.map(i => ({ medicine: i._id, quantity: i.qty, price: i.price })),

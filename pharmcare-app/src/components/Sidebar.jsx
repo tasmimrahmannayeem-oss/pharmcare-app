@@ -84,7 +84,7 @@ export default function Sidebar() {
 
       {/* Bottom: Logout */}
       <div className="sidebar-bottom">
-        <button className="sidebar-link w-full" onClick={() => navigate('/')}>
+        <button className="sidebar-link w-full" onClick={() => { localStorage.clear(); navigate('/'); }}>
           <span className="material-icons sidebar-link-icon">logout</span>
           <span className="sidebar-link-label">Sign Out</span>
         </button>

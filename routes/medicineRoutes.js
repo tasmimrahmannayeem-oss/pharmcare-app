@@ -1,11 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const medicineController = require('../controllers/medicineController');
+const { protect, authorize } = require('../middleware/auth');
+
+router.use(protect);
 
 router.get('/', medicineController.getMedicines);
-router.post('/', medicineController.createMedicine);
 router.get('/:id', medicineController.getMedicineById);
-router.patch('/:id', medicineController.updateMedicine);
-router.delete('/:id', medicineController.deleteMedicine);
+
+// Protected management routes
+router.post('/', authorize('Pharmacist', 'Pharmacy Owner', 'superadmin'), medicineController.createMedicine);
+router.patch('/:id', authorize('Pharmacist', 'Pharmacy Owner', 'superadmin'), medicineController.updateMedicine);
+router.delete('/:id', authorize('Pharmacist', 'Pharmacy Owner', 'superadmin'), medicineController.deleteMedicine);
 
 module.exports = router;

@@ -28,7 +28,7 @@ const pageTitles = {
 }
 
 export default function TopBar() {
-  const { role, setRole } = useRole()
+  const { role, setRole, userData } = useRole()
   const location = useLocation()
   const [open, setOpen] = useState(false)
 
@@ -63,7 +63,7 @@ export default function TopBar() {
               <span className="material-icons">{currentRole.icon}</span>
             </div>
             <div className="role-info">
-              <span className="role-name">{currentRole.name}</span>
+              <span className="role-name">{userData?.name || currentRole.name}</span>
               <span className="role-label">{currentRole.label}</span>
             </div>
             <span className="material-icons role-chevron">expand_more</span>
@@ -76,7 +76,7 @@ export default function TopBar() {
                 <button
                   key={key}
                   className={`role-option ${role === key ? 'active' : ''}`}
-                  onClick={() => { setRole(key); setOpen(false) }}
+                  onClick={() => { setRole(key, roles[key]); setOpen(false) }}
                 >
                   <span className="material-icons" style={{ fontSize: 18 }}>{r.icon}</span>
                   <span>{r.label}</span>

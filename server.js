@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -40,6 +41,9 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 app.get('/api/status', (req, res) => {
   res.json({ status: 'API is running', dbState: mongoose.connection.readyState });
 });
+
+// Serve uploaded prescription images
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads/prescriptions')));
 
 // API Routes
 app.use('/api/auth', authRoutes);

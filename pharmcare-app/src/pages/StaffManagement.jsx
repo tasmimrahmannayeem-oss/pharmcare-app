@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import { useRole } from '../context/RoleContext'
 import { exportToCSV } from '../utils/csvExport'
 
 export default function StaffManagement() {
+  const { userData } = useRole()
   const [team, setTeam] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -18,7 +20,9 @@ export default function StaffManagement() {
   const fetchStaff = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/users')
+      const res = await fetch('/api/users', {
+        headers: { 'Authorization': `Bearer ${userData?.token}` }
+      })
       const data = await res.json()
       const staffOnly = Array.isArray(data) ? data.filter(u => u.role !== 'Customer') : []
       setTeam(staffOnly)
@@ -50,8 +54,16 @@ export default function StaffManagement() {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, password: isEdit ? undefined : 'temp123', isApproved: true }) 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userData?.token}`
+        },
+        body: JSON.stringify({ 
+          ...formData, 
+          password: isEdit ? undefined : 'temp123', 
+          isApproved: true,
+          assignedPharmacy: userData?.assignedPharmacy // Auto-link new staff to current branch
+        }) 
       })
       if (res.ok) {
         setShowModal(false)
@@ -81,7 +93,10 @@ export default function StaffManagement() {
   const handleDelete = async (id) => {
     if (!window.confirm('Remove this staff member?')) return
     try {
-      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/users/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${userData?.token}` }
+      })
       if (res.ok) fetchStaff()
       else alert('Failed to delete staff member')
     } catch (err) { alert('Connection error') }

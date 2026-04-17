@@ -5,7 +5,10 @@ const Medicine = require('../models/Medicine');
 exports.getOrders = async (req, res) => {
   try {
     const filter = {};
-    // If not superadmin, maybe filter by pharmacy? (Future improvement)
+    if (req.user.role !== 'Super Admin' && req.user.assignedPharmacy) {
+      filter.pharmacy = req.user.assignedPharmacy;
+    }
+    
     const orders = await Order.find(filter)
       .populate('customer', 'name email')
       .populate('pharmacy', 'name location')
@@ -19,9 +22,8 @@ exports.getOrders = async (req, res) => {
 // @desc    Checkout / Place Order
 exports.createOrder = async (req, res) => {
   try {
-    let { pharmacy, medicines, totalAmount, paymentMethod } = req.body;
+    let { pharmacy, medicines, paymentMethod } = req.body;
     
-    // Parse medicines if it's a string (happens with multipart/form-data)
     if (typeof medicines === 'string') {
       try {
         medicines = JSON.parse(medicines);
@@ -30,13 +32,29 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    // Check if any medicine requires a prescription
-    const medsRequiringRx = await Medicine.find({
-      _id: { $in: medicines.map(m => m.medicine) },
-      requiresPrescription: true
-    });
+    const medIds = medicines.map(m => m.medicine);
+    const dbMedicines = await Medicine.find({ _id: { $in: medIds } });
+    const dbMedMap = {};
+    dbMedicines.forEach(m => dbMedMap[m._id.toString()] = m);
 
-    if (medsRequiringRx.length > 0 && !req.file) {
+    let subtotal = 0;
+    let requiresRx = false;
+
+    // Securely calculate total and set DB prices
+    for (let item of medicines) {
+      const dbMed = dbMedMap[item.medicine.toString()];
+      if (!dbMed) return res.status(400).json({ message: `Medicine not found` });
+      
+      item.price = dbMed.sellPrice;
+      subtotal += (dbMed.sellPrice * item.quantity);
+      if (dbMed.requiresPrescription) requiresRx = true;
+    }
+
+    const tax = subtotal * 0.08;
+    const delivery = 3.99;
+    const finalTotalAmount = subtotal + tax + delivery;
+
+    if (requiresRx && !req.file) {
       return res.status(400).json({ message: 'Order contains prescription-only medicine. Please upload a prescription copy.' });
     }
 
@@ -44,7 +62,7 @@ exports.createOrder = async (req, res) => {
       customer: req.user._id,
       pharmacy,
       medicines,
-      totalAmount,
+      totalAmount: finalTotalAmount,
       paymentMethod: paymentMethod || 'Cash on Delivery',
       prescriptionImage: req.file ? req.file.path : null,
       statusTimeline: [{ status: 'Pending', note: 'Order placed by customer' }]
@@ -60,9 +78,8 @@ exports.createOrder = async (req, res) => {
 // @desc    POS Sale (Staff Walk-in)
 exports.createPOSOrder = async (req, res) => {
   try {
-    let { pharmacy, medicines, totalAmount, paymentMethod } = req.body;
+    let { pharmacy, medicines, paymentMethod } = req.body;
     
-    // Auto-assign pharmacy from staff if not provided hrdcoded
     if (!pharmacy && req.user.assignedPharmacy) {
       pharmacy = req.user.assignedPharmacy;
     }
@@ -71,21 +88,45 @@ exports.createPOSOrder = async (req, res) => {
       return res.status(400).json({ message: 'No pharmacy branch assigned to this transaction' });
     }
     
-    // Decrement stock immediately
+    const medIds = medicines.map(m => m.medicine);
+    const dbMedicines = await Medicine.find({ _id: { $in: medIds } });
+    const dbMedMap = {};
+    dbMedicines.forEach(m => dbMedMap[m._id.toString()] = m);
+
+    let subtotal = 0;
+    const rollbacks = [];
+
+    // Atomic stock decrement & Secure Calculation
     for (const item of medicines) {
-      const medicine = await Medicine.findById(item.medicine);
-      if (!medicine || medicine.stockQuantity < item.quantity) {
-        return res.status(400).json({ message: `Insufficient stock for ${medicine?.name || 'item'}` });
+      const dbMed = dbMedMap[item.medicine.toString()];
+      if (!dbMed) {
+        for (const r of rollbacks) await Medicine.findByIdAndUpdate(r.id, { $inc: { stockQuantity: r.qty } });
+        return res.status(400).json({ message: 'Invalid medicine item' });
       }
-      medicine.stockQuantity -= item.quantity;
-      await medicine.save();
+
+      const updatedMed = await Medicine.findOneAndUpdate(
+        { _id: item.medicine, stockQuantity: { $gte: item.quantity } },
+        { $inc: { stockQuantity: -item.quantity } },
+        { new: true }
+      );
+
+      if (!updatedMed) {
+        for (const r of rollbacks) await Medicine.findByIdAndUpdate(r.id, { $inc: { stockQuantity: r.qty } });
+        return res.status(400).json({ message: `Insufficient stock for ${dbMed.name}` });
+      }
+
+      rollbacks.push({ id: item.medicine, qty: item.quantity });
+      item.price = dbMed.sellPrice;
+      subtotal += (dbMed.sellPrice * item.quantity);
     }
+
+    const finalTotalAmount = subtotal + (subtotal * 0.08); // POS has no delivery fee
 
     const order = new Order({
       customer: req.user?._id || null, 
       pharmacy,
       medicines,
-      totalAmount,
+      totalAmount: finalTotalAmount,
       status: 'Confirmed',
       paymentMethod: paymentMethod || 'Cash',
       paymentStatus: 'Paid',
@@ -109,14 +150,21 @@ exports.confirmOrder = async (req, res) => {
       return res.status(400).json({ message: `Cannot confirm order in ${order.status} state` });
     }
 
+    const rollbacks = [];
+
     // Atomic stock decrement
     for (const item of order.medicines) {
-      const medicine = await Medicine.findById(item.medicine);
-      if (medicine.stockQuantity < item.quantity) {
-        return res.status(400).json({ message: `Insufficient stock for ${medicine.name}` });
+      const updatedMed = await Medicine.findOneAndUpdate(
+        { _id: item.medicine, stockQuantity: { $gte: item.quantity } },
+        { $inc: { stockQuantity: -item.quantity } },
+        { new: true }
+      );
+
+      if (!updatedMed) {
+        for (const r of rollbacks) await Medicine.findByIdAndUpdate(r.id, { $inc: { stockQuantity: r.qty } });
+        return res.status(400).json({ message: `Insufficient stock for an item in your order. Please try again.` });
       }
-      medicine.stockQuantity -= item.quantity;
-      await medicine.save();
+      rollbacks.push({ id: item.medicine, qty: item.quantity });
     }
 
     order.status = 'Confirmed';

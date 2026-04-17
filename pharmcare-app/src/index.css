@@ -297,8 +297,7 @@ tr:last-child td { border-bottom: none; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(25, 28, 30, 0.4);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -311,7 +310,8 @@ tr:last-child td { border-bottom: none; }
   padding: 32px;
   width: 100%;
   box-shadow: var(--shadow-modal);
-  animation: fadeUp 0.3s ease-out;
+  opacity: 1;
+  transform: none;
 }
 
 /* ── Print Helpers ─────────────────────────────────────── */

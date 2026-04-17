@@ -1,9 +1,12 @@
 const Medicine = require('../models/Medicine');
 
-// Get all medicines
 exports.getMedicines = async (req, res) => {
   try {
-    const medicines = await Medicine.find();
+    const filter = {};
+    if (req.user && req.user.role !== 'Super Admin' && req.user.assignedPharmacy) {
+      filter.pharmacy = req.user.assignedPharmacy;
+    }
+    const medicines = await Medicine.find(filter);
     res.json(medicines);
   } catch (error) {
     res.status(500).json({ message: error.message });
