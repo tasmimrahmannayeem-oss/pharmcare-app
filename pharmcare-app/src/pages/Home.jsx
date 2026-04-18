@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import { useCart } from '../context/CartContext'
 
 const categories = [
@@ -13,9 +14,10 @@ const categories = [
 
 export default function Home() {
   const navigate = useNavigate()
-  const { addToCart, selectedPharmacy } = useCart()
+  const { addToCart, selectedPharmacy, setPrescriptionFile, prescriptionFile } = useCart()
   const [featured, setFeatured] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showRxModal, setShowRxModal] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -66,9 +68,9 @@ export default function Home() {
               <span className="material-icons">shopping_bag</span>
               Shop Now
             </button>
-            <button className="btn" style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: '1.5px solid rgba(255,255,255,0.3)' }} onClick={() => navigate('/prescriptions')}>
+            <button className="btn" style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: '1.5px solid rgba(255,255,255,0.3)' }} onClick={() => setShowRxModal(true)}>
               <span className="material-icons">description</span>
-              Upload Prescription
+              {prescriptionFile ? 'Rx Uploaded ✓' : 'Upload Prescription'}
             </button>
           </div>
         </div>
@@ -167,6 +169,63 @@ export default function Home() {
           </div>
         ))}
       </div>
+      {/* Prescription Upload Modal */}
+      {showRxModal && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)' }} onClick={() => setShowRxModal(false)} />
+          <div style={{
+            position: 'relative', background: 'var(--surface)', borderRadius: 16, padding: 32,
+            width: '90%', maxWidth: 480, zIndex: 100000, boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>Upload Prescription</h2>
+              <button onClick={() => setShowRxModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            <p style={{ color: 'var(--on-surface-variant)', marginBottom: 20, fontSize: '0.9rem' }}>
+              Upload your doctor's prescription (JPG, PNG or PDF, max 5MB). It will be attached automatically when you place your next order.
+            </p>
+            <input
+              type="file"
+              id="rx-home-upload"
+              hidden
+              accept="image/jpeg,image/jpg,image/png,application/pdf"
+              onChange={e => {
+                const file = e.target.files[0]
+                if (file) {
+                  setPrescriptionFile(file)
+                  setShowRxModal(false)
+                  navigate('/catalogue')
+                }
+              }}
+            />
+            <label htmlFor="rx-home-upload" style={{
+              display: 'block', border: prescriptionFile ? '2px solid var(--secondary)' : '2px dashed var(--outline-variant)',
+              borderRadius: 12, padding: 40, textAlign: 'center', cursor: 'pointer',
+              background: prescriptionFile ? 'var(--secondary-fixed)' : 'var(--surface-low)'
+            }}>
+              <span className="material-icons" style={{ fontSize: 48, color: prescriptionFile ? 'var(--secondary)' : 'var(--primary)' }}>
+                {prescriptionFile ? 'task' : 'upload_file'}
+              </span>
+              <p style={{ marginTop: 12, fontWeight: 600 }}>
+                {prescriptionFile ? `✓ ${prescriptionFile.name}` : 'Click to browse files'}
+              </p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginTop: 4 }}>JPG, PNG or PDF — max 5MB</p>
+            </label>
+            {prescriptionFile && (
+              <button
+                className="btn btn-secondary"
+                style={{ width: '100%', marginTop: 16 }}
+                onClick={() => { setShowRxModal(false); navigate('/catalogue') }}
+              >
+                Continue Shopping with Rx
+              </button>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }
