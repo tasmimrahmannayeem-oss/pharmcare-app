@@ -5,6 +5,23 @@ const CartContext = createContext(null)
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([])
   const [prescriptionFile, setPrescriptionFile] = useState(null)
+  const [selectedPharmacy, setSelectedPharmacy] = useState(() => {
+    try {
+      const saved = localStorage.getItem('selectedPharmacy')
+      return saved ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
+  })
+
+  // Persist pharmacy selection
+  useEffect(() => {
+    if (selectedPharmacy) {
+      localStorage.setItem('selectedPharmacy', JSON.stringify(selectedPharmacy))
+    } else {
+      localStorage.removeItem('selectedPharmacy')
+    }
+  }, [selectedPharmacy])
 
   const addToCart = (medicine) => {
     setCartItems(prev => {
@@ -38,7 +55,8 @@ export function CartProvider({ children }) {
   return (
     <CartContext.Provider value={{ 
       cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartTotal,
-      prescriptionFile, setPrescriptionFile
+      prescriptionFile, setPrescriptionFile,
+      selectedPharmacy, setSelectedPharmacy
     }}>
       {children}
     </CartContext.Provider>

@@ -1,35 +1,46 @@
 import { useState, useEffect } from 'react'
 import { useCart } from '../context/CartContext'
+import { useRole } from '../context/RoleContext'
 import { useNavigate } from 'react-router-dom'
 
 export default function Checkout() {
-  const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart, prescriptionFile } = useCart()
+  const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart, prescriptionFile, selectedPharmacy } = useCart()
+  const { userData } = useRole()
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [ordered, setOrdered] = useState(false)
   const [loading, setLoading] = useState(false)
   const [pharmacies, setPharmacies] = useState([])
-  const [selectedPharmacy, setSelectedPharmacy] = useState('')
-  const [shippingAddress, setShippingAddress] = useState("House 12, Road 5, Dhanmondi, Dhaka 1205")
+  const [selectedPharmacyId, setSelectedPharmacyId] = useState(selectedPharmacy?._id || '')
+  const [shippingAddress, setShippingAddress] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery')
 
+  const token = localStorage.getItem('token')
+
+  // Load pharmacies
   useEffect(() => {
-    fetch('/api/pharmacies', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    })
+    fetch('/api/pharmacies', { headers: { 'Authorization': `Bearer ${token}` } })
       .then(res => res.json())
       .then(data => {
         const branches = Array.isArray(data) ? data : []
         setPharmacies(branches)
-        if (branches.length > 0) setSelectedPharmacy(branches[0]._id)
+        if (!selectedPharmacyId && branches.length > 0) setSelectedPharmacyId(branches[0]._id)
       })
-      .catch(err => {
-        console.error('Error fetching pharmacies', err)
-        setPharmacies([])
-      })
+      .catch(() => setPharmacies([]))
   }, [])
+
+  // Pre-fill address from user profile
+  useEffect(() => {
+    const userId = userData?._id
+    if (!userId) return
+    fetch(`/api/users/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } })
+      .then(res => res.json())
+      .then(data => {
+        if (data.address) setShippingAddress(data.address)
+        else if (data.phone) setShippingAddress('')  // reset placeholder if no address
+      })
+      .catch(() => {})
+  }, [userData?._id])
 
   const subtotal = cartTotal
   const delivery = 3.99
@@ -48,7 +59,7 @@ export default function Checkout() {
     try {
       setLoading(true)
       const formData = new FormData()
-      formData.append('pharmacy', selectedPharmacy)
+      formData.append('pharmacy', selectedPharmacyId)
       formData.append('totalAmount', total)
       formData.append('paymentMethod', paymentMethod)
       formData.append('medicines', JSON.stringify(cartItems.map(i => ({
@@ -164,14 +175,14 @@ export default function Checkout() {
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
                 <div className="input-group" style={{ gridColumn:'span 2' }}>
                   <label className="input-label">Select Pharmacy Branch</label>
-                  <select className="input" value={selectedPharmacy} onChange={e => setSelectedPharmacy(e.target.value)}>
+                  <select className="input" value={selectedPharmacyId} onChange={e => setSelectedPharmacyId(e.target.value)}>
                     <option value="" disabled>Choose a pharmacy branch...</option>
                     {Array.isArray(pharmacies) && pharmacies.map(p => (
                       <option key={p._id} value={p._id}>{p.name} - {p.location}</option>
                     ))}
                   </select>
                 </div>
-                <div className="input-group" style={{ gridColumn:'span 2' }}><label className="input-label">Delivery Address</label><input className="input" defaultValue="House 12, Road 5, Dhanmondi, Dhaka 1205" onChange={e => setShippingAddress(e.target.value)} /></div>
+                <div className="input-group" style={{ gridColumn:'span 2' }}><label className="input-label">Delivery Address</label><input className="input" value={shippingAddress} placeholder="Enter your delivery address" onChange={e => setShippingAddress(e.target.value)} /></div>
 
                 <div className="input-group" style={{ gridColumn: 'span 2' }}>
                   <label className="input-label">Payment Method</label>

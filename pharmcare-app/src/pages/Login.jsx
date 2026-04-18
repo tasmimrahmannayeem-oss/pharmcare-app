@@ -43,7 +43,8 @@ export default function Login() {
           const backToFrontRole = Object.keys(roleMap).find(key => roleMap[key] === data.role) || 'customer'
           
           // CRITICAL: Merge token into user data so it is available in useRole().userData
-          const userWithToken = { ...data.user, token: data.token }
+          // data is the flat response from backend (not data.user)
+          const userWithToken = { ...data, token: data.token }
           setRole(backToFrontRole, userWithToken)
           
           const dest = { 

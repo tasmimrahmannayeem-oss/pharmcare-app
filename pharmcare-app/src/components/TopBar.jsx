@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useRole, roles } from '../context/RoleContext'
+import { useCart } from '../context/CartContext'
+import PharmacySelectModal from './PharmacySelectModal'
 import './TopBar.css'
 
 const pageTitles = {
@@ -29,8 +31,10 @@ const pageTitles = {
 
 export default function TopBar() {
   const { role, setRole, userData } = useRole()
+  const { selectedPharmacy } = useCart()
   const location = useLocation()
   const [open, setOpen] = useState(false)
+  const [showBranchModal, setShowBranchModal] = useState(false)
 
   const title = pageTitles[location.pathname] ||
     (location.pathname.startsWith('/prescriptions/') ? 'Prescription Verification' : 'SPMIS')
@@ -44,6 +48,20 @@ export default function TopBar() {
           <span className="live-dot" />
           <span className="live-label">Live</span>
         </div>
+
+        {role === 'customer' && (
+          <button 
+            className="btn btn-ghost btn-sm" 
+            style={{ marginLeft: 16, border: '1.5px solid var(--outline-variant)', borderRadius: 10, padding: '4px 12px', gap: 6 }}
+            onClick={() => setShowBranchModal(true)}
+          >
+            <span className="material-icons" style={{ fontSize: 18, color: 'var(--primary)' }}>location_on</span>
+            <span style={{ fontWeight: 600, fontSize: '0.8125rem' }}>
+              {selectedPharmacy ? selectedPharmacy.name : 'Select Pharmacy Branch'}
+            </span>
+            <span className="material-icons" style={{ fontSize: 16 }}>expand_more</span>
+          </button>
+        )}
       </div>
 
       <div className="topbar-right">
@@ -87,6 +105,8 @@ export default function TopBar() {
           )}
         </div>
       </div>
+
+      <PharmacySelectModal isOpen={showBranchModal} onClose={() => setShowBranchModal(false)} />
     </header>
   )
 }

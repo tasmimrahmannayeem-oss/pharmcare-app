@@ -7,9 +7,9 @@ import { useCart } from '../context/CartContext'
 export default function MedicineSearch() {
   const navigate = useNavigate()
   const { userData } = useRole()
-  const { addToCart, setPrescriptionFile, prescriptionFile } = useCart()
+  const { addToCart, setPrescriptionFile, prescriptionFile, selectedPharmacy } = useCart()
   const [medicines, setMedicines] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('All')
   const [sort, setSort] = useState('name-asc')
@@ -17,13 +17,18 @@ export default function MedicineSearch() {
   const [pendingItem, setPendingItem] = useState(null)
 
   useEffect(() => {
-    fetchMedicines()
-  }, [])
+    if (selectedPharmacy) {
+      fetchMedicines()
+    } else {
+      setMedicines([])
+      setLoading(false)
+    }
+  }, [selectedPharmacy])
 
   const fetchMedicines = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/medicines', {
+      const res = await fetch(`/api/medicines?pharmacy=${selectedPharmacy?._id || ''}`, {
         headers: { 'Authorization': `Bearer ${userData?.token}` }
       })
       const data = await res.json()
@@ -129,6 +134,13 @@ export default function MedicineSearch() {
             <tbody>
               {loading ? (
                 <tr><td colSpan="6" style={{ textAlign:'center', padding:40 }}>Loading catalogue...</td></tr>
+              ) : !selectedPharmacy ? (
+                <tr><td colSpan="6" style={{ textAlign:'center', padding:60 }}>
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
+                    <span className="material-icons" style={{ fontSize:48, color:'var(--outline)' }}>location_on</span>
+                    <div style={{ fontWeight:600 }}>Please select a pharmacy branch to view availability</div>
+                  </div>
+                </td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan="6" style={{ textAlign:'center', padding:40 }}>No results found.</td></tr>
               ) : filtered.map(m => {

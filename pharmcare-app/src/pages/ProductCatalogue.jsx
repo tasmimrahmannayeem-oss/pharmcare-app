@@ -7,21 +7,26 @@ import { useCart } from '../context/CartContext'
 export default function ProductCatalogue() {
   const navigate = useNavigate()
   const { userData } = useRole()
-  const { addToCart, setPrescriptionFile, prescriptionFile } = useCart()
+  const { addToCart, setPrescriptionFile, prescriptionFile, selectedPharmacy } = useCart()
   const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [cat, setCat] = useState('All')
   const [showRxModal, setShowRxModal] = useState(false)
   const [pendingItem, setPendingItem] = useState(null)
 
   useEffect(() => {
-    fetchProducts()
-  }, [])
+    if (selectedPharmacy) {
+      fetchProducts()
+    } else {
+      setProducts([])
+      setLoading(false)
+    }
+  }, [selectedPharmacy])
 
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/medicines', {
+      const res = await fetch(`/api/medicines?pharmacy=${selectedPharmacy?._id || ''}`, {
         headers: { 'Authorization': `Bearer ${userData?.token}` }
       })
       const data = await res.json()
@@ -97,6 +102,13 @@ export default function ProductCatalogue() {
 
         {loading ? (
           <div className="card text-center" style={{ padding:60 }}>Loading premium catalogue...</div>
+        ) : !selectedPharmacy ? (
+          <div className="card text-center" style={{ padding: 80 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+              <span className="material-icons" style={{ fontSize: 64, color: 'var(--outline)' }}>location_on</span>
+              <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>Please select a pharmacy branch to browse medicines</div>
+            </div>
+          </div>
         ) : (
           <div className="grid-3">
             {filtered.map(p => (

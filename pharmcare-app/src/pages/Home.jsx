@@ -13,12 +13,14 @@ const categories = [
 
 export default function Home() {
   const navigate = useNavigate()
-  const { addToCart } = useCart()
+  const { addToCart, selectedPharmacy } = useCart()
   const [featured, setFeatured] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/medicines')
+    const token = localStorage.getItem('token')
+    const url = selectedPharmacy ? `/api/medicines?pharmacy=${selectedPharmacy._id}` : '/api/medicines'
+    fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -34,7 +36,7 @@ export default function Home() {
       })
       .catch(err => console.error('Error fetching featured:', err))
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedPharmacy])
 
   return (
     <div className="fade-up">

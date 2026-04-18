@@ -3,9 +3,16 @@ const Medicine = require('../models/Medicine');
 exports.getMedicines = async (req, res) => {
   try {
     const filter = {};
-    if (req.user && req.user.role !== 'Super Admin' && req.user.assignedPharmacy) {
+    
+    // 1. If pharmacy is explicitly requested via query (Customer flow)
+    if (req.query.pharmacy) {
+      filter.pharmacy = req.query.pharmacy;
+    } 
+    // 2. Otherwise, if staff is logged in, restrict to their assigned pharmacy
+    else if (req.user && req.user.role !== 'Super Admin' && req.user.assignedPharmacy) {
       filter.pharmacy = req.user.assignedPharmacy;
     }
+    
     const medicines = await Medicine.find(filter);
     res.json(medicines);
   } catch (error) {
