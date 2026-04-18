@@ -69,6 +69,8 @@ exports.getSystemWideAnalytics = async (req, res) => {
     // 1. Overall System Stats
     const totalUsers = await User.countDocuments();
     const totalPharmacies = await Pharmacy.countDocuments();
+    
+    // Total Revenue across all non-cancelled orders
     const totalRevenueData = await Order.aggregate([
       { $match: { status: { $ne: 'Cancelled' } } },
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
@@ -84,13 +86,12 @@ exports.getSystemWideAnalytics = async (req, res) => {
     ]);
 
     // 3. Alerts (Low stock or expiring)
-    // For simplicity, we assume global thresholds if branch-specific ones aren't easily accessible in aggregation
     const alertsData = await Medicine.aggregate([
       { 
         $match: { 
           $or: [
-            { stockQuantity: { $lte: 10 } }, // Default low stock
-            { expiryDate: { $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } } // Expiring in 30 days
+            { stockQuantity: { $lte: 10 } },
+            { expiryDate: { $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } }
           ]
         }
       },
@@ -115,7 +116,7 @@ exports.getSystemWideAnalytics = async (req, res) => {
           as: 'details'
         }
       },
-      { $unwind: '$details' },
+      { $unwind: { path: '$details', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'users',
@@ -126,27 +127,27 @@ exports.getSystemWideAnalytics = async (req, res) => {
       },
       { 
         $project: {
-          name: '$details.name',
-          location: '$details.location',
+          name: { $ifNull: ['$details.name', 'Unnamed Branch'] },
+          location: { $ifNull: ['$details.location', 'Unknown'] },
           ownerName: { $ifNull: [{ $arrayElemAt: ['$owner.name', 0] }, 'N/A'] },
           revenue: 1,
           orderCount: 1,
-          status: { $literal: 'Online' } // Placeholder status
+          status: { $literal: 'Online' }
         }
       }
     ]);
 
-    // Map rxToday and alerts to pharmacyStats
-    const finalStats = pharmacyStats.map(stat => {
-      const rxToday = rxTodayData.find(r => r._id.toString() === stat._id.toString())?.count || 0;
-      const alerts = alertsData.find(a => a._id.toString() === stat._id.toString())?.count || 0;
+    // Map rxToday and alerts to pharmacyStats safely
+    const finalStats = (pharmacyStats || []).filter(s => s._id).map(stat => {
+      const rxToday = rxTodayData.find(r => r._id && r._id.toString() === stat._id.toString())?.count || 0;
+      const alerts = alertsData.find(a => a._id && a._id.toString() === stat._id.toString())?.count || 0;
       return { ...stat, rxToday, alerts };
     });
 
     // Also include pharmacies with NO orders yet
     const allPharmacies = await Pharmacy.find().populate('owner', 'name');
     allPharmacies.forEach(p => {
-      if (!finalStats.find(s => s._id.toString() === p._id.toString())) {
+      if (!finalStats.find(s => s._id && s._id.toString() === p._id.toString())) {
         finalStats.push({
           _id: p._id,
           name: p.name,
@@ -166,11 +167,12 @@ exports.getSystemWideAnalytics = async (req, res) => {
         totalRevenue,
         totalPharmacies,
         totalUsers,
-        systemFlags: alertsData.reduce((acc, curr) => acc + curr.count, 0)
+        systemFlags: alertsData.reduce((acc, curr) => acc + (curr.count || 0), 0)
       },
       pharmacies: finalStats
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[CRITICAL] System Analytics Error:', error);
+    res.status(500).json({ message: 'Internal server error while calculating analytics', details: error.message });
   }
 };
