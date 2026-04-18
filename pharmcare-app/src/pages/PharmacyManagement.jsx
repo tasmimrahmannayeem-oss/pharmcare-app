@@ -17,7 +17,9 @@ export default function PharmacyManagement() {
   const fetchBranches = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/pharmacies')
+      const res = await fetch('/api/pharmacies', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
       const data = await res.json()
       setBranches(Array.isArray(data) ? data : [])
     } catch (err) {
@@ -36,7 +38,10 @@ export default function PharmacyManagement() {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify(formData)
       })
       if (res.ok) {
@@ -67,7 +72,10 @@ export default function PharmacyManagement() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this pharmacy branch?')) return
     try {
-      const res = await fetch(`/api/pharmacies/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/pharmacies/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
       if (res.ok) fetchBranches()
       else alert('Failed to delete pharmacy')
     } catch (err) { alert('Connection error') }
@@ -83,12 +91,20 @@ export default function PharmacyManagement() {
             <h1 className="page-title">Pharmacy Network Management</h1>
             <p className="page-subtitle">Manage branches, access control, and configurations</p>
           </div>
-          <button className="btn btn-primary" onClick={() => {
-            setFormData({ name: '', location: '', address: '', contactPhone: '' })
-            setShowModal(true)
-          }}>
-            <span className="material-icons" style={{ fontSize: 18 }}>add_business</span> Add Branch
-          </button>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button className="btn btn-ghost" onClick={() => {
+              setFormData({ name: '', location: '', address: '', contactPhone: '' })
+              setShowModal(true)
+            }}>
+              <span className="material-icons" style={{ fontSize: 18 }}>store</span> Add New Pharmacy
+            </button>
+            <button className="btn btn-primary" onClick={() => {
+              setFormData({ name: '', location: '', address: '', contactPhone: '' })
+              setShowModal(true)
+            }}>
+              <span className="material-icons" style={{ fontSize: 18 }}>add_business</span> Add Branch
+            </button>
+          </div>
         </div>
 
         <div className="grid-4" style={{ marginBottom: 24 }}>

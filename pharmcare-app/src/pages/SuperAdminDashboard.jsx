@@ -1,28 +1,75 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const pharmacies = [
-  { name: 'Aura — Green Valley', admin: 'Dr. Sarah Chen', revenue: '৳284,200', status: 'Online', rxToday: 47, alerts: 2 },
-  { name: 'Aura — Westside', admin: 'Dr. Mark Liu', revenue: '৳198,400', status: 'Online', rxToday: 33, alerts: 0 },
-  { name: 'MedCenter — North', admin: 'Dr. Priya Gupta', revenue: '৳341,200', status: 'Online', rxToday: 61, alerts: 1 },
-  { name: 'CityPharm — Downtown', admin: 'Dr. Emma Wu', revenue: '৳112,000', status: 'Maintenance', rxToday: 0, alerts: 0 },
-]
-
-const recentActivity = [
-  { action: 'New pharmacy registered: HealthPlus Express', user: 'System Admin', time: '2 min ago', icon: 'business', color: 'var(--secondary)' },
-  { action: 'User role updated: James Lee → Chief Pharmacist', user: 'Dr. Chen', time: '18 min ago', icon: 'manage_accounts', color: 'var(--primary-container)' },
-  { action: 'Controlled substance audit flag: CityPharm', user: 'Audit Bot', time: '1 hr ago', icon: 'flag', color: 'var(--error)' },
-  { action: 'System backup completed successfully', user: 'System', time: '2 hr ago', icon: 'backup', color: 'var(--secondary)' },
-]
 
 export default function SuperAdminDashboard() {
   const navigate = useNavigate()
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    summary: { totalRevenue: 0, totalPharmacies: 0, totalUsers: 0, systemFlags: 0 },
+    pharmacies: []
+  })
+  const [recentActivity, setRecentActivity] = useState([])
+  
   const [adminSettings, setAdminSettings] = useState({
     name: 'System Owner',
     email: 'admin@spmis.com',
     password: ''
   })
+
+  const [errorStatus, setErrorStatus] = useState(null)
+
+  useEffect(() => {
+    fetchData()
+    const interval = setInterval(fetchData, 30000) // Poll every 30 seconds
+    return () => clearInterval(interval)
+  }, [])
+
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setErrorStatus('No token found');
+        return;
+      }
+
+      const res = await fetch('/api/analytics/system', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      const data = await res.json()
+      console.log('SAdmin Dashboard Data:', data)
+
+      if (res.ok) {
+        setStats(data)
+        setErrorStatus(null)
+      } else {
+        setErrorStatus(`Analytics Error: ${res.status}`);
+        console.warn(`Dashboard fetch failed: ${res.status}`, data);
+      }
+
+      // Fetch recent users
+      const userRes = await fetch('/api/users', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const users = await userRes.json()
+      if (userRes.ok && Array.isArray(users)) {
+        const activity = users.slice(0, 4).map(u => ({
+          action: `New user registered: ${u.name}`,
+          user: 'System Admin',
+          time: new Date(u.createdAt).toLocaleDateString(),
+          icon: 'person_add',
+          color: 'var(--primary-container)'
+        }))
+        setRecentActivity(activity)
+      }
+    } catch (err) {
+      console.error('Fetch dashboard error:', err)
+      setErrorStatus(`Network Error: ${err.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleUpdateSettings = (e) => {
     e.preventDefault()
@@ -39,9 +86,18 @@ export default function SuperAdminDashboard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
             <div className="live-dot" />
             <span style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>System-wide overview · All pharmacies · Live</span>
+            {errorStatus && (
+              <span className="badge badge-error" style={{ marginLeft: 12, fontSize: '0.75rem' }}>
+                <span className="material-icons" style={{ fontSize: 14, marginRight: 4 }}>error_outline</span>
+                {errorStatus}
+              </span>
+            )}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost btn-sm" onClick={fetchData}>
+            <span className="material-icons" style={{ fontSize: 16 }}>refresh</span> Refresh
+          </button>
           <button className="btn btn-ghost btn-sm" onClick={() => setShowSettingsModal(true)}>
             <span className="material-icons" style={{ fontSize: 16 }}>manage_accounts</span> Account Settings
           </button>
@@ -57,16 +113,16 @@ export default function SuperAdminDashboard() {
       {/* System-wide KPIs */}
       <div className="grid-4" style={{ marginBottom: 28 }}>
         {[
-          { label: 'Total System Revenue', val: '৳935,800', delta: '+11.2%', icon: 'trending_up', bg: 'linear-gradient(135deg,var(--primary),var(--primary-container))', white: true },
-          { label: 'Active Pharmacies', val: '3 / 4', delta: '1 under maintenance', icon: 'business', bg: 'var(--secondary-fixed)', ic: 'var(--secondary)' },
-          { label: 'Registered Users', val: '1,284', delta: '+38 this week', icon: 'group', bg: 'var(--primary-fixed)', ic: 'var(--primary-container)' },
-          { label: 'System Flags', val: '3', delta: '1 critical', icon: 'flag', bg: 'var(--error-container)', ic: 'var(--error)' },
+          { label: 'Total System Revenue', val: `৳${(stats.summary?.totalRevenue || 0).toLocaleString()}`, delta: 'Across all network', icon: 'trending_up', bg: 'linear-gradient(135deg,var(--primary),var(--primary-container))', white: true },
+          { label: 'Active Pharmacies', val: stats.summary?.totalPharmacies || 0, delta: 'Total branches', icon: 'business', bg: 'var(--secondary-fixed)', ic: 'var(--secondary)' },
+          { label: 'Registered Users', val: (stats.summary?.totalUsers || 0).toLocaleString(), delta: 'Total accounts', icon: 'group', bg: 'var(--primary-fixed)', ic: 'var(--primary-container)' },
+          { label: 'System Flags', val: stats.summary?.systemFlags || 0, delta: 'Critical alerts', icon: 'flag', bg: 'var(--error-container)', ic: 'var(--error)' },
         ].map(s => (
           <div className="stat-card" key={s.label} style={{ background: s.white ? s.bg : 'var(--surface-lowest)' }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: s.white ? 'rgba(255,255,255,0.2)' : s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span className="material-icons" style={{ color: s.white ? 'white' : s.ic, fontSize: 22 }}>{s.icon}</span>
             </div>
-            <div className="stat-value" style={{ fontSize: '1.75rem', color: s.white ? 'white' : 'var(--on-surface)' }}>{s.val}</div>
+            <div className="stat-value" style={{ fontSize: (stats.summary?.totalRevenue || 0) > 1000000 ? '1.4rem' : '1.75rem', color: s.white ? 'white' : 'var(--on-surface)' }}>{s.val}</div>
             <div style={{ fontSize: '0.75rem', color: s.white ? 'rgba(255,255,255,0.8)' : 'var(--secondary)', fontWeight: 600 }}>{s.delta}</div>
             <div className="stat-label" style={{ color: s.white ? 'rgba(255,255,255,0.75)' : 'var(--on-surface-variant)' }}>{s.label}</div>
           </div>
@@ -81,20 +137,24 @@ export default function SuperAdminDashboard() {
             <button className="btn btn-ghost btn-sm" onClick={() => navigate('/superadmin/pharmacies')}>Manage</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {pharmacies.map((p, i) => (
-              <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: i < pharmacies.length - 1 ? '1px solid rgba(196,197,213,0.25)' : 'none' }}>
-                <div style={{ width: 42, height: 42, borderRadius: 10, background: p.status === 'Online' ? 'var(--secondary-fixed)' : 'var(--surface-high)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span className="material-icons" style={{ color: p.status === 'Online' ? 'var(--secondary)' : 'var(--on-surface-variant)', fontSize: 22 }}>local_pharmacy</span>
+            {loading ? (
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--on-surface-variant)' }}>Loading network data...</div>
+            ) : (stats.pharmacies || []).length === 0 ? (
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--on-surface-variant)' }}>No pharmacies found in network.</div>
+            ) : (stats.pharmacies || []).map((p, i) => (
+              <div key={p?._id || i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: i < (stats.pharmacies || []).length - 1 ? '1px solid rgba(196,197,213,0.25)' : 'none' }}>
+                <div style={{ width: 42, height: 42, borderRadius: 10, background: p?.status === 'Online' ? 'var(--secondary-fixed)' : 'var(--surface-high)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span className="material-icons" style={{ color: p?.status === 'Online' ? 'var(--secondary)' : 'var(--on-surface-variant)', fontSize: 22 }}>local_pharmacy</span>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>{p.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{p.admin} · {p.rxToday} Rx today</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>{p?.name || 'Unnamed Pharmacy'}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{p?.ownerName || 'No owner'} · {p?.rxToday || 0} Rx today</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--primary-container)' }}>{p.revenue}</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--primary-container)' }}>৳{(p?.revenue || 0).toLocaleString()}</div>
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 4 }}>
-                    <span className={`badge ${p.status === 'Online' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.7rem' }}>{p.status}</span>
-                    {p.alerts > 0 && <span className="badge badge-error" style={{ fontSize: '0.7rem' }}>{p.alerts} alert{p.alerts > 1 ? 's' : ''}</span>}
+                    <span className={`badge ${p?.status === 'Online' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.7rem' }}>{p?.status || 'Offline'}</span>
+                    {(p?.alerts || 0) > 0 && <span className="badge badge-error" style={{ fontSize: '0.7rem' }}>{p.alerts} alert{p.alerts > 1 ? 's' : ''}</span>}
                   </div>
                 </div>
               </div>
