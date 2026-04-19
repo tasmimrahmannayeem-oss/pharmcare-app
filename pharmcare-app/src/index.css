@@ -316,8 +316,65 @@ tr:last-child td { border-bottom: none; }
 
 /* ── Print Helpers ─────────────────────────────────────── */
 @media print {
-  .no-print { display: none !important; }
+  /* Hide all UI chrome */
+  .no-print,
+  .sidebar,
+  .topbar,
+  .app-content > .topbar,
+  nav,
+  .btn,
+  .modal-overlay > *:not(#printable-invoice):not([id="printable-invoice"]) {
+    display: none !important;
+  }
+
   .print-only { display: block !important; }
+
+  /* Reset page */
+  @page {
+    size: A4 portrait;
+    margin: 16mm 14mm;
+  }
+
+  html, body {
+    width: 210mm;
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Remove app chrome layout */
+  .app-shell { display: block !important; }
+  .app-content {
+    margin-left: 0 !important;
+    display: block !important;
+  }
+  .page-main {
+    padding: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* Prevent content from being cut mid-element */
+  .card,
+  tr,
+  .stat-card,
+  table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Ensure tables print correctly */
+  table { width: 100%; border-collapse: collapse; }
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+
+  /* Remove box shadows and backgrounds that look bad on paper */
+  .card,
+  .stat-card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
 }
 
 /* ── Responsive ────────────────────────────────────────── */

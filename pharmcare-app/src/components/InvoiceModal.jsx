@@ -19,9 +19,36 @@ export default function InvoiceModal({ order, onClose }) {
           <title>Invoice - ${order._id?.slice(-8).toUpperCase()}</title>
           ${styles}
           <style>
-            body { padding: 40px; background: white !important; font-family: 'Inter', sans-serif; }
-            #printable-invoice { width: 100% !important; margin: 0 !important; }
-            @page { margin: 0; }
+            @page {
+              size: A4 portrait;
+              margin: 16mm 14mm;
+            }
+            * { box-sizing: border-box; }
+            html, body {
+              width: 210mm;
+              background: white !important;
+              color: #1a1c1e;
+              font-family: 'Inter', sans-serif;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            body { padding: 0; margin: 0; }
+            #printable-invoice {
+              width: 100% !important;
+              max-width: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            /* Prevent grid and table rows from being cut */
+            div[style*="grid"], tr {
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            /* Ensure the totals section never gets split from the table */
+            #printable-invoice > div:last-child {
+              page-break-before: auto;
+              break-before: auto;
+            }
           </style>
         </head>
         <body>
@@ -30,8 +57,8 @@ export default function InvoiceModal({ order, onClose }) {
             setTimeout(() => {
               window.print();
               window.close();
-            }, 500);
-          </script>
+            }, 600);
+          <\/script>
         </body>
       </html>
     `)

@@ -77,17 +77,42 @@ export default function PharmacySelectModal({ isOpen, onClose }) {
                 }}
                 onClick={() => handleSelect(p)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ 
-                    width: 40, height: 40, borderRadius: 10, 
+                    width: 40, height: 40, borderRadius: 10, flexShrink: 0,
                     background: selectedPharmacy?._id === p._id ? 'var(--primary)' : 'var(--surface-high)', 
                     display: 'flex', alignItems: 'center', justifyContent: 'center' 
                   }}>
                     <span className="material-icons" style={{ color: selectedPharmacy?._id === p._id ? 'white' : 'var(--primary)', fontSize: 20 }}>local_pharmacy</span>
                   </div>
-                  <div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>{p.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{p.location}</div>
+                    {/* Location area */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                      <span className="material-icons" style={{ fontSize: 13, color: 'var(--primary)' }}>location_on</span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>{p.location}</span>
+                    </div>
+                    {/* Full address */}
+                    {p.address && (
+                      <div style={{ fontSize: '0.72rem', color: 'var(--on-surface-variant)', marginTop: 3, lineHeight: 1.4 }}>
+                        {p.address}
+                      </div>
+                    )}
+                    {/* Contact phone */}
+                    {p.contactPhone && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 5 }}>
+                        <span className="material-icons" style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>phone</span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--on-surface-variant)' }}>{p.contactPhone}</span>
+                      </div>
+                    )}
+                    {/* Selected badge */}
+                    {selectedPharmacy?._id === p._id && (
+                      <div style={{ marginTop: 8 }}>
+                        <span style={{ fontSize: '0.7rem', background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>
+                          ✓ Selected
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

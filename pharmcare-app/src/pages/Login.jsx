@@ -57,6 +57,12 @@ export default function Login() {
           }
           navigate(dest[backToFrontRole] || '/home')
         } else {
+          // Only fallback to sandbox if it's a genuine network/connection failure
+          // Do NOT trigger sandbox for 401 (wrong credentials) or 403 (not approved)
+          if (data.message?.includes('ETIMEDOUT') || data.message?.includes('ECONNREFUSED') || data.message?.includes('querySrv')) {
+            console.warn('Database connection failed, falling back to Sandbox Mode:', data.message);
+            throw new Error('Database connection failed'); // Trigger the catch block below
+          }
           setError(data.message || 'Login failed')
         }
       } else {
@@ -90,19 +96,20 @@ export default function Login() {
       console.error('Backend connection failed, returning simulated UI login:', err)
       setIsSandbox(true)
       
-      // Smart simulation based on email patterns
+      // Smart simulation based on email patterns ONLY - never use form chip selection
+      // This prevents users from self-assigning elevated roles
       let simRole = 'customer'
       if (form.email.includes('admin')) simRole = 'superadmin'
       else if (form.email.includes('owner')) simRole = 'owner'
       else if (form.email.includes('pharm')) simRole = 'pharmacist'
       else if (form.email.includes('supp')) simRole = 'supplier'
-      else simRole = form.role // Fallback to whatever chip is selected
+      // Default to 'customer' - never trust the chip selector for role assignment
       
       setRole(simRole, { 
         name: form.name || roles[simRole]?.name || 'Demo User',
         email: form.email,
         role: roles[simRole]?.label,
-        assignedPharmacy: roles[simRole]?.assignedPharmacy || '69dfdba29b7248a1a8bf4ae9'
+        assignedPharmacy: roles[simRole]?.assignedPharmacy || null
       })
       const dest = { 
         superadmin: '/superadmin', 

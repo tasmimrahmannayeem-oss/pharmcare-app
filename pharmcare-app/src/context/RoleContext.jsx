@@ -52,8 +52,12 @@ export function RoleProvider({ children }) {
     localStorage.setItem('userRole', newRole)
     _setRole(newRole)
     if (data) {
-      localStorage.setItem('userData', JSON.stringify(data))
-      _setUserData(data)
+      // Preserve token if the new data doesn't have one (common in Demo switches)
+      const currentToken = data.token || localStorage.getItem('token')
+      const mergedData = { ...data, token: currentToken }
+      
+      localStorage.setItem('userData', JSON.stringify(mergedData))
+      _setUserData(mergedData)
     }
   }
 

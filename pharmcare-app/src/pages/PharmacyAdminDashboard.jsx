@@ -14,7 +14,7 @@ export default function PharmacyAdminDashboard() {
     nearExpiryCount: 0,
     recentSales: [],
     staff: [],
-    branchName: 'Your Branch'
+    branch: null  // full branch object from API
   })
 
   useEffect(() => {
@@ -82,10 +82,16 @@ export default function PharmacyAdminDashboard() {
         avatar: u.role === 'Pharmacist' ? 'medical_services' : 'person'
       })) : []
 
-      // 4. Fetch Branch Name
+      // 4. Fetch Branch details
       const branchRes = await fetch('/api/pharmacies', { headers })
       const branches = await branchRes.json()
-      const currentBranch = Array.isArray(branches) ? branches.find(b => b._id === userData.assignedPharmacy) : null
+      // Match branch by _id — handle both ObjectId strings and populated objects
+      const assignedId = typeof userData.assignedPharmacy === 'object'
+        ? userData.assignedPharmacy?._id
+        : userData.assignedPharmacy
+      const currentBranch = Array.isArray(branches)
+        ? branches.find(b => String(b._id) === String(assignedId))
+        : null
 
       setData({
         todaySales: todayTotal,
@@ -95,7 +101,7 @@ export default function PharmacyAdminDashboard() {
         nearExpiryCount: nearExpiry,
         recentSales: recent,
         staff: staffList,
-        branchName: currentBranch ? currentBranch.name : 'Dhanmondi Branch'
+        branch: currentBranch || null
       })
 
     } catch (err) {
@@ -141,8 +147,27 @@ export default function PharmacyAdminDashboard() {
           <h1 className="page-title">Branch Command Center</h1>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:4 }}>
             <div className="live-dot" />
-            <span style={{ fontSize:'0.875rem', color:'var(--on-surface-variant)' }}>Live overview · {data.branchName} · System Online</span>
+            <span style={{ fontSize:'0.875rem', color:'var(--on-surface-variant)' }}>
+              Live overview · {data.branch ? data.branch.name : 'Loading branch...'} · System Online
+            </span>
           </div>
+          {/* Branch address & contact */}
+          {data.branch && (
+            <div style={{ display:'flex', alignItems:'center', gap:16, marginTop:6, flexWrap:'wrap' }}>
+              {data.branch.address && (
+                <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                  <span className="material-icons" style={{ fontSize:14, color:'var(--primary)' }}>location_on</span>
+                  <span style={{ fontSize:'0.8rem', color:'var(--on-surface-variant)' }}>{data.branch.address}</span>
+                </div>
+              )}
+              {data.branch.contactPhone && (
+                <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                  <span className="material-icons" style={{ fontSize:14, color:'var(--on-surface-variant)' }}>phone</span>
+                  <span style={{ fontSize:'0.8rem', color:'var(--on-surface-variant)' }}>{data.branch.contactPhone}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div style={{ display:'flex', gap:8 }}>
           <button className="btn btn-ghost btn-sm" onClick={fetchAllData}><span className="material-icons" style={{fontSize:16}}>refresh</span></button>
