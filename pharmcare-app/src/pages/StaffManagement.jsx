@@ -21,7 +21,7 @@ export default function StaffManagement() {
     try {
       setLoading(true)
       const res = await fetch('/api/users', {
-        headers: { 'Authorization': `Bearer ${userData?.token}` }
+        headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
       })
       const data = await res.json()
       const staffOnly = Array.isArray(data) ? data.filter(u => u.role !== 'Customer') : []
@@ -56,7 +56,7 @@ export default function StaffManagement() {
         method,
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${userData?.token}`
+          'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}`
         },
         body: JSON.stringify({ 
           ...formData, 
@@ -95,7 +95,7 @@ export default function StaffManagement() {
     try {
       const res = await fetch(`/api/users/${id}`, { 
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${userData?.token}` }
+        headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
       })
       if (res.ok) fetchStaff()
       else alert('Failed to delete staff member')

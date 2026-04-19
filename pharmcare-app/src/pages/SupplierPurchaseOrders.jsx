@@ -1,29 +1,86 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRole } from '../context/RoleContext'
 
-const orders = [
-  { id: 'PO-2024-088', pharmacy: 'Aura — Dhanmondi', items: 'Paracetamol 500mg ×500, Ibuprofen 400mg ×200', value: '৳2,450', date: 'Apr 6, 2026', dueDate: 'Apr 9, 2026', status: 'Delivered', priority: 'Standard' },
-  { id: 'PO-2024-082', pharmacy: 'MedCenter — Uttara', items: 'Amoxicillin 500mg ×300, Metformin 850mg ×400', value: '৳3,820', date: 'Apr 4, 2026', dueDate: 'Apr 8, 2026', status: 'In Transit', priority: 'Urgent' },
-  { id: 'PO-2024-075', pharmacy: 'CityPharm — Banani', items: 'Atorvastatin 40mg ×200', value: '৳1,640', date: 'Apr 1, 2026', dueDate: 'Apr 7, 2026', status: 'Processing', priority: 'Standard' },
-  { id: 'PO-2024-071', pharmacy: 'Aura — Chattogram', items: 'Cetirizine 10mg ×500, Omeprazole ×300', value: '৳4,200', date: 'Mar 28, 2026', dueDate: 'Apr 4, 2026', status: 'Delivered', priority: 'Standard' },
-  { id: 'PO-2024-066', pharmacy: 'HealthCare Plus — Sylhet', items: 'Lisinopril 10mg ×400, Vitamin D ×200', value: '৳2,980', date: 'Mar 25, 2026', dueDate: 'Mar 30, 2026', status: 'Delivered', priority: 'Urgent' },
-]
-
-const statusBadge = { Delivered: 'badge-success', 'In Transit': 'badge-info', Processing: 'badge-warning' }
+const statusBadge = { 'Delivered': 'badge-success', 'Accepted': 'badge-info', 'Requested': 'badge-warning', 'Rejected': 'badge-error' }
 const priorityBadge = { Urgent: 'badge-error', Standard: 'badge-neutral' }
-const nextStatus = { Processing: 'In Transit', 'In Transit': 'Delivered', Delivered: 'Delivered' }
+const nextStatus = { 'Requested': 'Accepted', 'Accepted': 'Delivered', 'Delivered': 'Delivered' }
 
 export default function SupplierPurchaseOrders() {
+  const { userData } = useRole()
   const [filter, setFilter] = useState('All')
-  const [orderList, setOrderList] = useState(orders)
+  const [orderList, setOrderList] = useState([])
+  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ pharmacy: '', items: '', value: '', priority: 'Standard' })
 
+  const fetchOrders = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/suppliers/orders', {
+        headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
+      })
+      const data = await res.json()
+      if (res.ok && Array.isArray(data)) {
+        const formatted = data.map(o => {
+          let value = 0;
+          let itemsText = '';
+          o.items.forEach((item, i) => {
+            if (item.medicine) {
+              value += item.quantity * (item.medicine.purchasePrice || 0);
+              if (i < 2) itemsText += `${item.medicine.name} ×${item.quantity}${i===0 && o.items.length>1?', ':''}`;
+            }
+          });
+          if (o.items.length > 2) itemsText += ` +${o.items.length - 2} more`;
+
+          return {
+            id: `PO-${o._id.toString().slice(-6).toUpperCase()}`,
+            _rawId: o._id,
+            pharmacy: o.pharmacy?.name || 'Unknown Branch',
+            items: itemsText || 'No items',
+            value: `৳${value.toLocaleString()}`,
+            date: new Date(o.createdAt).toLocaleDateString(),
+            dueDate: o.estimatedDeliveryDate ? new Date(o.estimatedDeliveryDate).toLocaleDateString() : 'TBD',
+            status: o.status,
+            priority: o.notes?.toLowerCase().includes('urgent') ? 'Urgent' : 'Standard'
+          }
+        })
+        setOrderList(formatted.reverse())
+      }
+    } catch (err) {
+      console.error('Failed to fetch supplier orders:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchOrders()
+  }, [userData])
+
   const filtered = filter === 'All' ? orderList : orderList.filter(o => o.status === filter)
 
-  const handleUpdate = (id) => {
-    setOrderList(prev => prev.map(o =>
-      o.id === id ? { ...o, status: nextStatus[o.status] || o.status } : o
-    ))
+  const handleUpdate = async (o) => {
+    const nxt = nextStatus[o.status]
+    if (!nxt || nxt === o.status) return
+
+    try {
+      const res = await fetch(`/api/suppliers/orders/${o._rawId}`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ status: nxt })
+      })
+      if (res.ok) {
+        setOrderList(prev => prev.map(item => item._rawId === o._rawId ? { ...item, status: nxt } : item))
+      } else {
+         const data = await res.json()
+         alert(data.message || 'Error updating status')
+      }
+    } catch {
+      alert('Network error updating status')
+    }
   }
 
   const handleInvoice = (o) => {
@@ -64,15 +121,18 @@ export default function SupplierPurchaseOrders() {
         <div className="grid-4" style={{ marginBottom: 24 }}>
           {[
             { label: 'Total Orders', val: orderList.length, icon: 'receipt_long', bg: 'var(--primary-fixed)', ic: 'var(--primary-container)' },
-            { label: 'In Transit', val: orderList.filter(o => o.status === 'In Transit').length, icon: 'local_shipping', bg: 'var(--primary-fixed)', ic: 'var(--primary-container)' },
-            { label: 'Processing', val: orderList.filter(o => o.status === 'Processing').length, icon: 'pending', bg: 'var(--tertiary-fixed)', ic: 'var(--tertiary-container)' },
-            { label: 'Total Value (MTD)', val: '৳15,090', icon: 'payments', bg: 'var(--secondary-fixed)', ic: 'var(--secondary)' },
+            { label: 'Accepted', val: orderList.filter(o => o.status === 'Accepted').length, icon: 'local_shipping', bg: 'var(--primary-fixed)', ic: 'var(--primary-container)' },
+            { label: 'Requested', val: orderList.filter(o => o.status === 'Requested').length, icon: 'pending', bg: 'var(--tertiary-fixed)', ic: 'var(--tertiary-container)' },
+            { label: 'Total Value (MTD)', val: (() => {
+              const total = orderList.reduce((acc, curr) => acc + parseInt(curr.value.replace(/\D/g, '') || 0, 10), 0);
+              return `৳${total.toLocaleString()}`
+            })(), icon: 'payments', bg: 'var(--secondary-fixed)', ic: 'var(--secondary)' },
           ].map(s => (
             <div className="stat-card" key={s.label}>
               <div style={{ width: 40, height: 40, borderRadius: 10, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span className="material-icons" style={{ color: s.ic, fontSize: 22 }}>{s.icon}</span>
               </div>
-              <div className="stat-value" style={{ fontSize: '1.75rem' }}>{s.val}</div>
+              <div className="stat-value" style={{ fontSize: '1.75rem' }}>{loading ? '—' : s.val}</div>
               <div className="stat-label">{s.label}</div>
             </div>
           ))}
@@ -80,7 +140,7 @@ export default function SupplierPurchaseOrders() {
 
         {/* Filter chips */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          {['All', 'Processing', 'In Transit', 'Delivered'].map(f => (
+          {['All', 'Requested', 'Accepted', 'Delivered'].map(f => (
             <button key={f} className={`badge ${filter === f ? 'badge-info' : 'badge-neutral'}`}
               style={{ cursor: 'pointer', padding: '7px 14px', fontSize: '0.8125rem' }} onClick={() => setFilter(f)}>{f}</button>
           ))}
@@ -108,7 +168,7 @@ export default function SupplierPurchaseOrders() {
                         <button
                           className="btn btn-primary btn-sm"
                           disabled={o.status === 'Delivered'}
-                          onClick={() => handleUpdate(o.id)}
+                          onClick={() => handleUpdate(o)}
                         >Update</button>
                         <button className="btn btn-ghost btn-sm" onClick={() => handleInvoice(o)}>Invoice</button>
                       </div>

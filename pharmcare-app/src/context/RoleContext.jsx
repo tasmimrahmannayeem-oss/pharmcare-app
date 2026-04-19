@@ -52,9 +52,16 @@ export function RoleProvider({ children }) {
     localStorage.setItem('userRole', newRole)
     _setRole(newRole)
     if (data) {
-      // Preserve token if the new data doesn't have one (common in Demo switches)
-      const currentToken = data.token || localStorage.getItem('token')
-      const mergedData = { ...data, token: currentToken }
+      // Preserve the user's actual DB details (name, email, _id, token) while applying DEMO role configs (color, icon)
+      // This ensures if a real user 'Nayem' clicks the mock switcher to test 'Store Assistant', they remain 'Nayem'.
+      const existingData = JSON.parse(localStorage.getItem('userData') || '{}')
+      
+      // We apply existingData last so real DB details (like name) ALWAYS override fake demo strings
+      const mergedData = { 
+        ...data, 
+        ...existingData,
+        token: existingData.token || localStorage.getItem('token')
+      }
       
       localStorage.setItem('userData', JSON.stringify(mergedData))
       _setUserData(mergedData)
@@ -64,7 +71,9 @@ export function RoleProvider({ children }) {
   useEffect(() => {
     // 1. Auto-heal missing userData from defaults if needed (Demo/Stale state fix)
     if (!userData?.assignedPharmacy && roles[role]?.assignedPharmacy) {
-      const mergedData = { ...userData, ...roles[role] }
+      // Prioritize real user data over the hardcoded demo roles data! 
+      // This prevents REAL logged-in names getting overwritten by 'Anna Kwak'
+      const mergedData = { ...roles[role], ...userData }
       localStorage.setItem('userData', JSON.stringify(mergedData))
       _setUserData(mergedData)
       console.log('Session auto-healed with pharmacy:', mergedData.assignedPharmacy)

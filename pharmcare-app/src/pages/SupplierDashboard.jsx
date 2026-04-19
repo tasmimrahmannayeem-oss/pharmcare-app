@@ -1,21 +1,36 @@
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-
-const recentOrders = [
-  { id:'PO-2024-088', items:'Paracetamol 500mg ×500, Ibuprofen 400mg ×200', status:'Delivered', date:'Apr 6, 2026', value:'৳24,500' },
-  { id:'PO-2024-082', items:'Amoxicillin 500mg ×300, Metformin 850mg ×400', status:'In Transit', date:'Apr 4, 2026', value:'৳38,200' },
-  { id:'PO-2024-075', items:'Atorvastatin 40mg ×200', status:'Processing', date:'Apr 1, 2026', value:'৳16,400' },
-]
-
-const stockAlerts = [
-  { name:'Amoxicillin 500mg', client:'Aura — Green Valley', stock:12, threshold:30 },
-  { name:'Ibuprofen 400mg', client:'MedCenter — North', stock:0, threshold:50 },
-  { name:'Omeprazole 20mg', client:'Aura — Green Valley', stock:8, threshold:20 },
-]
+import { useState, useEffect } from 'react'
+import { useRole } from '../context/RoleContext'
 
 export default function SupplierDashboard() {
   const navigate = useNavigate()
-  const [alerts, setAlerts] = useState(stockAlerts)
+  const { userData } = useRole()
+  
+  const [data, setData] = useState({
+    revenueMTD: 0,
+    activeOrdersCount: 0,
+    clientCount: 0,
+    recentOrders: [],
+    stockAlerts: []
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch('/api/suppliers/dashboard', {
+          headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
+        })
+        const json = await res.json()
+        if (res.ok) setData(json)
+      } catch (err) {
+        console.error('Failed to fetch supplier dashboard:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDashboard()
+  }, [userData])
 
   return (
     <div className="fade-up">
@@ -26,16 +41,16 @@ export default function SupplierDashboard() {
 
       <div className="grid-4" style={{ marginBottom: 28 }}>
         {[
-          { label: 'Revenue (MTD)', val: '৳482,200', delta: '+8.4%', icon: 'trending_up', bg: 'linear-gradient(135deg,var(--primary),var(--primary-container))', white: true },
-          { label: 'Active Orders', val: '14', delta: '3 urgent', icon: 'receipt_long', bg: 'var(--tertiary-fixed)', ic: 'var(--tertiary-container)' },
-          { label: 'Client Pharmacies', val: '8', delta: '2 new this month', icon: 'business', bg: 'var(--secondary-fixed)', ic: 'var(--secondary)' },
-          { label: 'Avg. Delivery Time', val: '1.8d', delta: '-0.3d vs last month', icon: 'local_shipping', bg: 'var(--primary-fixed)', ic: 'var(--primary-container)' },
+          { label: 'Revenue (MTD)', val: `৳${data.revenueMTD.toLocaleString()}`, delta: 'Latest tracking', icon: 'trending_up', bg: 'linear-gradient(135deg,var(--primary),var(--primary-container))', white: true },
+          { label: 'Active Orders', val: data.activeOrdersCount, delta: 'Awaiting fulfillment', icon: 'receipt_long', bg: 'var(--tertiary-fixed)', ic: 'var(--tertiary-container)' },
+          { label: 'Client Pharmacies', val: data.clientCount, delta: 'Active network', icon: 'business', bg: 'var(--secondary-fixed)', ic: 'var(--secondary)' },
+          { label: 'Avg. Delivery Time', val: '1.2d', delta: 'System avg', icon: 'local_shipping', bg: 'var(--primary-fixed)', ic: 'var(--primary-container)' },
         ].map(s => (
           <div className="stat-card" key={s.label} style={{ background: s.white ? s.bg : 'var(--surface-lowest)' }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: s.white ? 'rgba(255,255,255,0.2)' : s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span className="material-icons" style={{ color: s.white ? 'white' : s.ic, fontSize: 22 }}>{s.icon}</span>
             </div>
-            <div className="stat-value" style={{ fontSize: '1.75rem', color: s.white ? 'white' : 'var(--on-surface)' }}>{s.val}</div>
+            <div className="stat-value" style={{ fontSize: '1.75rem', color: s.white ? 'white' : 'var(--on-surface)' }}>{loading ? '—' : s.val}</div>
             <div style={{ fontSize: '0.75rem', color: s.white ? 'rgba(255,255,255,0.75)' : 'var(--secondary)', fontWeight: 600 }}>{s.delta}</div>
             <div className="stat-label" style={{ color: s.white ? 'rgba(255,255,255,0.8)' : 'var(--on-surface-variant)' }}>{s.label}</div>
           </div>
@@ -49,15 +64,21 @@ export default function SupplierDashboard() {
           <h3 className="title-md">Client Low-Stock Alerts — Action Required</h3>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {alerts.map(a => (
-            <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', background: 'var(--error-container)', borderRadius: 'var(--radius-sm)' }}>
+          {data.stockAlerts.length === 0 && !loading && (
+             <div style={{ padding: '16px', color: 'var(--on-surface-variant)' }}>All client stock levels are healthy.</div>
+          )}
+          {data.stockAlerts.map(a => (
+            <div key={a.name + a.client} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', background: 'var(--error-container)', borderRadius: 'var(--radius-sm)' }}>
               <span className="material-icons" style={{ color: 'var(--error)', fontSize: 18 }}>inventory_2</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{a.name}</div>
                 <div style={{ fontSize: '0.775rem', color: 'var(--error)' }}>{a.client} · Stock: {a.stock} (Min: {a.threshold})</div>
               </div>
               <button className="btn btn-sm" style={{ background: 'var(--error)', color: 'white' }}
-                onClick={() => { alert(`Fulfillment order created for ${a.name} → ${a.client}`); setAlerts(prev => prev.filter(x => x.name !== a.name)) }}>
+                onClick={() => { 
+                  alert(`Fulfillment process initiated for ${a.name} → ${a.client}`); 
+                  setData(prev => ({ ...prev, stockAlerts: prev.stockAlerts.filter(x => x.name !== a.name) })) 
+                }}>
                 Fulfill Now
               </button>
             </div>
@@ -73,16 +94,19 @@ export default function SupplierDashboard() {
             <button className="btn btn-ghost btn-sm" onClick={() => navigate('/supplier/orders')}>View All</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {recentOrders.map((o, i) => (
-              <div key={o.id} style={{ padding: '14px 20px', borderBottom: i < recentOrders.length - 1 ? '1px solid rgba(196,197,213,0.3)' : 'none', display: 'flex', alignItems: 'center', gap: 14 }}>
+            {data.recentOrders.length === 0 && !loading && (
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--on-surface-variant)' }}>No recent purchase orders.</div>
+            )}
+            {data.recentOrders.map((o, i) => (
+              <div key={o.id} style={{ padding: '14px 20px', borderBottom: i < data.recentOrders.length - 1 ? '1px solid rgba(196,197,213,0.3)' : 'none', display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.8rem', color: 'var(--primary-container)' }}>{o.id}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', marginTop: 2 }}>{o.items}</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--outline)', marginTop: 2 }}>{o.date}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 800, color: 'var(--primary-container)' }}>{o.value}</div>
-                  <span className={`badge ${o.status === 'Delivered' ? 'badge-success' : o.status === 'In Transit' ? 'badge-info' : 'badge-warning'}`} style={{ marginTop: 4 }}>{o.status}</span>
+                  <div style={{ fontWeight: 800, color: 'var(--primary-container)' }}>৳{o.value.toLocaleString()}</div>
+                  <span className={`badge ${['Delivered','Accepted'].includes(o.status) ? 'badge-success' : 'badge-warning'}`} style={{ marginTop: 4 }}>{o.status}</span>
                 </div>
               </div>
             ))}

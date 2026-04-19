@@ -77,8 +77,8 @@ export default function PharmacyAdminDashboard() {
       const staffList = Array.isArray(users) ? users.slice(0, 5).map(u => ({
         name: u.name,
         role: u.role,
-        status: 'On Shift', // Placeholder for actual shift logic
-        tasks: Math.floor(Math.random() * 20), // Placeholder
+        status: u.isApproved ? 'Active' : 'Pending', 
+        tasks: u.role === 'Pharmacist' ? dailyOrders.filter(o => o.status === 'Pending').length : dailyOrders.filter(o => o.status === 'Confirmed' || o.status === 'Being Processed').length,
         avatar: u.role === 'Pharmacist' ? 'medical_services' : 'person'
       })) : []
 

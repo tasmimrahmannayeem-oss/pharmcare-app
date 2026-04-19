@@ -31,7 +31,9 @@ export default function PrescriptionQueue() {
   const fetchOrders = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/orders')
+      const res = await fetch('/api/orders', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
       const data = await res.json()
       const formatted = Array.isArray(data) ? data.map(o => ({
         id: o._id,
