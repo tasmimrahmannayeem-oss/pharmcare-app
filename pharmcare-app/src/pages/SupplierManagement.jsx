@@ -131,7 +131,15 @@ export default function SupplierManagement() {
               <thead><tr><th>Supplier</th><th>Email</th><th>Contact</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="5" style={{ textAlign:'center', padding:40 }}>Loading supplier data...</td></tr>
+                  [1,2,3,4].map(i => (
+                    <tr key={i}>
+                      <td><div style={{ display:'flex', alignItems:'center', gap:10 }}><div className="skeleton skeleton-avatar" style={{width:36, height:36, borderRadius:8}} /><div className="skeleton skeleton-text short" style={{margin:0}} /></div></td>
+                      <td><div className="skeleton skeleton-text" style={{margin:0}} /></td>
+                      <td><div className="skeleton skeleton-text short" style={{margin:0}} /></td>
+                      <td><div className="skeleton skeleton-text" style={{margin:0, width:60}} /></td>
+                      <td><div className="skeleton skeleton-text" style={{margin:0, width:40}} /></td>
+                    </tr>
+                  ))
                 ) : filtered.length === 0 ? (
                   <tr><td colSpan="5" style={{ textAlign:'center', padding:40 }}>No suppliers found.</td></tr>
                 ) : filtered.map(s => (

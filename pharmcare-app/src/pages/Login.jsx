@@ -39,34 +39,23 @@ export default function Login() {
         
         if (res.ok) {
           localStorage.setItem('token', data.token)
-          // Map backend role back to frontend keys for the UI logic
           const backToFrontRole = Object.keys(roleMap).find(key => roleMap[key] === data.role) || 'customer'
-          
-          // CRITICAL: Merge token into user data so it is available in useRole().userData
-          // data is the flat response from backend (not data.user)
           const userWithToken = { ...data, token: data.token }
           setRole(backToFrontRole, userWithToken)
           
           const dest = { 
-            superadmin: '/superadmin', 
-            owner: '/admin', 
-            pharmacist: '/prescriptions', 
-            assistant: '/pos', 
-            customer: '/home', 
-            supplier: '/supplier/dashboard' 
+            superadmin: '/superadmin', owner: '/admin', pharmacist: '/prescriptions', 
+            assistant: '/pos', customer: '/home', supplier: '/supplier/dashboard' 
           }
           navigate(dest[backToFrontRole] || '/home')
         } else {
-          // Only fallback to sandbox if it's a genuine network/connection failure
-          // Do NOT trigger sandbox for 401 (wrong credentials) or 403 (not approved)
           if (data.message?.includes('ETIMEDOUT') || data.message?.includes('ECONNREFUSED') || data.message?.includes('querySrv')) {
             console.warn('Database connection failed, falling back to Sandbox Mode:', data.message);
-            throw new Error('Database connection failed'); // Trigger the catch block below
+            throw new Error('Database connection failed');
           }
           setError(data.message || 'Login failed')
         }
       } else {
-        // Registration
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -85,7 +74,7 @@ export default function Login() {
             setRole(form.role)
             navigate('/home')
           } else {
-            alert(data.message) // Approval message
+            alert(data.message)
             setTab('login')
           }
         } else {
@@ -96,34 +85,21 @@ export default function Login() {
       console.error('Backend connection failed, returning simulated UI login:', err)
       setIsSandbox(true)
       
-      // Smart simulation based on email patterns ONLY - never use form chip selection
-      // This prevents users from self-assigning elevated roles
       let simRole = 'customer'
       if (form.email.includes('admin')) simRole = 'superadmin'
       else if (form.email.includes('owner')) simRole = 'owner'
       else if (form.email.includes('pharm')) simRole = 'pharmacist'
       else if (form.email.includes('supp')) simRole = 'supplier'
-      // Default to 'customer' - never trust the chip selector for role assignment
       
       setRole(simRole, { 
-        name: form.name || roles[simRole]?.name || 'Demo User',
+        name: form.name || 'Demo User',
         email: form.email,
-        role: roles[simRole]?.label,
-        assignedPharmacy: roles[simRole]?.assignedPharmacy || null
+        role: simRole,
+        assignedPharmacy: null
       })
-      const dest = { 
-        superadmin: '/superadmin', 
-        owner: '/admin', 
-        pharmacist: '/prescriptions', 
-        assistant: '/pos', 
-        customer: '/home', 
-        supplier: '/supplier/dashboard' 
-      }
+      const dest = { superadmin: '/superadmin', owner: '/admin', pharmacist: '/prescriptions', assistant: '/pos', customer: '/home', supplier: '/supplier/dashboard' }
       
-      // Small timeout to allow state to propagate
-      setTimeout(() => {
-        navigate(dest[simRole] || '/home')
-      }, 100)
+      setTimeout(() => navigate(dest[simRole] || '/home'), 100)
     } finally {
       setLoading(false)
     }
@@ -133,24 +109,37 @@ export default function Login() {
     <div className="login-page">
       {/* Left panel */}
       <div className="login-panel-left">
+        <div className="particles">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div key={i} className="particle" style={{
+              width: Math.random() * 8 + 2 + 'px',
+              height: Math.random() * 8 + 2 + 'px',
+              left: Math.random() * 100 + '%',
+              top: Math.random() * 100 + '%',
+              animationDuration: Math.random() * 10 + 15 + 's',
+              animationDelay: Math.random() * 5 + 's'
+            }} />
+          ))}
+        </div>
+
         <div className="login-brand">
           <div className="login-brand-icon">
             <span className="material-icons">medication</span>
           </div>
           <div>
             <div className="login-brand-name">SPMIS</div>
-            <div className="login-brand-tag">Smart Pharmacy Management Information System</div>
+            <div className="login-brand-tag">Pharmacy Management System</div>
           </div>
         </div>
 
         <div className="login-hero">
-          <h1 className="login-hero-title">Optimizing Pharmacy Intelligence</h1>
+          <h1 className="login-hero-title">Optimizing <br/>Pharmacy Intelligence</h1>
           <p className="login-hero-sub">
-            The Clinical Curator for modern healthcare management. Seamlessly manage inventory, orders, and clinical data in one secure environment.
+            The Clinical Curator for modern healthcare management. Seamlessly manage inventory, orders, and clinical data.
           </p>
-          <blockquote className="login-quote">
+          <div className="login-quote typewriter-tag">
             "Precision in every dose, clarity in every report."
-          </blockquote>
+          </div>
         </div>
 
         <div className="login-features">
@@ -158,10 +147,9 @@ export default function Login() {
             { icon: 'inventory_2', text: 'Real-time Inventory Tracking' },
             { icon: 'description', text: 'Digital Prescription Management' },
             { icon: 'analytics', text: 'Sales & Compliance Analytics' },
-            { icon: 'shield', text: 'HIPAA-Compliant & Secure' },
           ].map(f => (
             <div className="login-feature-item" key={f.text}>
-              <span className="material-icons" style={{ color: 'var(--secondary-fixed)', fontSize: 20 }}>{f.icon}</span>
+              <span className="material-icons">{f.icon}</span>
               <span>{f.text}</span>
             </div>
           ))}
@@ -189,55 +177,57 @@ export default function Login() {
             }}>Register</button>
           </div>
 
-          {isSandbox && (
-            <div style={{ background: '#fff3e0', color: '#e65100', padding: '10px 14px', borderRadius: 8, fontSize: '0.8rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #ffe0b2' }}>
-              <span className="material-icons" style={{ fontSize: 18 }}>science</span>
+          {tab === 'register' && (
+            <div className="tab-pane" style={{ background: 'var(--primary-fixed)', color: 'var(--primary-container)', padding: '12px 14px', borderRadius: 8, fontSize: '0.8125rem', display: 'flex', alignItems: 'flex-start', gap: 10, border: '1px solid var(--primary-fixed-dim)' }}>
+              <span className="material-icons" style={{ fontSize: 18, marginTop: 2 }}>info</span>
               <div>
-                <strong>Sandbox Mode:</strong> Backend server offline. Using simulated credentials.
+                <strong>Want to register your Pharmacy?</strong><br/>
+                Please contact our team at <a href="mailto:admin@spmis.com" style={{fontWeight: 700, textDecoration: 'underline'}}>admin@spmis.com</a> to set up your business account.
               </div>
             </div>
           )}
 
+          {isSandbox && (
+            <div className="error-shake" style={{ background: '#fff3e0', color: '#e65100', padding: '10px 14px', borderRadius: 8, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #ffe0b2' }}>
+              <span className="material-icons" style={{ fontSize: 18 }}>science</span>
+              <div><strong>Sandbox Mode:</strong> Backend server offline. Using simulated credentials.</div>
+            </div>
+          )}
+
           {error && (
-            <div style={{ background: '#fce4e4', color: '#c62828', padding: '10px 14px', borderRadius: 8, fontSize: '0.875rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="error-shake" style={{ background: '#fce4e4', color: '#c62828', padding: '10px 14px', borderRadius: 8, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: 10 }}>
               <span className="material-icons" style={{ fontSize: 18 }}>error</span>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="login-form">
+          <form onSubmit={handleSubmit} className="login-form tab-pane" key={tab}>
             {tab === 'register' && (
-              <div className="input-group">
-                <label className="input-label">Full Name</label>
-                <div className="input-icon-wrap">
-                  <span className="material-icons icon">badge</span>
-                  <input className="input" placeholder="Dr. Jane Smith" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
-                </div>
+              <div className={`floating-group ${form.name ? 'has-value' : ''}`}>
+                <input id="name" className="floating-input" type="text" placeholder=" " value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+                <span className="material-icons floating-icon">badge</span>
+                <label className="floating-label" htmlFor="name">Full Name</label>
               </div>
             )}
 
-            <div className="input-group">
-              <label className="input-label">Email Address</label>
-              <div className="input-icon-wrap">
-                <span className="material-icons icon">email</span>
-                <input className="input" type="email" placeholder="you@pharmcare.com" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
-              </div>
+            <div className={`floating-group ${form.email ? 'has-value' : ''}`}>
+              <input id="email" className="floating-input" type="email" placeholder=" " value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+              <span className="material-icons floating-icon">email</span>
+              <label className="floating-label" htmlFor="email">Email Address</label>
             </div>
 
-            <div className="input-group">
-              <label className="input-label">Password</label>
-              <div className="input-icon-wrap" style={{ position: 'relative' }}>
-                <span className="material-icons icon">lock</span>
-                <input className="input" type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} style={{ paddingRight: 40 }} />
-                <button type="button" tabIndex="-1" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--on-surface-variant)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
-                  <span className="material-icons" style={{ fontSize: 20 }}>{showPassword ? 'visibility_off' : 'visibility'}</span>
-                </button>
-              </div>
+            <div className={`floating-group ${form.password ? 'has-value' : ''}`}>
+              <input id="password" className="floating-input" type={showPassword ? 'text' : 'password'} placeholder=" " value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} />
+              <span className="material-icons floating-icon">lock</span>
+              <label className="floating-label" htmlFor="password">Password</label>
+              <button type="button" tabIndex="-1" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                <span className="material-icons">{showPassword ? 'visibility_off' : 'visibility'}</span>
+              </button>
             </div>
 
             {/* Role selector */}
-            <div className="input-group">
-              <label className="input-label">Access Role</label>
+            <div className="role-select-box">
+              <label className="role-label-text">Access Role</label>
               <div className="role-select-grid">
                 {[
                   { key: 'customer', icon: 'person', label: 'Customer' },
@@ -254,42 +244,43 @@ export default function Login() {
                     className={`role-chip ${form.role === r.key ? 'active' : ''}`}
                     onClick={() => setForm(p => ({ ...p, role: r.key }))}
                   >
-                    <span className="material-icons" style={{ fontSize: 16 }}>{r.icon}</span>
+                    <span className="material-icons">{r.icon}</span>
                     {r.label}
                   </button>
                 ))}
               </div>
             </div>
 
-          {tab === 'login' && (
-            <div style={{ textAlign: 'right', marginTop: -4 }}>
-              <button 
-                type="button" 
-                className="btn btn-ghost" 
-                style={{ padding: '4px 0', fontSize: '0.875rem' }}
-                onClick={() => alert("Forgot password functionality will be implemented soon.")}
-              >
-                Forgot Password?
-              </button>
-            </div>
-          )}
+            {tab === 'login' && (
+              <div style={{ textAlign: 'right', marginTop: -4 }}>
+                <button 
+                  type="button" 
+                  className="btn btn-ghost" 
+                  style={{ padding: '4px 0', fontSize: '0.875rem' }}
+                  onClick={() => alert("Forgot password functionality will be implemented soon.")}
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
 
-            <button type="submit" className="btn btn-primary w-full btn-lg" style={{ marginTop: 8 }} disabled={loading}>
-              <span className="material-icons">{loading ? 'sync' : 'login'}</span>
+            <button type="submit" className="btn-cta" disabled={loading}>
+              <span className={`material-icons ${loading ? 'spinner' : ''}`}>{loading ? 'sync' : 'login'}</span>
               {loading ? 'Authenticating...' : (tab === 'login' ? 'Sign In to SPMIS' : 'Create Account')}
             </button>
           </form>
 
-          <p className="login-footer-text">
-            {tab === 'login' ? "Don't have an account? " : 'Already registered? '}
-            <button className="btn-ghost" style={{ padding: 0, fontWeight: 600, color: 'var(--primary-container)', fontSize: 'inherit' }} onClick={() => setTab(tab === 'login' ? 'register' : 'login')}>
-              {tab === 'login' ? 'Register' : 'Sign In'}
-            </button>
-          </p>
-
-          <p className="login-disclaimer">
-            By continuing, you agree to our Terms of Service and Privacy Policy. SPMIS is HIPAA-compliant.
-          </p>
+          <div>
+            <p className="login-footer-text" style={{ marginBottom: 12 }}>
+              {tab === 'login' ? "Don't have an account? " : 'Already registered? '}
+              <button className="btn-ghost" style={{ padding: 0, fontWeight: 600, color: 'var(--primary-container)', fontSize: 'inherit' }} onClick={() => setTab(tab === 'login' ? 'register' : 'login')}>
+                {tab === 'login' ? 'Register' : 'Sign In'}
+              </button>
+            </p>
+            <p className="login-disclaimer">
+              By continuing, you agree to our Terms of Service and Privacy Policy.
+            </p>
+          </div>
         </div>
       </div>
     </div>

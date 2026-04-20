@@ -146,7 +146,20 @@ export default function StaffManagement() {
         </div>
 
         {loading ? (
-          <div className="card text-center" style={{ padding: 40 }}>Loading team details...</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:16 }}>
+            {[1,2,3,4,5,6].map(i => (
+              <div key={i} className="card" style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                  <div className="skeleton skeleton-avatar" style={{width:48,height:48}} />
+                  <div style={{ flex:1 }}>
+                    <div className="skeleton skeleton-text" />
+                    <div className="skeleton skeleton-text short" style={{marginBottom:0}} />
+                  </div>
+                </div>
+                <div className="skeleton" style={{ height: 60, width: '100%' }} />
+              </div>
+            ))}
+          </div>
         ) : (
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:16 }}>
             {filtered.map(s => (

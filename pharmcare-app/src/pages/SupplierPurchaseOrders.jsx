@@ -132,7 +132,7 @@ export default function SupplierPurchaseOrders() {
               <div style={{ width: 40, height: 40, borderRadius: 10, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span className="material-icons" style={{ color: s.ic, fontSize: 22 }}>{s.icon}</span>
               </div>
-              <div className="stat-value" style={{ fontSize: '1.75rem' }}>{loading ? '—' : s.val}</div>
+              <div className="stat-value" style={{ fontSize: '1.75rem' }}>{loading ? <div className="skeleton" style={{ height:28, width: 40, borderRadius: 4 }} /> : s.val}</div>
               <div className="stat-label">{s.label}</div>
             </div>
           ))}
@@ -153,7 +153,13 @@ export default function SupplierPurchaseOrders() {
                 <tr><th>PO ID</th><th>Pharmacy</th><th>Items</th><th>Value</th><th>Order Date</th><th>Due Date</th><th>Priority</th><th>Status</th><th>Actions</th></tr>
               </thead>
               <tbody>
-                {filtered.map(o => (
+                {loading ? (
+                  [1,2,3,4].map(i => (
+                    <tr key={i}>
+                      {Array.from({length: 9}).map((_, j) => <td key={j}><div className="skeleton skeleton-text" style={{ margin: 0 }} /></td>)}
+                    </tr>
+                  ))
+                ) : filtered.map(o => (
                   <tr key={o.id}>
                     <td style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.875rem', color: 'var(--primary-container)' }}>{o.id}</td>
                     <td style={{ fontWeight: 600 }}>{o.pharmacy}</td>

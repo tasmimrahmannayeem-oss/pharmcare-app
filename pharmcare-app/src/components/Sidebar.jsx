@@ -44,29 +44,44 @@ const navConfig = {
   ],
 }
 
-export default function Sidebar() {
+export default function Sidebar({ isCollapsed, toggleCollapse }) {
   const { role, roles } = useRole()
   const navigate = useNavigate()
   const items = navConfig[role] || navConfig.customer
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon">
           <span className="material-icons">medication</span>
         </div>
-        <div>
-          <div className="sidebar-logo-name">SPMIS</div>
-          <div className="sidebar-logo-tag">Pharmacy System</div>
-        </div>
+        {!isCollapsed && (
+          <div>
+            <div className="sidebar-logo-name">SPMIS</div>
+            <div className="sidebar-logo-tag">Pharmacy System</div>
+          </div>
+        )}
+        <button 
+          className="btn-ghost" 
+          style={{ marginLeft: isCollapsed ? 0 : 'auto', padding: isCollapsed ? 0 : 4, color: 'var(--on-surface-variant)' }} 
+          onClick={toggleCollapse}
+        >
+          <span className="material-icons">{isCollapsed ? 'menu' : 'menu_open'}</span>
+        </button>
       </div>
 
       {/* Role chip */}
-      <div className="sidebar-role-chip">
-        <span className="material-icons" style={{ fontSize: 16 }}>{roles[role].icon}</span>
-        <span>{roles[role].label}</span>
-      </div>
+      {!isCollapsed ? (
+        <div className="sidebar-role-chip">
+          <span className="material-icons" style={{ fontSize: 16 }}>{roles[role].icon}</span>
+          <span>{roles[role].label}</span>
+        </div>
+      ) : (
+        <div className="sidebar-role-chip collapsed" title={roles[role].label}>
+          <span className="material-icons" style={{ fontSize: 18 }}>{roles[role].icon}</span>
+        </div>
+      )}
 
       {/* Nav */}
       <nav className="sidebar-nav">
@@ -75,18 +90,24 @@ export default function Sidebar() {
             key={item.to}
             to={item.to}
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            title={isCollapsed ? item.label : undefined}
           >
             <span className="material-icons sidebar-link-icon">{item.icon}</span>
-            <span className="sidebar-link-label">{item.label}</span>
+            {!isCollapsed && <span className="sidebar-link-label">{item.label}</span>}
           </NavLink>
         ))}
       </nav>
 
       {/* Bottom: Logout */}
       <div className="sidebar-bottom">
-        <button className="sidebar-link w-full" onClick={() => { localStorage.clear(); navigate('/'); }}>
+        <button 
+          className="sidebar-link w-full" 
+          onClick={() => { localStorage.clear(); navigate('/'); }}
+          title={isCollapsed ? "Sign Out" : undefined}
+          style={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}
+        >
           <span className="material-icons sidebar-link-icon">logout</span>
-          <span className="sidebar-link-label">Sign Out</span>
+          {!isCollapsed && <span className="sidebar-link-label">Sign Out</span>}
         </button>
       </div>
     </aside>
