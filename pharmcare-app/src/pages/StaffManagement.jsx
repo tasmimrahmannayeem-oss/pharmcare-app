@@ -24,7 +24,7 @@ export default function StaffManagement() {
         headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
       })
       const data = await res.json()
-      const staffOnly = Array.isArray(data) ? data.filter(u => u.role !== 'Customer') : []
+      const staffOnly = Array.isArray(data) ? data.filter(u => u.role !== 'Customer' && u.role !== 'Supplier') : []
       setTeam(staffOnly)
     } catch (err) {
       console.error('Failed to fetch staff', err)

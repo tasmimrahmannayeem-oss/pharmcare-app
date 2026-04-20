@@ -9,6 +9,7 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [pharmacyName, setPharmacyName] = useState('')
   const [formData, setFormData] = useState({
     name: '', genericName: '', batchNumber: '', stockQuantity: 0,
     purchasePrice: 0, sellPrice: 0, manufacturer: '',
@@ -17,6 +18,7 @@ export default function Inventory() {
 
   useEffect(() => {
     fetchInventory()
+    fetchPharmacyName()
   }, [])
 
   const fetchInventory = async () => {
@@ -31,6 +33,30 @@ export default function Inventory() {
       console.error('Failed to fetch inventory', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchPharmacyName = async () => {
+    if (!userData?.assignedPharmacy) return
+    const pharmacyId = typeof userData.assignedPharmacy === 'object' 
+      ? userData.assignedPharmacy._id 
+      : userData.assignedPharmacy;
+      
+    if (!pharmacyId) return;
+
+    try {
+      const res = await fetch(`/api/pharmacies/${pharmacyId}`, {
+        headers: { 'Authorization': `Bearer ${userData?.token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setPharmacyName(data.name || '')
+      } else {
+        setPharmacyName('Unknown')
+      }
+    } catch (err) {
+      console.error('Failed to fetch pharmacy name', err)
+      setPharmacyName('Unknown')
     }
   }
 
@@ -153,7 +179,7 @@ export default function Inventory() {
           <div className="page-header" style={{ marginBottom:0 }}>
             <h1 className="page-title">Inventory Management</h1>
             <p className="page-subtitle">
-              Branch: {userData?.assignedPharmacy ? 'Dhanmondi (Assigned)' : 'Not Assigned'} · {inventory.length} SKUs tracked
+              Branch: {pharmacyName ? `${pharmacyName} (Assigned)` : userData?.assignedPharmacy ? 'Loading...' : 'Not Assigned'} · {inventory.length} SKUs tracked
             </p>
           </div>
           <div style={{ display:'flex', gap:8 }}>

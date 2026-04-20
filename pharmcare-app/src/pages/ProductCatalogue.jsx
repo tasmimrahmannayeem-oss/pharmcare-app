@@ -11,6 +11,7 @@ export default function ProductCatalogue() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
   const [cat, setCat] = useState('All')
+  const [manufacturer, setManufacturer] = useState('All')
   const [showRxModal, setShowRxModal] = useState(false)
   const [pendingItem, setPendingItem] = useState(null)
 
@@ -39,11 +40,6 @@ export default function ProductCatalogue() {
   }
 
   const handleAddToCart = (p) => {
-    if (p.requiresPrescription && !prescriptionFile) {
-      setPendingItem(p)
-      setShowRxModal(true)
-      return
-    }
     addToCart(p)
     alert(`${p.name} added to cart!`)
   }
@@ -71,9 +67,15 @@ export default function ProductCatalogue() {
   }
 
   const cats = ['All', 'Antibiotic', 'Pain Relief', 'Diabetes', 'Allergy', 'Cardio', 'Supplements']
-  const filtered = products.filter(p => 
-    cat === 'All' || (p.genericName && p.genericName.toLowerCase().includes(cat.toLowerCase()))
-  )
+
+  // Collect unique manufacturers from loaded products
+  const manufacturers = ['All', ...Array.from(new Set(products.map(p => p.manufacturer).filter(Boolean))).sort()]
+
+  const filtered = products.filter(p => {
+    const catMatch = cat === 'All' || (p.genericName && p.genericName.toLowerCase().includes(cat.toLowerCase()))
+    const mfgMatch = manufacturer === 'All' || p.manufacturer === manufacturer
+    return catMatch && mfgMatch
+  })
 
   return (
     <>
@@ -87,6 +89,25 @@ export default function ProductCatalogue() {
             <span className="material-icons" style={{fontSize:18}}>{prescriptionFile ? 'check_circle' : 'history_edu'}</span> 
             {prescriptionFile ? 'Rx Uploaded' : 'New Rx'}
           </button>
+        </div>
+
+        {/* Manufacturer filter bar */}
+        <div style={{ marginBottom:16 }}>
+          <div style={{ fontSize:'0.8125rem', fontWeight:600, color:'var(--on-surface-variant)', marginBottom:8, display:'flex', alignItems:'center', gap:6 }}>
+            <span className="material-icons" style={{fontSize:16}}>factory</span>
+            Filter by Company
+          </div>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            {manufacturers.map(m => (
+              <button key={m}
+                onClick={() => setManufacturer(m)}
+                className={`badge ${manufacturer === m ? 'badge-info' : 'badge-neutral'}`}
+                style={{ cursor:'pointer', padding:'6px 14px', fontSize:'0.8125rem', fontWeight: manufacturer === m ? 700 : 500 }}
+              >
+                {m === 'All' ? '🏭 All Companies' : m}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Category chips */}
@@ -122,8 +143,14 @@ export default function ProductCatalogue() {
                 </div>
                 <div style={{ padding:'16px 18px', display:'flex', flexDirection:'column', gap:8 }}>
                   <div>
-                    <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)', fontWeight:500 }}>{p.genericName || 'Medicine'}</div>
-                    <div style={{ fontWeight:700, fontSize:'0.9375rem', marginTop:2 }}>{p.name}</div>
+                    <div style={{ fontWeight:700, fontSize:'1rem' }}>{p.name}</div>
+                    <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)', marginTop:2 }}>{p.genericName || ''}</div>
+                    {p.manufacturer && (
+                      <div style={{ fontSize:'0.72rem', color:'var(--outline)', marginTop:4, display:'flex', alignItems:'center', gap:4 }}>
+                        <span className="material-icons" style={{fontSize:12}}>factory</span>
+                        {p.manufacturer}
+                      </div>
+                    )}
                   </div>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                     <span style={{ fontFamily:'var(--font-headline)', fontSize:'1.25rem', fontWeight:800, color:'var(--primary-container)' }}>৳{(p.sellPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>

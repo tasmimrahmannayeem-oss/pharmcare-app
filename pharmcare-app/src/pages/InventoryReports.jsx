@@ -12,7 +12,31 @@ const expiring = [
   { name:'Codeine Syrup', qty:6, expiry:'Apr 25, 2026', days:17 },
 ]
 
+import { useState, useEffect } from 'react'
+import { useRole } from '../context/RoleContext'
+
 export default function InventoryReports() {
+  const { userData } = useRole()
+  const [pharmacyName, setPharmacyName] = useState('')
+
+  useEffect(() => {
+    const fetchPharmacyName = async () => {
+      if (!userData?.assignedPharmacy) return;
+      const pharmacyId = typeof userData.assignedPharmacy === 'object' ? userData.assignedPharmacy._id : userData.assignedPharmacy;
+      if (!pharmacyId) return;
+      try {
+        const res = await fetch(`/api/pharmacies/${pharmacyId}`, {
+          headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setPharmacyName(data.name || '')
+        }
+      } catch (err) {}
+    };
+    fetchPharmacyName();
+  }, [userData])
+
   const handleExport = () => {
     window.print()
   }
@@ -35,7 +59,7 @@ export default function InventoryReports() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
         <div className="page-header" style={{ marginBottom:0 }}>
           <h1 className="page-title">Inventory Reports</h1>
-          <p className="page-subtitle">April 2026 · Dhanmondi Branch</p>
+          <p className="page-subtitle">April 2026 · {pharmacyName || 'Assigned Branch'}</p>
         </div>
         <div style={{ display:'flex', gap:8 }} className="no-print">
           <button className="btn btn-ghost btn-sm"><span className="material-icons" style={{fontSize:16}}>date_range</span> Apr 2026</button>

@@ -48,14 +48,6 @@ export default function Checkout() {
   const total = subtotal + delivery + tax
 
   const handlePlaceOrder = async () => {
-    // Basic validation for Rx
-    const needsRx = cartItems.some(i => i.requiresPrescription)
-    if (needsRx && !prescriptionFile) {
-      alert("This order contains prescription-only medication. Please upload a prescription first in the catalogue.")
-      navigate('/catalogue')
-      return
-    }
-
     try {
       setLoading(true)
       const formData = new FormData()
@@ -223,13 +215,6 @@ export default function Checkout() {
               className="btn btn-primary" 
               disabled={loading} 
               onClick={() => {
-                if (step === 1) {
-                  const needsRx = cartItems.some(i => i.requiresPrescription)
-                  if (needsRx && !prescriptionFile) {
-                    alert("This order contains prescription-only medication. Please upload a prescription first.")
-                    return
-                  }
-                }
                 step < 3 ? setStep(s => s+1) : handlePlaceOrder()
               }}
             >

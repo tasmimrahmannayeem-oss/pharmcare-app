@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRole } from '../context/RoleContext'
 
 const weeklyData = [
   { day:'Mon', revenue:3200, prescriptions:48 },
@@ -19,14 +20,34 @@ const topProducts = [
 ]
 
 export default function SalesAnalytics() {
+  const { userData } = useRole()
   const [period, setPeriod] = useState('Week')
+  const [pharmacyName, setPharmacyName] = useState('')
+
+  useEffect(() => {
+    const fetchPharmacyName = async () => {
+      if (!userData?.assignedPharmacy) return;
+      const pharmacyId = typeof userData.assignedPharmacy === 'object' ? userData.assignedPharmacy._id : userData.assignedPharmacy;
+      if (!pharmacyId) return;
+      try {
+        const res = await fetch(`/api/pharmacies/${pharmacyId}`, {
+          headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setPharmacyName(data.name || '')
+        }
+      } catch (err) {}
+    };
+    fetchPharmacyName();
+  }, [userData])
 
   return (
     <div className="fade-up">
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
         <div className="page-header" style={{ marginBottom:0 }}>
           <h1 className="page-title">Sales Analytics</h1>
-          <p className="page-subtitle">Revenue intelligence · Dhanmondi Branch</p>
+          <p className="page-subtitle">Revenue intelligence · {pharmacyName || 'Assigned Branch'}</p>
         </div>
         <div style={{ display:'flex', gap:8 }}>
           {['Day','Week','Month','Year'].map(p => (

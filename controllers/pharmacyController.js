@@ -10,6 +10,17 @@ exports.getPharmacies = async (req, res) => {
   }
 };
 
+// @desc    Get single pharmacy by ID
+exports.getPharmacyById = async (req, res) => {
+  try {
+    const pharmacy = await Pharmacy.findById(req.params.id);
+    if (!pharmacy) return res.status(404).json({ message: 'Pharmacy not found' });
+    res.json(pharmacy);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Create a pharmacy (System Owner only)
 exports.createPharmacy = async (req, res) => {
   try {

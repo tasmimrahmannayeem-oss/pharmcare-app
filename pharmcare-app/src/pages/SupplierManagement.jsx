@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { exportToCSV } from '../utils/csvExport'
+import { useRole } from '../context/RoleContext'
 
 export default function SupplierManagement() {
+  const { userData } = useRole()
   const [suppliers, setSuppliers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -17,7 +19,9 @@ export default function SupplierManagement() {
   const fetchSuppliers = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/users')
+      const res = await fetch('/api/users', {
+        headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
+      })
       const data = await res.json()
       const suppliersOnly = Array.isArray(data) ? data.filter(u => u.role === 'Supplier') : []
       setSuppliers(suppliersOnly)
@@ -48,7 +52,10 @@ export default function SupplierManagement() {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}`
+        },
         body: JSON.stringify({ ...formData, password: isEdit ? undefined : 'temp123', isApproved: true })
       })
       if (res.ok) {
@@ -79,7 +86,10 @@ export default function SupplierManagement() {
   const handleDelete = async (id) => {
     if (!window.confirm('Remove this supplier?')) return
     try {
-      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/users/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
+      })
       if (res.ok) fetchSuppliers()
       else alert('Failed to delete supplier')
     } catch (err) { alert('Connection error') }

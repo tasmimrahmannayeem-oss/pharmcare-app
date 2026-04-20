@@ -12,6 +12,7 @@ export default function MedicineSearch() {
   const [loading, setLoading] = useState(false)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('All')
+  const [manufacturer, setManufacturer] = useState('All')
   const [sort, setSort] = useState('name-asc')
   const [showRxModal, setShowRxModal] = useState(false)
   const [pendingItem, setPendingItem] = useState(null)
@@ -41,11 +42,6 @@ export default function MedicineSearch() {
   }
 
   const handleAddToCart = (item, isBuyNow = false) => {
-    if (item.requiresPrescription && !prescriptionFile) {
-      setPendingItem({ ...item, isBuyNow })
-      setShowRxModal(true)
-      return
-    }
     addToCart(item)
     if (isBuyNow) {
       navigate('/checkout')
@@ -80,8 +76,12 @@ export default function MedicineSearch() {
     setPendingItem(null)
   }
 
+  // Unique manufacturers from the loaded results
+  const manufacturers = ['All', ...Array.from(new Set(medicines.map(m => m.manufacturer).filter(Boolean))).sort()]
+
   const filtered = medicines.filter(m =>
     (filter === 'All' || (m.genericName && m.genericName.toLowerCase().includes(filter.toLowerCase()))) &&
+    (manufacturer === 'All' || m.manufacturer === manufacturer) &&
     (m.name.toLowerCase().includes(query.toLowerCase()) || (m.genericName && m.genericName.toLowerCase().includes(query.toLowerCase())))
   ).sort((a,b) => {
     if (sort === 'name-asc') return a.name.localeCompare(b.name)
@@ -108,6 +108,25 @@ export default function MedicineSearch() {
         </button>
       </div>
 
+      {/* Company filter row */}
+      <div style={{ marginBottom:16 }}>
+        <div style={{ fontSize:'0.8125rem', fontWeight:600, color:'var(--on-surface-variant)', marginBottom:8, display:'flex', alignItems:'center', gap:6 }}>
+          <span className="material-icons" style={{fontSize:16}}>factory</span>
+          Filter by Company
+        </div>
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+          {manufacturers.map(m => (
+            <button key={m}
+              onClick={() => setManufacturer(m)}
+              className={`badge ${manufacturer === m ? 'badge-info' : 'badge-neutral'}`}
+              style={{ cursor:'pointer', padding:'6px 14px', fontSize:'0.8125rem', fontWeight: manufacturer === m ? 700 : 500 }}
+            >
+              {m === 'All' ? '🏭 All Companies' : m}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="card" style={{ marginBottom: 24, padding: 20 }}>
         <div style={{ display:'flex', gap:12, alignItems:'center' }}>
           <div className="input-icon-wrap" style={{ flex:1 }}>
@@ -129,7 +148,7 @@ export default function MedicineSearch() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>Medicine</th><th>Generic Name</th><th>Price</th><th>Availability</th><th>Rx</th><th>Action</th></tr>
+              <tr><th>Medicine</th><th>Company</th><th>Price</th><th>Availability</th><th>Rx</th><th>Action</th></tr>
             </thead>
             <tbody>
               {loading ? (
@@ -147,8 +166,19 @@ export default function MedicineSearch() {
                 const status = stockStatus(m.stockQuantity)
                 return (
                   <tr key={m._id}>
-                    <td style={{ fontWeight:600 }}>{m.name}</td>
-                    <td style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)' }}>{m.genericName || '—'}</td>
+                    <td>
+                      <div style={{ fontWeight:700, fontSize:'0.9375rem' }}>{m.name}</div>
+                      <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)', marginTop:2 }}>{m.genericName || ''}</div>
+                    </td>
+                    <td>
+                      {m.manufacturer
+                        ? <span style={{ fontSize:'0.8125rem', display:'flex', alignItems:'center', gap:4 }}>
+                            <span className="material-icons" style={{fontSize:13, color:'var(--outline)'}}>factory</span>
+                            {m.manufacturer}
+                          </span>
+                        : <span style={{ color:'var(--outline)' }}>—</span>
+                      }
+                    </td>
                     <td style={{ fontWeight:700, color:'var(--primary-container)' }}>৳{(m.sellPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td><span className={`badge ${status.class}`}>{status.label}</span></td>
                     <td>{m.requiresPrescription ? <span className="badge badge-error">Required</span> : <span className="badge badge-success">OTC</span>}</td>

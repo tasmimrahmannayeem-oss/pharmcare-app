@@ -193,7 +193,7 @@ export default function SupplierPurchaseOrders() {
             <form onSubmit={handleCreateOrder} className="login-form" style={{ marginTop: 20 }}>
               <div className="input-group">
                 <label className="input-label">Client Pharmacy</label>
-                <input className="input" required placeholder="e.g. Aura — Dhanmondi" value={form.pharmacy} onChange={e => setForm({ ...form, pharmacy: e.target.value })} />
+                <input className="input" required placeholder="e.g. PharMCare — Main Branch" value={form.pharmacy} onChange={e => setForm({ ...form, pharmacy: e.target.value })} />
               </div>
               <div className="input-group" style={{ marginTop: 12 }}>
                 <label className="input-label">Items (description)</label>
