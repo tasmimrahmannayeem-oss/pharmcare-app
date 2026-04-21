@@ -35,17 +35,19 @@ export default function PrescriptionQueue() {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       })
       const data = await res.json()
-      const formatted = Array.isArray(data) ? data.map(o => ({
-        id: o._id,
-        displayId: o._id.slice(-6).toUpperCase(),
-        patient: o.customer?.name || 'Walk-in',
-        drug: o.medicines[0]?.medicine?.name || 'Unknown Item',
-        qty: `${o.medicines[0]?.quantity || 0} units`,
-        urgency: o.medicines.some(m => m.medicine?.requiresPrescription) ? 'Urgent' : 'Standard',
-        status: statusMap[o.status] || o.status,
-        time: new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        insurance: 'Verified'
-      })) : []
+      const formatted = Array.isArray(data) ? data
+        .filter(o => o.requiresPrescription) // Focus only on Rx orders
+        .map(o => ({
+          id: o._id,
+          displayId: o._id.slice(-6).toUpperCase(),
+          patient: o.customer?.name || 'Walk-in',
+          drug: o.medicines[0]?.medicine?.name || 'Unknown Item',
+          qty: `${o.medicines[0]?.quantity || 0} units`,
+          urgency: 'Urgent', // All orders in this queue are now Rx related
+          status: statusMap[o.status] || o.status,
+          time: new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          insurance: 'Verified'
+        })) : []
       setItems(formatted)
     } catch (err) {
       console.error('Fetch orders error:', err)

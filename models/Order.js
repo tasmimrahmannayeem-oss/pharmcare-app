@@ -10,6 +10,7 @@ const orderSchema = new mongoose.Schema({
   }],
   totalAmount: { type: Number, required: true },
   prescriptionImage: { type: String }, // Path to uploaded image
+  requiresPrescription: { type: Boolean, default: false },
   status: { 
     type: String, 
     enum: [

@@ -56,12 +56,11 @@ export function RoleProvider({ children }) {
       // This ensures if a real user 'Nayem' clicks the mock switcher to test 'Store Assistant', they remain 'Nayem'.
       const existingData = JSON.parse(localStorage.getItem('userData') || '{}')
       
-      // We apply existingData last so real DB details (like name) ALWAYS override fake demo strings
-      const mergedData = { 
-        ...data, 
-        ...existingData,
-        token: existingData.token || localStorage.getItem('token')
-      }
+      // LOGIC: If 'data' has a token, it's a REAL LOGIN - it must replace existing session data.
+      // If it doesn't have a token, it's a MOCK ROLE SWITCH - preserve real user info (name, email) from 'existingData'.
+      const mergedData = data.token 
+        ? { ...existingData, ...data } // Login: New data wins
+        : { ...data, ...existingData, token: existingData.token || localStorage.getItem('token') }; // Switch: Real ID wins
       
       localStorage.setItem('userData', JSON.stringify(mergedData))
       _setUserData(mergedData)

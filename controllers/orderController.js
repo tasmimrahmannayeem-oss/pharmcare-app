@@ -65,6 +65,7 @@ exports.createOrder = async (req, res) => {
       totalAmount: finalTotalAmount,
       paymentMethod: paymentMethod || 'Cash on Delivery',
       prescriptionImage: req.file ? req.file.path : null,
+      requiresPrescription: requiresRx,
       statusTimeline: [{ status: 'Pending', note: 'Order placed by customer' }]
     });
 
@@ -94,6 +95,7 @@ exports.createPOSOrder = async (req, res) => {
     dbMedicines.forEach(m => dbMedMap[m._id.toString()] = m);
 
     let subtotal = 0;
+    let requiresRx = false;
     const rollbacks = [];
 
     // Atomic stock decrement & Secure Calculation
@@ -118,6 +120,7 @@ exports.createPOSOrder = async (req, res) => {
       rollbacks.push({ id: item.medicine, qty: item.quantity });
       item.price = dbMed.sellPrice;
       subtotal += (dbMed.sellPrice * item.quantity);
+      if (dbMed.requiresPrescription) requiresRx = true;
     }
 
     const finalTotalAmount = subtotal + (subtotal * 0.08); // POS has no delivery fee
@@ -127,6 +130,7 @@ exports.createPOSOrder = async (req, res) => {
       pharmacy,
       medicines,
       totalAmount: finalTotalAmount,
+      requiresPrescription: requiresRx,
       status: 'Confirmed',
       paymentMethod: paymentMethod || 'Cash',
       paymentStatus: 'Paid',
@@ -167,9 +171,14 @@ exports.confirmOrder = async (req, res) => {
       rollbacks.push({ id: item.medicine, qty: item.quantity });
     }
 
-    order.status = 'Confirmed';
     order.paymentStatus = 'Paid';
-    order.statusTimeline.push({ status: 'Confirmed', note: 'Payment received. Stock allocated.' });
+    if (order.requiresPrescription) {
+      order.status = 'Confirmed';
+      order.statusTimeline.push({ status: 'Confirmed', note: 'Payment received. Awaiting pharmacist verification.' });
+    } else {
+      order.status = 'Being Processed';
+      order.statusTimeline.push({ status: 'Being Processed', note: 'Payment received. Order sent to fulfillment.' });
+    }
     
     await order.save();
     res.json({ message: 'Payment confirmed and stock updated', order });
