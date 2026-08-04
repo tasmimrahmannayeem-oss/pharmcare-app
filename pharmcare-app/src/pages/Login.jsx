@@ -36,16 +36,16 @@ export default function Login() {
           body: JSON.stringify({ email: form.email, password: form.password })
         })
         const data = await res.json()
-        
+
         if (res.ok) {
           localStorage.setItem('token', data.token)
           const backToFrontRole = Object.keys(roleMap).find(key => roleMap[key] === data.role) || 'customer'
           const userWithToken = { ...data, token: data.token }
           setRole(backToFrontRole, userWithToken)
-          
-          const dest = { 
-            superadmin: '/superadmin', owner: '/admin', pharmacist: '/prescriptions', 
-            assistant: '/pos', customer: '/home', supplier: '/supplier/dashboard' 
+
+          const dest = {
+            superadmin: '/superadmin', owner: '/admin', pharmacist: '/prescriptions',
+            assistant: '/pos', customer: '/home', supplier: '/supplier/dashboard'
           }
           navigate(dest[backToFrontRole] || '/home')
         } else {
@@ -67,7 +67,7 @@ export default function Login() {
           })
         })
         const data = await res.json()
-        
+
         if (res.ok) {
           if (data.token) {
             localStorage.setItem('token', data.token)
@@ -84,21 +84,21 @@ export default function Login() {
     } catch (err) {
       console.error('Backend connection failed, returning simulated UI login:', err)
       setIsSandbox(true)
-      
+
       let simRole = 'customer'
       if (form.email.includes('admin')) simRole = 'superadmin'
       else if (form.email.includes('owner')) simRole = 'owner'
       else if (form.email.includes('pharm')) simRole = 'pharmacist'
       else if (form.email.includes('supp')) simRole = 'supplier'
-      
-      setRole(simRole, { 
+
+      setRole(simRole, {
         name: form.name || 'Demo User',
         email: form.email,
         role: simRole,
         assignedPharmacy: null
       })
       const dest = { superadmin: '/superadmin', owner: '/admin', pharmacist: '/prescriptions', assistant: '/pos', customer: '/home', supplier: '/supplier/dashboard' }
-      
+
       setTimeout(() => navigate(dest[simRole] || '/home'), 100)
     } finally {
       setLoading(false)
@@ -128,14 +128,17 @@ export default function Login() {
           </div>
           <div>
             <div className="login-brand-name">SPMIS</div>
-            <div className="login-brand-tag">Pharmacy Management System</div>
+            <div className="login-brand-tag">Smart Pharmacy Management And Information System</div>
           </div>
         </div>
 
         <div className="login-hero">
-          <h1 className="login-hero-title">Optimizing <br/>Pharmacy Intelligence</h1>
+          <h1 className="login-hero-title">প্রযুক্তির ছোঁয়ায়, <br />ফার্মেসীর উন্নয়ন</h1>
           <p className="login-hero-sub">
-            The Clinical Curator for modern healthcare management. Seamlessly manage inventory, orders, and clinical data.
+            ফার্মেসী ব্যবস্থাপনা কি জটিল মনে হচ্ছে?
+            এখন নয়।<br />
+            ইনভেন্টরি, অর্ডার ও ক্লিনিক্যাল তথ্য—
+            সবকিছু একসাথে, সহজ নিয়ন্ত্রণে।
           </p>
           <div className="login-quote typewriter-tag">
             "Precision in every dose, clarity in every report."
@@ -181,8 +184,8 @@ export default function Login() {
             <div className="tab-pane" style={{ background: 'var(--primary-fixed)', color: 'var(--primary-container)', padding: '12px 14px', borderRadius: 8, fontSize: '0.8125rem', display: 'flex', alignItems: 'flex-start', gap: 10, border: '1px solid var(--primary-fixed-dim)' }}>
               <span className="material-icons" style={{ fontSize: 18, marginTop: 2 }}>info</span>
               <div>
-                <strong>Want to register your Pharmacy?</strong><br/>
-                Please contact our team at <a href="mailto:admin@spmis.com" style={{fontWeight: 700, textDecoration: 'underline'}}>admin@spmis.com</a> to set up your business account.
+                <strong>Want to register your Pharmacy?</strong><br />
+                Please contact our team at <a href="mailto:admin@spmis.com" style={{ fontWeight: 700, textDecoration: 'underline' }}>admin@spmis.com</a> to set up your business account.
               </div>
             </div>
           )}
@@ -237,25 +240,25 @@ export default function Login() {
                   { key: 'supplier', icon: 'local_shipping', label: 'Supplier' },
                   { key: 'superadmin', icon: 'supervisor_account', label: 'Super Admin' },
                 ].filter(r => tab === 'login' ? true : !['superadmin', 'owner', 'assistant'].includes(r.key))
-                .map(r => (
-                  <button
-                    type="button"
-                    key={r.key}
-                    className={`role-chip ${form.role === r.key ? 'active' : ''}`}
-                    onClick={() => setForm(p => ({ ...p, role: r.key }))}
-                  >
-                    <span className="material-icons">{r.icon}</span>
-                    {r.label}
-                  </button>
-                ))}
+                  .map(r => (
+                    <button
+                      type="button"
+                      key={r.key}
+                      className={`role-chip ${form.role === r.key ? 'active' : ''}`}
+                      onClick={() => setForm(p => ({ ...p, role: r.key }))}
+                    >
+                      <span className="material-icons">{r.icon}</span>
+                      {r.label}
+                    </button>
+                  ))}
               </div>
             </div>
 
             {tab === 'login' && (
               <div style={{ textAlign: 'right', marginTop: -4 }}>
-                <button 
-                  type="button" 
-                  className="btn btn-ghost" 
+                <button
+                  type="button"
+                  className="btn btn-ghost"
                   style={{ padding: '4px 0', fontSize: '0.875rem' }}
                   onClick={() => alert("Forgot password functionality will be implemented soon.")}
                 >

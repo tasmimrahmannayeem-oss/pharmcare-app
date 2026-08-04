@@ -48,6 +48,11 @@ export default function Checkout() {
   const total = subtotal + delivery + tax
 
   const handlePlaceOrder = async () => {
+    if (!selectedPharmacyId) {
+      alert('Please select a pharmacy branch for order fulfillment.')
+      setStep(2)
+      return
+    }
     try {
       setLoading(true)
       const formData = new FormData()
@@ -215,6 +220,10 @@ export default function Checkout() {
               className="btn btn-primary" 
               disabled={loading} 
               onClick={() => {
+                if (step === 2 && !selectedPharmacyId) {
+                  alert('Please select a pharmacy branch for order fulfillment before continuing.')
+                  return
+                }
                 step < 3 ? setStep(s => s+1) : handlePlaceOrder()
               }}
             >

@@ -10,6 +10,7 @@ exports.getOrders = async (req, res) => {
     }
     
     const orders = await Order.find(filter)
+      .sort({ createdAt: -1 })
       .populate('customer', 'name email')
       .populate('pharmacy', 'name location')
       .populate('medicines.medicine', 'name requiresPrescription');
@@ -79,13 +80,14 @@ exports.createOrder = async (req, res) => {
 // @desc    POS Sale (Staff Walk-in)
 exports.createPOSOrder = async (req, res) => {
   try {
-    let { pharmacy, medicines, paymentMethod } = req.body;
+    const { pharmacy, medicines, paymentMethod, customerName } = req.body;
     
-    if (!pharmacy && req.user.assignedPharmacy) {
-      pharmacy = req.user.assignedPharmacy;
+    let activePharmacy = pharmacy;
+    if (!activePharmacy && req.user.assignedPharmacy) {
+      activePharmacy = req.user.assignedPharmacy;
     }
 
-    if (!pharmacy) {
+    if (!activePharmacy) {
       return res.status(400).json({ message: 'No pharmacy branch assigned to this transaction' });
     }
     
@@ -127,7 +129,8 @@ exports.createPOSOrder = async (req, res) => {
 
     const order = new Order({
       customer: req.user?._id || null, 
-      pharmacy,
+      customerName: customerName || 'Walk-in Customer',
+      pharmacy: activePharmacy,
       medicines,
       totalAmount: finalTotalAmount,
       requiresPrescription: requiresRx,
@@ -137,8 +140,22 @@ exports.createPOSOrder = async (req, res) => {
       statusTimeline: [{ status: 'Confirmed', note: `POS Sale completed via ${paymentMethod || 'Cash'}` }]
     });
 
-    const savedOrder = await order.save();
-    res.status(201).json(savedOrder);
+    let savedOrder;
+    try {
+      savedOrder = await order.save();
+    } catch (saveError) {
+      for (const r of rollbacks) await Medicine.findByIdAndUpdate(r.id, { $inc: { stockQuantity: r.qty } });
+      throw saveError;
+    }
+    
+    // Manually attach medicine details to ensure names appear in the immediate invoice response
+    const orderObj = savedOrder.toObject();
+    orderObj.medicines = orderObj.medicines.map(m => ({
+      ...m,
+      medicine: dbMedMap[m.medicine.toString()]
+    }));
+
+    res.status(201).json(orderObj);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -180,7 +197,12 @@ exports.confirmOrder = async (req, res) => {
       order.statusTimeline.push({ status: 'Being Processed', note: 'Payment received. Order sent to fulfillment.' });
     }
     
-    await order.save();
+    try {
+      await order.save();
+    } catch (saveError) {
+      for (const r of rollbacks) await Medicine.findByIdAndUpdate(r.id, { $inc: { stockQuantity: r.qty } });
+      throw saveError;
+    }
     res.json({ message: 'Payment confirmed and stock updated', order });
   } catch (error) {
     res.status(500).json({ message: error.message });

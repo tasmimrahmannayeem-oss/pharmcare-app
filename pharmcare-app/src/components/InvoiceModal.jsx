@@ -116,7 +116,7 @@ export default function InvoiceModal({ order, onClose }) {
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:24, marginBottom:40 }}>
             <div>
               <div style={{ fontSize:'0.75rem', fontWeight:800, color:'#999', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>Billed To</div>
-              <div style={{ fontWeight:800, fontSize:'1rem', color:'#1a1c1e' }}>{order.customer?.name || 'Walk-in Customer'}</div>
+              <div style={{ fontWeight:800, fontSize:'1rem', color:'#1a1c1e' }}>{order.customerName || order.customer?.name || 'Walk-in Customer'}</div>
               <div style={{ fontSize:'0.875rem', color:'#666' }}>{order.customer?.email || 'N/A'}</div>
             </div>
             <div style={{ textAlign:'right' }}>

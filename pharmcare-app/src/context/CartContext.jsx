@@ -25,26 +25,24 @@ export function CartProvider({ children }) {
     }
   }, [selectedPharmacy])
 
-  // 2. AUTO-SELECT for Staff: If user is assigned to a pharmacy, auto-select it
+  // 2. AUTO-SELECT branch for Staff: If staff user is assigned to a pharmacy, auto-select it
   useEffect(() => {
+    const token = userData?.token || localStorage.getItem('token')
     const assigned = userData?.assignedPharmacy
     if (!assigned) return
 
     const syncPharmacy = async () => {
-      // If it's already a full object that matches, skip
       if (typeof assigned === 'object' && assigned._id === selectedPharmacy?._id) return
-      // If it's an ID that matches existing selection, skip
       if (typeof assigned === 'string' && assigned === selectedPharmacy?._id) return
 
       try {
         const id = typeof assigned === 'string' ? assigned : assigned._id
         const res = await fetch(`/api/pharmacies/${id}`, {
-          headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         })
         if (res.ok) {
           const data = await res.json()
           setSelectedPharmacy(data)
-          console.log('✅ Auto-selected assigned pharmacy branch:', data.name)
         }
       } catch (err) {
         console.error('Auto-selection fetch failed:', err)

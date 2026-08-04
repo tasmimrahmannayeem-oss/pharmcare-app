@@ -14,21 +14,18 @@ export const roles = {
     icon: 'admin_panel_settings',
     name: 'Dr. Sarah Chen',
     color: '#872d00',
-    assignedPharmacy: '69dfdba29b7248a1a8bf4ae9' // Dhanmondi
   },
   pharmacist: {
     label: 'Pharmacist',
     icon: 'medical_services',
     name: 'Dr. Alex Smith',
     color: '#006c49',
-    assignedPharmacy: '69dfdba29b7248a1a8bf4ae9' // Dhanmondi
   },
   assistant: {
     label: 'Store Assistant',
     icon: 'storefront',
     name: 'Anna Kwak',
     color: '#005b8e',
-    assignedPharmacy: '69dfdba29b7248a1a8bf4ae9' // Dhanmondi
   },
   customer: {
     label: 'Customer',
@@ -46,21 +43,25 @@ export const roles = {
 
 export function RoleProvider({ children }) {
   const [role, _setRole] = useState(localStorage.getItem('userRole') || 'customer')
-  const [userData, _setUserData] = useState(JSON.parse(localStorage.getItem('userData') || '{}'))
+  const [userData, _setUserData] = useState(() => {
+    const saved = JSON.parse(localStorage.getItem('userData') || '{}')
+    const savedToken = localStorage.getItem('token')
+    if (savedToken && !saved.token) {
+      const updated = { ...saved, token: savedToken }
+      localStorage.setItem('userData', JSON.stringify(updated))
+      return updated
+    }
+    return saved
+  })
 
   const setRole = (newRole, data = null) => {
     localStorage.setItem('userRole', newRole)
     _setRole(newRole)
     if (data) {
-      // Preserve the user's actual DB details (name, email, _id, token) while applying DEMO role configs (color, icon)
-      // This ensures if a real user 'Nayem' clicks the mock switcher to test 'Store Assistant', they remain 'Nayem'.
       const existingData = JSON.parse(localStorage.getItem('userData') || '{}')
-      
-      // LOGIC: If 'data' has a token, it's a REAL LOGIN - it must replace existing session data.
-      // If it doesn't have a token, it's a MOCK ROLE SWITCH - preserve real user info (name, email) from 'existingData'.
       const mergedData = data.token 
-        ? { ...existingData, ...data } // Login: New data wins
-        : { ...data, ...existingData, token: existingData.token || localStorage.getItem('token') }; // Switch: Real ID wins
+        ? { ...existingData, ...data } 
+        : { ...data, ...existingData, token: existingData.token || localStorage.getItem('token') };
       
       localStorage.setItem('userData', JSON.stringify(mergedData))
       _setUserData(mergedData)
@@ -68,25 +69,28 @@ export function RoleProvider({ children }) {
   }
 
   useEffect(() => {
-    // 1. Auto-heal missing userData from defaults if needed (Demo/Stale state fix)
-    if (!userData?.assignedPharmacy && roles[role]?.assignedPharmacy) {
-      // Prioritize real user data over the hardcoded demo roles data! 
-      // This prevents REAL logged-in names getting overwritten by 'Anna Kwak'
-      const mergedData = { ...roles[role], ...userData }
-      localStorage.setItem('userData', JSON.stringify(mergedData))
-      _setUserData(mergedData)
-      console.log('Session auto-healed with pharmacy:', mergedData.assignedPharmacy)
-    }
-
-    // 2. TOKEN AUTO-HEAL: Ensure userData has the token from localStorage
     const savedToken = localStorage.getItem('token')
-    if (savedToken && !userData?.token) {
-      const dataWithToken = { ...userData, token: savedToken }
-      localStorage.setItem('userData', JSON.stringify(dataWithToken))
-      _setUserData(dataWithToken)
-      console.log('Session auto-healed with security token.')
+    
+    // Auto-fetch dynamic pharmacy branch for staff roles if missing
+    if (['owner', 'pharmacist', 'assistant'].includes(role) && !userData?.assignedPharmacy) {
+      fetch('/api/pharmacies', {
+        headers: savedToken ? { 'Authorization': `Bearer ${savedToken}` } : {}
+      })
+        .then(res => res.json())
+        .then(branches => {
+          if (Array.isArray(branches) && branches.length > 0) {
+            const firstBranchId = branches[0]._id
+            _setUserData(prev => {
+              if (prev?.assignedPharmacy === firstBranchId) return prev
+              const updated = { ...prev, assignedPharmacy: firstBranchId }
+              localStorage.setItem('userData', JSON.stringify(updated))
+              return updated
+            })
+          }
+        })
+        .catch(() => {})
     }
-  }, [role, userData])
+  }, [role, userData?.assignedPharmacy])
 
   return (
     <RoleContext.Provider value={{ role, setRole, roles, userData }}>

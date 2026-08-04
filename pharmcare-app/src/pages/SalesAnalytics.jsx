@@ -37,7 +37,9 @@ export default function SalesAnalytics() {
           const data = await res.json()
           setPharmacyName(data.name || '')
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error('Failed to fetch pharmacy name:', err)
+      }
     };
     fetchPharmacyName();
   }, [userData])

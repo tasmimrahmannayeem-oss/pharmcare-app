@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useRole } from '../context/RoleContext'
 import { createPortal } from 'react-dom'
 import { useCart } from '../context/CartContext'
+import PharmacySelectModal from '../components/PharmacySelectModal'
 
 export default function ProductCatalogue() {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ export default function ProductCatalogue() {
   const [cat, setCat] = useState('All')
   const [manufacturer, setManufacturer] = useState('All')
   const [showRxModal, setShowRxModal] = useState(false)
+  const [showBranchModal, setShowBranchModal] = useState(false)
   const [pendingItem, setPendingItem] = useState(null)
 
   useEffect(() => {
@@ -124,10 +126,17 @@ export default function ProductCatalogue() {
         {loading ? (
           <div className="card text-center" style={{ padding:60 }}>Loading premium catalogue...</div>
         ) : !selectedPharmacy ? (
-          <div className="card text-center" style={{ padding: 80 }}>
+          <div className="card text-center" style={{ padding: 60 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-              <span className="material-icons" style={{ fontSize: 64, color: 'var(--outline)' }}>location_on</span>
-              <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>Please select a pharmacy branch to browse medicines</div>
+              <span className="material-icons" style={{ fontSize: 64, color: 'var(--primary-container)' }}>location_on</span>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>Select a Pharmacy Branch</div>
+              <p style={{ color: 'var(--on-surface-variant)', maxWidth: 420, marginTop: -6, fontSize: '0.9375rem' }}>
+                Please select a pharmacy branch to view live inventory and medicine availability in your area.
+              </p>
+              <button className="btn btn-primary" onClick={() => setShowBranchModal(true)}>
+                <span className="material-icons" style={{ fontSize: 18 }}>storefront</span>
+                Choose Pharmacy Branch
+              </button>
             </div>
           </div>
         ) : (
@@ -216,6 +225,8 @@ export default function ProductCatalogue() {
         </div>,
         document.body
       )}
+
+      <PharmacySelectModal isOpen={showBranchModal} onClose={() => setShowBranchModal(false)} />
     </>
   )
 }

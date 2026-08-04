@@ -45,7 +45,9 @@ export default function UserManagement() {
       const res = await fetch('/api/pharmacies', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
       const data = await res.json()
       setPharmacies(Array.isArray(data) ? data : [])
-    } catch (err) {}
+    } catch (err) {
+      console.error('Failed to fetch pharmacies list:', err)
+    }
   }
 
   const handleAddUser = async (e) => {

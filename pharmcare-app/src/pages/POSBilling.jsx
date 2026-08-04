@@ -11,6 +11,7 @@ export default function POSBilling() {
   const [search, setSearch] = useState('')
   const [showInvoice, setShowInvoice] = useState(null) // Stores the successful order object
   const [activePharmacy, setActivePharmacy] = useState(null)
+  const [clientName, setClientName] = useState('')
   const { userData } = useRole()
 
   useEffect(() => {
@@ -47,10 +48,13 @@ export default function POSBilling() {
         headers: { 'Authorization': `Bearer ${userData.token}` }
       })
       const data = await res.json()
-      // Filter for recent POS-like orders (e.g. status Confirmed/Paid)
-      const formatted = Array.isArray(data) ? data.slice(0, 5).map(o => ({
+      // Filter for latest 5 POS-like orders, sorted by date
+      const formatted = Array.isArray(data) 
+        ? data.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))
+             .slice(0, 5)
+             .map(o => ({
         id: o._id.slice(-6).toUpperCase(),
-        customer: o.customer ? o.customer.name : 'Walk-in',
+        customer: o.customerName || (o.customer ? o.customer.name : 'Walk-in'),
         items: o.medicines.map(m => `${m.medicine?.name || 'Item'} ×${m.quantity}`).join(', '),
         total: `৳${o.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
         method: o.statusTimeline[0]?.note.split('via ')[1] || 'Cash',
@@ -78,16 +82,40 @@ export default function POSBilling() {
           pharmacy: userData.assignedPharmacy, 
           medicines: cart.map(i => ({ medicine: i._id, quantity: i.qty, price: i.price })),
           totalAmount: total,
-          paymentMethod: payMethod
+          paymentMethod: payMethod,
+          customerName: clientName
         })
       })
 
       if (res.ok) {
         const orderData = await res.json()
+        
+        // Safety fallback: If backend population fails, use names from the local cart
+        const enrichedMedicines = orderData.medicines.map(m => {
+          const mId = m.medicine?._id || m.medicine;
+          const cartItem = cart.find(c => c._id === mId);
+          return {
+            ...m,
+            medicine: {
+              ...(typeof m.medicine === 'object' ? m.medicine : {}),
+              _id: mId,
+              name: m.medicine?.name || cartItem?.name || 'Medicine'
+            }
+          };
+        });
+
+        const finalCustomerName = orderData.customerName || clientName || 'Walk-in Customer';
+
         setCart([])
-        setShowInvoice({...orderData, pharmacy: activePharmacy}) // Pass full pharmacy details for printing
+        setClientName('')
+        setShowInvoice({ 
+          ...orderData, 
+          customerName: finalCustomerName,
+          medicines: enrichedMedicines, 
+          pharmacy: activePharmacy 
+        })
         fetchHistory()
-        fetchMedicines() // Refresh stock
+        fetchMedicines() 
       } else {
         const err = await res.json()
         alert(`Error: ${err.message}`)
@@ -177,8 +205,18 @@ export default function POSBilling() {
               <span className="material-icons" style={{fontSize:16}}>delete</span> Clear
             </button>
           </div>
+          
+          <div className="input-icon-wrap" style={{ marginBottom: 4 }}>
+            <span className="material-icons icon">person</span>
+            <input 
+              className="input" 
+              placeholder="Client Name (Walk-in)" 
+              value={clientName} 
+              onChange={e => setClientName(e.target.value)} 
+            />
+          </div>
 
-          <div style={{ display:'flex', flexDirection:'column', gap:10, minHeight:200 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:10, minHeight:160 }}>
             {cart.length === 0 && (
               <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--on-surface-variant)', fontSize:'0.9rem', padding:'40px 0' }}>
                 <span className="material-icons" style={{fontSize:32,display:'block',marginBottom:8}}>shopping_cart</span>

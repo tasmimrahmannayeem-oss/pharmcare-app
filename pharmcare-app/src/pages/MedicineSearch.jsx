@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { useRole } from '../context/RoleContext'
 import { useCart } from '../context/CartContext'
+import PharmacySelectModal from '../components/PharmacySelectModal'
 
 export default function MedicineSearch() {
   const navigate = useNavigate()
@@ -15,6 +16,7 @@ export default function MedicineSearch() {
   const [manufacturer, setManufacturer] = useState('All')
   const [sort, setSort] = useState('name-asc')
   const [showRxModal, setShowRxModal] = useState(false)
+  const [showBranchModal, setShowBranchModal] = useState(false)
   const [pendingItem, setPendingItem] = useState(null)
 
   useEffect(() => {
