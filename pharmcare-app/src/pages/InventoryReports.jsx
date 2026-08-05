@@ -18,6 +18,8 @@ import { useRole } from '../context/RoleContext'
 export default function InventoryReports() {
   const { userData } = useRole()
   const [pharmacyName, setPharmacyName] = useState('')
+  const [restockData, setRestockData] = useState(null)
+  const [loadingAI, setLoadingAI] = useState(false)
 
   useEffect(() => {
     const fetchPharmacyName = async () => {
@@ -38,6 +40,28 @@ export default function InventoryReports() {
     };
     fetchPharmacyName();
   }, [userData])
+
+  useEffect(() => {
+    const fetchAIRestock = async () => {
+      if (!userData?.assignedPharmacy) return;
+      const pharmacyId = typeof userData.assignedPharmacy === 'object' ? userData.assignedPharmacy._id : userData.assignedPharmacy;
+      setLoadingAI(true);
+      try {
+        const res = await fetch(`/api/ml/restock?pharmacyId=${pharmacyId}`, {
+          headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setRestockData(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch AI restock data:', err);
+      } finally {
+        setLoadingAI(false);
+      }
+    };
+    fetchAIRestock();
+  }, [userData]);
 
   const handleExport = () => {
     window.print()
@@ -159,6 +183,53 @@ export default function InventoryReports() {
           </div>
         </div>
       </div>
+
+      {/* AI Restock Predictions */}
+      {loadingAI ? (
+        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--on-surface-variant)' }}>Loading AI restock predictions...</div>
+      ) : restockData && restockData.length > 0 ? (
+        <div className="card" style={{ marginTop: 24 }}>
+          <div className="section-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h3 className="section-title">AI Restock Predictions</h3>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#06b6d4', boxShadow: '0 0 8px #06b6d4', animation: 'pulse 2s infinite' }}></span>
+            </div>
+            <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.1)', color: '#06b6d4', border: '1px solid rgba(6, 182, 212, 0.2)' }}>Smart Restock</span>
+          </div>
+          <div className="table-wrap">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--outline-variant)', textAlign: 'left', color: 'var(--on-surface-variant)', fontSize: '0.8125rem' }}>
+                  <th style={{ padding: '12px 16px', fontWeight: 600 }}>Medicine Name</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600 }}>Current Stock</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600 }}>Consumption Rate</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600 }}>Days until Stockout</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600 }}>Recommended Qty</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600 }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {restockData.map((item, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid var(--surface-high)' }}>
+                    <td style={{ padding: '12px 16px', fontWeight: 500, fontSize: '0.875rem' }}>{item.medicineName}</td>
+                    <td style={{ padding: '12px 16px', fontSize: '0.875rem' }}>{item.currentStock} units</td>
+                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>~{item.dailyConsumption} units/day</td>
+                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: item.daysUntilStockout <= 7 ? 'var(--error)' : item.daysUntilStockout <= 14 ? '#f59e0b' : '#10b981' }}>
+                      {item.daysUntilStockout} days
+                    </td>
+                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary-container)' }}>+{item.recommendedOrderQty}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span className={`badge ${item.urgency === 'critical' ? 'badge-error' : item.urgency === 'warning' ? 'badge-warning' : 'badge-success'}`}>
+                        {item.urgency}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

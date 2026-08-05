@@ -23,6 +23,8 @@ export default function SalesAnalytics() {
   const { userData } = useRole()
   const [period, setPeriod] = useState('Week')
   const [pharmacyName, setPharmacyName] = useState('')
+  const [forecast, setForecast] = useState(null)
+  const [loadingAI, setLoadingAI] = useState(false)
 
   useEffect(() => {
     const fetchPharmacyName = async () => {
@@ -43,6 +45,28 @@ export default function SalesAnalytics() {
     };
     fetchPharmacyName();
   }, [userData])
+
+  useEffect(() => {
+    const fetchAIForecast = async () => {
+      if (!userData?.assignedPharmacy) return;
+      const pharmacyId = typeof userData.assignedPharmacy === 'object' ? userData.assignedPharmacy._id : userData.assignedPharmacy;
+      setLoadingAI(true);
+      try {
+        const res = await fetch(`/api/ml/forecast?pharmacyId=${pharmacyId}`, {
+          headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setForecast(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch AI forecast:', err);
+      } finally {
+        setLoadingAI(false);
+      }
+    };
+    fetchAIForecast();
+  }, [userData]);
 
   return (
     <div className="fade-up">
@@ -163,6 +187,55 @@ export default function SalesAnalytics() {
             <span style={{ fontSize:'0.7rem', color:'var(--on-surface-variant)' }}>8 PM</span>
           </div>
         </div>
+      </div>
+
+      {/* AI Revenue Forecast */}
+      <div className="card" style={{ marginTop: 24 }}>
+        <div className="section-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h3 className="section-title">AI Revenue Forecast</h3>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#06b6d4', boxShadow: '0 0 8px #06b6d4', animation: 'pulse 2s infinite' }}></span>
+          </div>
+          <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.1)', color: '#06b6d4', border: '1px solid rgba(6, 182, 212, 0.2)' }}>Powered by ML</span>
+        </div>
+        
+        {loadingAI ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--on-surface-variant)' }}>Loading AI predictions...</div>
+        ) : forecast ? (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#06b6d4', fontFamily: 'var(--font-headline)' }}>৳{(forecast.predictedTotal / 1000).toFixed(1)}k</div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)' }}>Predicted next 7 days</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: forecast.trend > 0 ? '#10b981' : 'var(--error)' }}>
+                <span className="material-icons" style={{ fontSize: 18 }}>{forecast.trend > 0 ? 'trending_up' : 'trending_down'}</span>
+                <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>{Math.abs(forecast.trend)}%</span>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 160, paddingBottom: 8 }}>
+              {forecast.daily.map((d, i) => (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, height: '100%', justifyContent: 'flex-end' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#06b6d4' }}>৳{(d.revenue / 1000).toFixed(1)}k</span>
+                  <div style={{ width: '100%', position: 'relative', borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0', overflow: 'hidden' }}>
+                    <div style={{ 
+                      height: `${(d.revenue / Math.max(...forecast.daily.map(x => x.revenue))) * 120}px`, 
+                      background: 'linear-gradient(180deg, rgba(6, 182, 212, 0.8), rgba(6, 182, 212, 0.2))', 
+                      borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0', 
+                      minHeight: 8,
+                      borderTop: '2px solid #06b6d4'
+                    }} />
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 500 }}>{d.day}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', textAlign: 'right', marginTop: 8 }}>
+              Based on {forecast.historicalDays || 90} days of historical data
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )

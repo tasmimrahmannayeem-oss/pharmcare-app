@@ -23,6 +23,7 @@ import Inventory from './pages/Inventory'
 import InventoryReports from './pages/InventoryReports'
 import POSBilling from './pages/POSBilling'
 import SalesAnalytics from './pages/SalesAnalytics'
+import SmartInsights from './pages/SmartInsights'
 import StaffManagement from './pages/StaffManagement'
 import SupplierManagement from './pages/SupplierManagement'
 import PharmacyAdminDashboard from './pages/PharmacyAdminDashboard'
@@ -82,6 +83,7 @@ export default function App() {
                 <Route path="/analytics" element={<SalesAnalytics />} />
                 <Route path="/staff" element={<StaffManagement />} />
                 <Route path="/suppliers" element={<SupplierManagement />} />
+                <Route path="/smart-insights" element={<SmartInsights />} />
               </Route>
               
               {/* Supplier */}
