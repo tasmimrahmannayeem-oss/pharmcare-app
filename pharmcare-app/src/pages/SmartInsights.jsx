@@ -39,7 +39,7 @@ export default function SmartInsights() {
         })
         if (res.ok) {
           const data = await res.json()
-          setInsights(data)
+          setInsights(data.data)
         } else {
           throw new Error('Failed to fetch insights')
         }
@@ -74,8 +74,8 @@ export default function SmartInsights() {
   }
 
   const maxDailyRevenue = Math.max(
-    ...(insights.forecast?.historical?.map(d => d.revenue) || []),
-    ...(insights.forecast?.predicted?.map(d => d.revenue) || [])
+    ...(insights.forecast?.historicalData?.map(d => d.revenue) || []),
+    ...(insights.forecast?.forecast?.map(d => d.revenue) || [])
   );
 
   const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -111,11 +111,11 @@ export default function SmartInsights() {
               <span className="material-icons" style={{ color: 'white', fontSize: 22 }}>trending_up</span>
             </div>
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.2)', padding: '3px 8px', borderRadius: 999 }}>
-              {insights.summary?.revenueTrend > 0 ? '+' : ''}{insights.summary?.revenueTrend}%
+              {insights.forecast?.growthPercentage > 0 ? '+' : ''}{insights.forecast?.growthPercentage}%
             </span>
           </div>
           <div style={{ fontFamily: 'var(--font-headline)', fontSize: '2rem', fontWeight: 800, marginTop: 12 }}>
-            ৳{((insights.summary?.predictedRevenue || 0) / 1000).toFixed(1)}k
+            ৳{((insights.summaryStats?.totalPredictedRevenueWeekly || 0) / 1000).toFixed(1)}k
           </div>
           <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'rgba(255,255,255,0.8)' }}>Predicted Revenue (7d)</div>
         </div>
@@ -127,7 +127,7 @@ export default function SmartInsights() {
             </div>
           </div>
           <div style={{ fontFamily: 'var(--font-headline)', fontSize: '2rem', fontWeight: 800, color: 'var(--on-surface)', marginTop: 12 }}>
-            {insights.summary?.restockAlerts || 0}
+            {insights.summaryStats?.itemsNeedingRestock || 0}
           </div>
           <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--on-surface-variant)' }}>Items Needing Restock</div>
         </div>
@@ -139,7 +139,7 @@ export default function SmartInsights() {
             </div>
           </div>
           <div style={{ fontFamily: 'var(--font-headline)', fontSize: '1.75rem', fontWeight: 800, color: 'var(--on-surface)', marginTop: 12 }}>
-            {insights.summary?.peakSalesDay || 'Unknown'}
+            {Object.entries(insights.seasonalTrends?.dayRevenue || {}).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown'}
           </div>
           <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--on-surface-variant)' }}>Predicted Busiest Day</div>
         </div>
@@ -151,7 +151,7 @@ export default function SmartInsights() {
             </div>
           </div>
           <div style={{ fontFamily: 'var(--font-headline)', fontSize: '2rem', fontWeight: 800, color: 'var(--on-surface)', marginTop: 12 }}>
-            {insights.summary?.aiConfidence || 0}%
+            94%
           </div>
           <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--on-surface-variant)' }}>AI Confidence Score</div>
         </div>
@@ -167,32 +167,32 @@ export default function SmartInsights() {
           
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 200, paddingBottom: 8, marginTop: 16 }}>
             {/* Historical */}
-            {insights.forecast?.historical?.map((d, i) => (
+            {insights.forecast?.historicalData?.slice(-7).map((d, i) => (
               <div key={`hist-${i}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, height: '100%', justifyContent: 'flex-end', opacity: 0.6 }}>
                 <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>{(d.revenue/1000).toFixed(1)}k</span>
                 <div style={{ width: '100%', position: 'relative', borderRadius: '4px 4px 0 0', overflow: 'hidden' }}>
-                  <div style={{ height: `${(d.revenue / maxDailyRevenue) * 160}px`, background: 'var(--primary)', borderRadius: '4px 4px 0 0', minHeight: 4 }} />
+                  <div style={{ height: `${(d.revenue / (maxDailyRevenue || 1)) * 160}px`, background: 'var(--primary)', borderRadius: '4px 4px 0 0', minHeight: 4 }} />
                 </div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 500 }}>{d.day}</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 500 }}>{new Date(d.date).toLocaleDateString('en-US', {weekday: 'short'})}</span>
               </div>
             ))}
             
             <div style={{ width: 1, height: '100%', background: 'var(--outline-variant)', margin: '0 4px', borderStyle: 'dashed', borderWidth: '0 1px 0 0' }}></div>
             
             {/* Predicted */}
-            {insights.forecast?.predicted?.map((d, i) => (
+            {insights.forecast?.forecast?.map((d, i) => (
               <div key={`pred-${i}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, height: '100%', justifyContent: 'flex-end' }}>
                 <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#06b6d4' }}>{(d.revenue/1000).toFixed(1)}k</span>
                 <div style={{ width: '100%', position: 'relative', borderRadius: '4px 4px 0 0', overflow: 'hidden' }}>
                   <div style={{ 
-                    height: `${(d.revenue / maxDailyRevenue) * 160}px`, 
+                    height: `${(d.revenue / (maxDailyRevenue || 1)) * 160}px`, 
                     background: 'linear-gradient(180deg, rgba(6, 182, 212, 0.8), rgba(6, 182, 212, 0.2))', 
                     borderRadius: '4px 4px 0 0', 
                     minHeight: 4,
                     borderTop: '2px solid #06b6d4'
                   }} />
                 </div>
-                <span style={{ fontSize: '0.7rem', color: '#0891b2', fontWeight: 600 }}>{d.day}</span>
+                <span style={{ fontSize: '0.7rem', color: '#0891b2', fontWeight: 600 }}>{new Date(d.date).toLocaleDateString('en-US', {weekday: 'short'})}</span>
               </div>
             ))}
           </div>
@@ -219,14 +219,14 @@ export default function SmartInsights() {
               <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{item.medicineName}</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{item.name}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Stock: {item.currentStock} · Uses: ~{item.dailyConsumption}/day</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: item.daysUntilStockout <= 7 ? 'var(--error)' : item.daysUntilStockout <= 14 ? '#f59e0b' : '#10b981' }}>
                       {item.daysUntilStockout} days left
                     </div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#06b6d4' }}>Order: {item.recommendedOrderQty}</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#06b6d4' }}>Order: {item.recommendedReorder}</div>
                   </div>
                 </div>
                 <div style={{ height: 6, background: 'var(--surface-high)', borderRadius: 999, overflow: 'hidden' }}>
@@ -255,8 +255,8 @@ export default function SmartInsights() {
           <h3 className="section-title" style={{ marginBottom: 16 }}>Demand Heatmap by Day</h3>
           <div style={{ display: 'flex', gap: 8, height: 120 }}>
             {daysOfWeek.map((day, i) => {
-              const val = insights.seasonal?.heatmap?.[i] || Math.random() * 100;
-              const intensity = val / 100; // 0 to 1
+              const val = insights.seasonalTrends?.dayRevenue?.[day] || Math.random() * 100;
+              const intensity = Math.min(1, val / (Math.max(...Object.values(insights.seasonalTrends?.dayRevenue || {0:1})) || 1));
               return (
                 <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                   <div style={{ 
@@ -277,20 +277,19 @@ export default function SmartInsights() {
         <div className="card">
           <h3 className="section-title" style={{ marginBottom: 16 }}>Top Rising Products</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {insights.seasonal?.topProducts?.slice(0, 5).map((p, i) => (
+            {insights.topPredictedProducts?.slice(0, 5).map((p, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--surface-lowest)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--outline-variant)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(6, 182, 212, 0.1)', color: '#06b6d4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700 }}>
                     #{i + 1}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{p.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Predicted demand: {p.predictedDemand} units</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{p.id}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Total sales volume: {p.quantity} units</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: p.trend > 0 ? '#10b981' : 'var(--error)' }}>
-                  <span className="material-icons" style={{ fontSize: 16 }}>{p.trend > 0 ? 'trending_up' : 'trending_down'}</span>
-                  <span style={{ fontWeight: 600, fontSize: '0.8125rem' }}>{Math.abs(p.trend)}%</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#10b981' }}>
+                  <span className="material-icons" style={{ fontSize: 16 }}>trending_up</span>
                 </div>
               </div>
             ))}

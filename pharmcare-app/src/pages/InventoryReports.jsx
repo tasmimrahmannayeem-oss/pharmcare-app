@@ -52,7 +52,7 @@ export default function InventoryReports() {
         });
         if (res.ok) {
           const data = await res.json();
-          setRestockData(data);
+          setRestockData(data.data);
         }
       } catch (err) {
         console.error('Failed to fetch AI restock data:', err);
@@ -211,13 +211,13 @@ export default function InventoryReports() {
               <tbody>
                 {restockData.map((item, idx) => (
                   <tr key={idx} style={{ borderBottom: '1px solid var(--surface-high)' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 500, fontSize: '0.875rem' }}>{item.medicineName}</td>
+                    <td style={{ padding: '12px 16px', fontWeight: 500, fontSize: '0.875rem' }}>{item.name}</td>
                     <td style={{ padding: '12px 16px', fontSize: '0.875rem' }}>{item.currentStock} units</td>
                     <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>~{item.dailyConsumption} units/day</td>
                     <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: item.daysUntilStockout <= 7 ? 'var(--error)' : item.daysUntilStockout <= 14 ? '#f59e0b' : '#10b981' }}>
                       {item.daysUntilStockout} days
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary-container)' }}>+{item.recommendedOrderQty}</td>
+                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary-container)' }}>+{item.recommendedReorder}</td>
                     <td style={{ padding: '12px 16px' }}>
                       <span className={`badge ${item.urgency === 'critical' ? 'badge-error' : item.urgency === 'warning' ? 'badge-warning' : 'badge-success'}`}>
                         {item.urgency}
