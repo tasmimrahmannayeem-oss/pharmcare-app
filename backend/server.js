@@ -36,6 +36,8 @@ const pharmacyRoutes = require('./routes/pharmacyRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 
+const mlRoutes = require('./routes/mlRoutes');
+
 // Basic route to test connection
 app.get('/api/status', (req, res) => {
   res.json({ status: 'API is running', dbState: mongoose.connection.readyState });
@@ -49,6 +51,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/pharmacies', pharmacyRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/ml', mlRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

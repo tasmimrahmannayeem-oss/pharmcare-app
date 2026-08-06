@@ -7,7 +7,7 @@ export default function Login() {
   const navigate = useNavigate()
   const { setRole } = useRole()
   const [tab, setTab] = useState('login')
-  const [form, setForm] = useState({ email: '', password: '', name: '', role: 'customer' })
+  const [form, setForm] = useState({ email: '', password: '', name: '', role: 'customer', otp: '', newPassword: '' })
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -55,7 +55,7 @@ export default function Login() {
           }
           setError(data.message || 'Login failed')
         }
-      } else {
+      } else if (tab === 'register') {
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -71,7 +71,8 @@ export default function Login() {
         if (res.ok) {
           if (data.token) {
             localStorage.setItem('token', data.token)
-            setRole(form.role)
+            const backToFrontRole = Object.keys(roleMap).find(key => roleMap[key] === data.role) || 'customer'
+            setRole(backToFrontRole, { ...data, token: data.token })
             navigate('/home')
           } else {
             alert(data.message)
@@ -79,6 +80,32 @@ export default function Login() {
           }
         } else {
           setError(data.message || 'Registration failed')
+        }
+      } else if (tab === 'forgot') {
+        const res = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: form.email })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          alert('OTP has been sent to your email (simulated in console).')
+          setTab('reset')
+        } else {
+          setError(data.message || 'Failed to send OTP')
+        }
+      } else if (tab === 'reset') {
+        const res = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: form.email, otp: form.otp, newPassword: form.newPassword })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          alert('Password successfully reset. You can now login.')
+          setTab('login')
+        } else {
+          setError(data.message || 'Failed to reset password')
         }
       }
     } catch (err) {
@@ -180,6 +207,12 @@ export default function Login() {
             }}>Register</button>
           </div>
 
+          {(tab === 'forgot' || tab === 'reset') && (
+            <div className="login-hero-sub" style={{marginBottom: 10}}>
+              {tab === 'forgot' ? 'Enter your email to receive a password reset OTP.' : 'Enter the OTP and your new password.'}
+            </div>
+          )}
+
           {tab === 'register' && (
             <div className="tab-pane" style={{ background: 'var(--primary-fixed)', color: 'var(--primary-container)', padding: '12px 14px', borderRadius: 8, fontSize: '0.8125rem', display: 'flex', alignItems: 'flex-start', gap: 10, border: '1px solid var(--primary-fixed-dim)' }}>
               <span className="material-icons" style={{ fontSize: 18, marginTop: 2 }}>info</span>
@@ -229,30 +262,32 @@ export default function Login() {
             </div>
 
             {/* Role selector */}
-            <div className="role-select-box">
-              <label className="role-label-text">Access Role</label>
-              <div className="role-select-grid">
-                {[
-                  { key: 'customer', icon: 'person', label: 'Customer' },
-                  { key: 'assistant', icon: 'storefront', label: 'Assistant' },
-                  { key: 'pharmacist', icon: 'medical_services', label: 'Pharmacist' },
-                  { key: 'owner', icon: 'admin_panel_settings', label: 'Owner' },
-                  { key: 'supplier', icon: 'local_shipping', label: 'Supplier' },
-                  { key: 'superadmin', icon: 'supervisor_account', label: 'Super Admin' },
-                ].filter(r => tab === 'login' ? true : !['superadmin', 'owner', 'assistant'].includes(r.key))
-                  .map(r => (
-                    <button
-                      type="button"
-                      key={r.key}
-                      className={`role-chip ${form.role === r.key ? 'active' : ''}`}
-                      onClick={() => setForm(p => ({ ...p, role: r.key }))}
-                    >
-                      <span className="material-icons">{r.icon}</span>
-                      {r.label}
-                    </button>
-                  ))}
+            {(tab === 'login' || tab === 'register') && (
+              <div className="role-select-box">
+                <label className="role-label-text">Access Role</label>
+                <div className="role-select-grid">
+                  {[
+                    { key: 'customer', icon: 'person', label: 'Customer' },
+                    { key: 'assistant', icon: 'storefront', label: 'Assistant' },
+                    { key: 'pharmacist', icon: 'medical_services', label: 'Pharmacist' },
+                    { key: 'owner', icon: 'admin_panel_settings', label: 'Owner' },
+                    { key: 'supplier', icon: 'local_shipping', label: 'Supplier' },
+                    { key: 'superadmin', icon: 'supervisor_account', label: 'Super Admin' },
+                  ].filter(r => tab === 'login' ? true : !['superadmin', 'owner', 'assistant'].includes(r.key))
+                    .map(r => (
+                      <button
+                        type="button"
+                        key={r.key}
+                        className={`role-chip ${form.role === r.key ? 'active' : ''}`}
+                        onClick={() => setForm(p => ({ ...p, role: r.key }))}
+                      >
+                        <span className="material-icons">{r.icon}</span>
+                        {r.label}
+                      </button>
+                    ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {tab === 'login' && (
               <div style={{ textAlign: 'right', marginTop: -4 }}>
@@ -260,24 +295,42 @@ export default function Login() {
                   type="button"
                   className="btn btn-ghost"
                   style={{ padding: '4px 0', fontSize: '0.875rem' }}
-                  onClick={() => alert("Forgot password functionality will be implemented soon.")}
+                  onClick={() => setTab('forgot')}
                 >
                   Forgot Password?
                 </button>
               </div>
             )}
 
+            {tab === 'reset' && (
+              <>
+                <div className={`floating-group ${form.otp ? 'has-value' : ''}`}>
+                  <input id="otp" className="floating-input" type="text" placeholder=" " value={form.otp} onChange={e => setForm(p => ({ ...p, otp: e.target.value }))} />
+                  <span className="material-icons floating-icon">vpn_key</span>
+                  <label className="floating-label" htmlFor="otp">OTP Code</label>
+                </div>
+                <div className={`floating-group ${form.newPassword ? 'has-value' : ''}`}>
+                  <input id="newPassword" className="floating-input" type={showPassword ? 'text' : 'password'} placeholder=" " value={form.newPassword} onChange={e => setForm(p => ({ ...p, newPassword: e.target.value }))} />
+                  <span className="material-icons floating-icon">lock_reset</span>
+                  <label className="floating-label" htmlFor="newPassword">New Password</label>
+                  <button type="button" tabIndex="-1" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                    <span className="material-icons">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                  </button>
+                </div>
+              </>
+            )}
+
             <button type="submit" className="btn-cta" disabled={loading}>
-              <span className={`material-icons ${loading ? 'spinner' : ''}`}>{loading ? 'sync' : 'login'}</span>
-              {loading ? 'Authenticating...' : (tab === 'login' ? 'Sign In to SPMIS' : 'Create Account')}
+              <span className={`material-icons ${loading ? 'spinner' : ''}`}>{loading ? 'sync' : (tab === 'forgot' ? 'send' : (tab === 'reset' ? 'lock_reset' : 'login'))}</span>
+              {loading ? 'Processing...' : (tab === 'login' ? 'Sign In to SPMIS' : (tab === 'register' ? 'Create Account' : (tab === 'forgot' ? 'Send OTP' : 'Reset Password')))}
             </button>
           </form>
 
           <div>
             <p className="login-footer-text" style={{ marginBottom: 12 }}>
-              {tab === 'login' ? "Don't have an account? " : 'Already registered? '}
-              <button className="btn-ghost" style={{ padding: 0, fontWeight: 600, color: 'var(--primary-container)', fontSize: 'inherit' }} onClick={() => setTab(tab === 'login' ? 'register' : 'login')}>
-                {tab === 'login' ? 'Register' : 'Sign In'}
+              {(tab === 'login' || tab === 'forgot' || tab === 'reset') ? "Don't have an account? " : 'Already registered? '}
+              <button className="btn-ghost" style={{ padding: 0, fontWeight: 600, color: 'var(--primary-container)', fontSize: 'inherit' }} onClick={() => setTab((tab === 'login' || tab === 'forgot' || tab === 'reset') ? 'register' : 'login')}>
+                {(tab === 'login' || tab === 'forgot' || tab === 'reset') ? 'Register' : 'Sign In'}
               </button>
             </p>
             <p className="login-disclaimer">

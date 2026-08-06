@@ -59,9 +59,12 @@ export function RoleProvider({ children }) {
     _setRole(newRole)
     if (data) {
       const existingData = JSON.parse(localStorage.getItem('userData') || '{}')
-      const mergedData = data.token 
-        ? { ...existingData, ...data } 
-        : { ...data, ...existingData, token: existingData.token || localStorage.getItem('token') };
+      // If the incoming data has a different _id or email, we shouldn't merge with the old user's data
+      const isNewUser = (data._id && existingData._id && data._id !== existingData._id) || 
+                        (data.email && existingData.email && data.email !== existingData.email);
+                        
+      let mergedData = isNewUser ? { ...data } : { ...existingData, ...data };
+      if (!mergedData.token) mergedData.token = localStorage.getItem('token');
       
       localStorage.setItem('userData', JSON.stringify(mergedData))
       _setUserData(mergedData)

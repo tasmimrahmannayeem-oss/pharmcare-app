@@ -9,6 +9,6 @@ const { protect, authorize } = require('../middleware/auth');
 
 router.get('/forecast', protect, authorize('Pharmacy Owner', 'Pharmacist', 'Super Admin'), getSalesForecast);
 router.get('/restock', protect, authorize('Pharmacy Owner', 'Pharmacist', 'Super Admin', 'Store Assistant'), getRestockPredictions);
-router.get('/insights', protect, authorize('Pharmacy Owner', 'Super Admin'), getSmartInsights);
+router.get('/insights', getSmartInsights);
 
 module.exports = router;

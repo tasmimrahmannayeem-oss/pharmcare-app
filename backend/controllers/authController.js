@@ -80,11 +80,37 @@ exports.forgotPassword = async (req, res) => {
 
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     user.otpCode = otp;
-    user.otpExpire = Date.now() + 60 * 1000; // 1 minute
+    user.otpExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
     await user.save();
 
     console.log(`[SIMULATION] Verification OTP for ${email}: ${otp}`);
-    res.json({ message: 'OTP sent to registered mobile number (Simulated in logs)' });
+    res.json({ message: 'OTP sent to registered email (Simulated in logs)' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reset Password with OTP
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    
+    const user = await User.findOne({ 
+      email,
+      otpCode: otp,
+      otpExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    user.password = newPassword;
+    user.otpCode = undefined;
+    user.otpExpire = undefined;
+    await user.save();
+
+    res.json({ message: 'Password reset successful. You can now log in.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

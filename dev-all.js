@@ -4,7 +4,7 @@ const path = require('path');
 console.log('🚀 Starting PharmCare Development Suite...');
 
 // 1. Start Backend
-const backend = spawn('node', ['server.js'], { 
+const backend = spawn('node', ['backend/server.js'], { 
   stdio: 'inherit', 
   shell: true 
 });

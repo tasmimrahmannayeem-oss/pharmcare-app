@@ -174,6 +174,50 @@ const seedDatabase = async () => {
       console.log(`✅ Sample medicines seeded for ${pharmacies.length} pharmacy branches.`);
     }
     
+    // 4. Seed Historical Orders for AI/ML Validation
+    const Order = require('./models/Order');
+    const orderCount = await Order.countDocuments();
+    if (pharmacies.length > 0) {
+      console.log(`📊 Current order count: ${orderCount}. Seeding extra historical AI/ML test data (Orders)...`);
+      
+      const admin = await User.findOne({ email: 'admin@spmis.com' });
+      const medicines = await Medicine.find();
+      
+      const mockOrders = [];
+      const past30Days = [...Array(30).keys()].map(i => {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        return d;
+      });
+
+      past30Days.forEach(date => {
+        // Create 2-5 random orders per day
+        const ordersPerDay = Math.floor(Math.random() * 4) + 2;
+        for (let i=0; i<ordersPerDay; i++) {
+          const med = medicines[Math.floor(Math.random() * medicines.length)];
+          const qty = Math.floor(Math.random() * 5) + 1; // 1 to 5 items
+          
+          mockOrders.push({
+            customer: admin._id,
+            pharmacy: med.pharmacy,
+            medicines: [{
+              medicine: med._id,
+              quantity: qty,
+              price: med.sellPrice
+            }],
+            totalAmount: med.sellPrice * qty,
+            status: 'Delivered',
+            paymentStatus: 'Paid',
+            createdAt: date,
+            updatedAt: date
+          });
+        }
+      });
+
+      await Order.insertMany(mockOrders);
+      console.log(`✅ Inserted ${mockOrders.length} historical orders for AI/ML Smart Insights validation.`);
+    }
+
     console.log('✨ Seeding complete.');
   } catch (err) {
     console.error('❌ Automatic seeding failed:', err.message);

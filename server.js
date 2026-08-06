@@ -58,30 +58,15 @@ const startServer = async () => {
     process.exit(1);
   }
 };
-
-startServer();
-
-// Routes
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const medicineRoutes = require('./routes/medicineRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-const pharmacyRoutes = require('./routes/pharmacyRoutes');
-const supplierRoutes = require('./routes/supplierRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
-const mlRoutes = require('./routes/mlRoutes');
-
-// Basic route to test connection
-app.get('/api/status', (req, res) => {
-  res.json({ 
-    status: 'API is running', 
-    dbState: mongoose.connection.readyState,
-    dbName: mongoose.connection.name
-  });
-});
-
-// Serve uploaded prescription images
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads/prescriptions')));
+// Routes
+const authRoutes = require('./backend/routes/authRoutes');
+const userRoutes = require('./backend/routes/userRoutes');
+const medicineRoutes = require('./backend/routes/medicineRoutes');
+const orderRoutes = require('./backend/routes/orderRoutes');
+const pharmacyRoutes = require('./backend/routes/pharmacyRoutes');
+const supplierRoutes = require('./backend/routes/supplierRoutes');
+const analyticsRoutes = require('./backend/routes/analyticsRoutes');
+const mlRoutes = require('./backend/routes/mlRoutes');
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -92,3 +77,10 @@ app.use('/api/pharmacies', pharmacyRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ml', mlRoutes);
+
+// Basic route to test connection
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'API is running', dbState: mongoose.connection.readyState, dbName: mongoose.connection.name });
+});
+
+startServer();
