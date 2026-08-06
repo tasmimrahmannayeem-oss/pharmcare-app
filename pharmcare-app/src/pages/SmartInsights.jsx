@@ -43,8 +43,8 @@ export default function SmartInsights() {
           headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
         })
         if (res.ok) {
-          const data = await res.json()
-          setInsights(data.data)
+          const json = await res.json()
+          setInsights(json.success ? json.data : (json.data || json))
         } else {
           throw new Error('Failed to fetch insights')
         }

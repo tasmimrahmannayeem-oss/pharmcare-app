@@ -10,6 +10,8 @@ router.get('/pending', authorize('Super Admin', 'Pharmacy Owner'), userControlle
 router.get('/:id', userController.getUserById);
 router.patch('/:id', userController.updateUser);
 router.delete('/:id', userController.deleteUser);
-router.patch('/:id/approve', authorize('Super Admin', 'Pharmacy Owner'), userController.approveUser);
+// Reset user password (Super Admin only)
+router.patch('/:id/password', authorize('Super Admin'), userController.resetUserPassword);
+
 
 module.exports = router;
