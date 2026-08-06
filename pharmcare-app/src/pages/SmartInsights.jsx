@@ -10,7 +10,10 @@ export default function SmartInsights() {
 
   useEffect(() => {
     const fetchPharmacyName = async () => {
-      if (!userData?.assignedPharmacy) return;
+      if (!userData?.assignedPharmacy) {
+        setPharmacyName('All Branches');
+        return;
+      }
       const pharmacyId = typeof userData.assignedPharmacy === 'object' ? userData.assignedPharmacy._id : userData.assignedPharmacy;
       if (!pharmacyId) return;
       try {
@@ -30,11 +33,13 @@ export default function SmartInsights() {
 
   useEffect(() => {
     const fetchInsights = async () => {
-      if (!userData?.assignedPharmacy) return;
-      const pharmacyId = typeof userData.assignedPharmacy === 'object' ? userData.assignedPharmacy._id : userData.assignedPharmacy;
+      if (!userData) return;
+      const pharmacyId = userData.assignedPharmacy 
+        ? (typeof userData.assignedPharmacy === 'object' ? userData.assignedPharmacy._id : userData.assignedPharmacy) 
+        : '';
       try {
         setLoading(true);
-        const res = await fetch(`/api/ml/insights?pharmacyId=${pharmacyId}`, {
+        const res = await fetch(`/api/ml/insights${pharmacyId ? `?pharmacyId=${pharmacyId}` : ''}`, {
           headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
         })
         if (res.ok) {

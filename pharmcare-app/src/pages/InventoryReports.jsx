@@ -43,11 +43,13 @@ export default function InventoryReports() {
 
   useEffect(() => {
     const fetchAIRestock = async () => {
-      if (!userData?.assignedPharmacy) return;
-      const pharmacyId = typeof userData.assignedPharmacy === 'object' ? userData.assignedPharmacy._id : userData.assignedPharmacy;
+      if (!userData) return;
+      const pharmacyId = userData.assignedPharmacy 
+        ? (typeof userData.assignedPharmacy === 'object' ? userData.assignedPharmacy._id : userData.assignedPharmacy) 
+        : '';
       setLoadingAI(true);
       try {
-        const res = await fetch(`/api/ml/restock?pharmacyId=${pharmacyId}`, {
+        const res = await fetch(`/api/ml/restock${pharmacyId ? `?pharmacyId=${pharmacyId}` : ''}`, {
           headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
         });
         if (res.ok) {
