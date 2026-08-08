@@ -30,6 +30,6 @@ router.get(
   getRestockPredictions
 );
 
-router.get('/insights', getSmartInsights);
+router.get('/insights', protect, authorize('Pharmacy Owner', 'Pharmacist', 'Super Admin', 'Store Assistant'), getSmartInsights);
 
 module.exports = router;

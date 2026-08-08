@@ -83,7 +83,8 @@ export default function SmartInsights() {
     ...(insights.forecast?.forecast?.map(d => d.revenue) || [])
   );
 
-  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const daysOfWeekShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
     <div className="fade-up">
@@ -242,7 +243,7 @@ export default function SmartInsights() {
                     borderRadius: 999 
                   }} />
                 </div>
-                {item.expiringSoon && (
+                {item.expiryAlert && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: -4 }}>
                     <span className="material-icons" style={{ fontSize: 14, color: '#f59e0b' }}>warning</span>
                     <span style={{ fontSize: '0.7rem', color: '#f59e0b' }}>Some batches expiring within 30 days</span>
@@ -260,18 +261,20 @@ export default function SmartInsights() {
           <h3 className="section-title" style={{ marginBottom: 16 }}>Demand Heatmap by Day</h3>
           <div style={{ display: 'flex', gap: 8, height: 120 }}>
             {daysOfWeek.map((day, i) => {
-              const val = insights.seasonalTrends?.dayRevenue?.[day] || Math.random() * 100;
-              const intensity = Math.min(1, val / (Math.max(...Object.values(insights.seasonalTrends?.dayRevenue || {0:1})) || 1));
+              const val = insights.seasonalTrends?.dayRevenue?.[day] || 0;
+              const allVals = Object.values(insights.seasonalTrends?.dayRevenue || {});
+              const maxVal = allVals.length > 0 ? Math.max(...allVals) : 1;
+              const intensity = maxVal > 0 ? Math.min(1, val / maxVal) : 0;
               return (
                 <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                   <div style={{ 
                     flex: 1, 
                     width: '100%', 
                     borderRadius: 'var(--radius-sm)',
-                    background: `rgba(6, 182, 212, ${Math.max(0.1, intensity)})`,
+                    background: `rgba(6, 182, 212, ${Math.max(0.08, intensity)})`,
                     border: '1px solid rgba(6, 182, 212, 0.1)'
-                  }} title={`Relative demand: ${Math.round(val)}%`}></div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{day}</span>
+                  }} title={`Revenue: ৳${Math.round(val).toLocaleString()}`}></div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{daysOfWeekShort[i]}</span>
                 </div>
               );
             })}

@@ -82,9 +82,15 @@ exports.getRestockPredictions = async (req, res) => {
 
 exports.getSmartInsights = async (req, res) => {
   try {
-    let pharmacyId = req.query.pharmacyId;
+    let pharmacyId = null;
+    // Prefer assignedPharmacy from the authenticated user
     if (req.user && req.user.assignedPharmacy) {
       pharmacyId = req.user.assignedPharmacy;
+    } else if (req.query.pharmacyId) {
+      // Fall back to query param (Super Admin selecting a branch)
+      pharmacyId = mongoose.Types.ObjectId.isValid(req.query.pharmacyId)
+        ? new mongoose.Types.ObjectId(req.query.pharmacyId)
+        : null;
     }
 
     const medicineQuery = {};
