@@ -29,7 +29,7 @@ const pageTitles = {
   '/superadmin/audit': 'System Audit Log',
 }
 
-export default function TopBar() {
+export default function TopBar({ toggleMobileSidebar }) {
   const { role, setRole, userData } = useRole()
   const { selectedPharmacy } = useCart()
   const location = useLocation()
@@ -90,6 +90,14 @@ export default function TopBar() {
   return (
     <header className="topbar">
       <div className="topbar-left">
+        <button 
+          className="mobile-menu-btn" 
+          onClick={toggleMobileSidebar}
+          aria-label="Open Menu"
+        >
+          <span className="material-icons">menu</span>
+        </button>
+
         <h1 className="topbar-title">{title}</h1>
         <div className="live-indicator">
           <span className="live-dot" />

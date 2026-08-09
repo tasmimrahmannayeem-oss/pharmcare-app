@@ -136,7 +136,7 @@ export default function Checkout() {
         ))}
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:24 }}>
+      <div className="checkout-layout">
         <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
           {step === 1 && (
             <div className="card" style={{ padding:0 }}>

@@ -13,6 +13,10 @@
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Desktop toggle vs Mobile close */
+.desktop-only { display: flex; }
+.mobile-close-btn { display: none; margin-left: auto; color: var(--on-surface-variant); padding: 4px; }
+
 .sidebar.collapsed .sidebar-logo {
   flex-direction: column;
   padding: 16px 4px;
@@ -129,3 +133,30 @@
   padding-top: 12px;
   margin-top: 8px;
 }
+
+/* ── Mobile Responsive Off-Canvas Drawer ────────────────────── */
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+  .mobile-close-btn { display: flex !important; }
+
+  .sidebar {
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    width: 280px !important;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+    border-right: 1px solid var(--outline-variant);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .sidebar.collapsed {
+    width: 280px !important;
+  }
+}
+

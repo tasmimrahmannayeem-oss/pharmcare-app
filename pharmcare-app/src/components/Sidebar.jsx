@@ -48,13 +48,13 @@ const navConfig = {
   ],
 }
 
-export default function Sidebar({ isCollapsed, toggleCollapse }) {
+export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, closeMobile }) {
   const { role, roles } = useRole()
   const navigate = useNavigate()
   const items = navConfig[role] || navConfig.customer
 
   return (
-    <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+    <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon">
@@ -66,24 +66,36 @@ export default function Sidebar({ isCollapsed, toggleCollapse }) {
             <div className="sidebar-logo-tag">Pharmacy System</div>
           </div>
         )}
+
+        {/* Desktop Collapse Toggle */}
         <button 
-          className="btn-ghost" 
+          className="btn-ghost sidebar-toggle-btn desktop-only" 
           style={{ marginLeft: isCollapsed ? 0 : 'auto', padding: isCollapsed ? 0 : 4, color: 'var(--on-surface-variant)' }} 
           onClick={toggleCollapse}
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <span className="material-icons">{isCollapsed ? 'menu' : 'menu_open'}</span>
+        </button>
+
+        {/* Mobile Close Button */}
+        <button 
+          className="btn-ghost mobile-close-btn" 
+          onClick={closeMobile}
+          title="Close Menu"
+        >
+          <span className="material-icons">close</span>
         </button>
       </div>
 
       {/* Role chip */}
       {!isCollapsed ? (
         <div className="sidebar-role-chip">
-          <span className="material-icons" style={{ fontSize: 16 }}>{roles[role].icon}</span>
-          <span>{roles[role].label}</span>
+          <span className="material-icons" style={{ fontSize: 16 }}>{roles[role]?.icon || 'person'}</span>
+          <span>{roles[role]?.label || 'User'}</span>
         </div>
       ) : (
-        <div className="sidebar-role-chip collapsed" title={roles[role].label}>
-          <span className="material-icons" style={{ fontSize: 18 }}>{roles[role].icon}</span>
+        <div className="sidebar-role-chip collapsed" title={roles[role]?.label}>
+          <span className="material-icons" style={{ fontSize: 18 }}>{roles[role]?.icon || 'person'}</span>
         </div>
       )}
 
@@ -95,6 +107,7 @@ export default function Sidebar({ isCollapsed, toggleCollapse }) {
             to={item.to}
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
             title={isCollapsed ? item.label : undefined}
+            onClick={closeMobile}
           >
             <span className="material-icons sidebar-link-icon">{item.icon}</span>
             {!isCollapsed && <span className="sidebar-link-label">{item.label}</span>}
@@ -106,7 +119,7 @@ export default function Sidebar({ isCollapsed, toggleCollapse }) {
       <div className="sidebar-bottom">
         <button 
           className="sidebar-link w-full" 
-          onClick={() => { localStorage.clear(); navigate('/'); }}
+          onClick={() => { closeMobile(); localStorage.clear(); navigate('/'); }}
           title={isCollapsed ? "Sign Out" : undefined}
           style={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}
         >

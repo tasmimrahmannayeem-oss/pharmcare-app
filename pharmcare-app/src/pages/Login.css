@@ -290,5 +290,15 @@
 
 @media (max-width: 960px) {
   .login-panel-left { display: none; }
-  .login-panel-right { width: 100%; min-height: 100vh; }
+  .login-panel-right { width: 100%; min-height: 100vh; padding: 24px 16px; }
+  .login-card { max-width: 480px; padding: 28px 24px; }
 }
+
+@media (max-width: 480px) {
+  .login-panel-right { padding: 16px 12px; }
+  .login-card { padding: 24px 16px; border-radius: var(--radius); gap: 18px; }
+  .login-card-logo .login-brand-name.sm { font-size: 1.1rem; }
+  .role-chip { padding: 8px 10px; font-size: 0.78rem; flex: 1 1 calc(50% - 6px); justify-content: center; }
+  .btn-cta { padding: 14px; min-height: 48px; font-size: 0.95rem; }
+}
+

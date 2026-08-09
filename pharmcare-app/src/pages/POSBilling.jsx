@@ -137,7 +137,7 @@ export default function POSBilling() {
         <button className="btn btn-ghost btn-sm" onClick={fetchHistory}>Reset History</button>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 380px', gap:24, alignItems:'start' }}>
+      <div className="pos-layout">
         {/* Left: Product search + recent */}
         <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
           <div className="card">
@@ -146,7 +146,7 @@ export default function POSBilling() {
               <span className="material-icons icon">search</span>
               <input className="input" placeholder="Scan barcode or search medicine…" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginTop:14 }}>
+            <div className="pos-products-grid">
               {medicines.filter(n => n.name.toLowerCase().includes(search.toLowerCase()) || n.genericName.toLowerCase().includes(search.toLowerCase())).slice(0, 12).map(med => (
                 <button key={med._id}
                   disabled={med.stockQuantity <= 0}
