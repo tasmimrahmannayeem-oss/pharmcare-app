@@ -153,7 +153,7 @@ export default function FulfillmentStatus() {
       </div>
 
       {/* Filter */}
-      <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+      <div className="filter-row">
         {['All','Pickup','Delivery','Being Processed','Dispatched','Pending'].map(f => (
           <button
             key={f}

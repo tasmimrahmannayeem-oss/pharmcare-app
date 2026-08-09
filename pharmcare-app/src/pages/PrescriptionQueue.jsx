@@ -101,7 +101,7 @@ export default function PrescriptionQueue() {
       </div>
 
       {/* Filter tabs */}
-      <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+      <div className="filter-row">
         {filters.map(f => (
           <button key={f} className={`badge ${filter===f?'badge-info':'badge-neutral'}`} style={{ cursor:'pointer', padding:'7px 14px', fontSize:'0.8125rem' }} onClick={() => setFilter(f)}>{f}</button>
         ))}

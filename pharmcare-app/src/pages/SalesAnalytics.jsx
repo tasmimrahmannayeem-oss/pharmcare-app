@@ -113,16 +113,18 @@ export default function SalesAnalytics() {
             <h3 className="section-title">Daily Revenue — This Week</h3>
             <span className="badge badge-success">↑ 12.4%</span>
           </div>
-          <div style={{ display:'flex', alignItems:'flex-end', gap:12, height:180, paddingBottom:8 }}>
-            {weeklyData.map(d => (
-              <div key={d.day} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:6, height:'100%', justifyContent:'flex-end' }}>
-                <span style={{ fontSize:'0.7rem', fontWeight:700, color:'var(--primary-container)' }}>৳{(d.revenue/1000).toFixed(1)}k</span>
-                <div style={{ width:'100%', position:'relative', borderRadius:'var(--radius-sm) var(--radius-sm) 0 0', overflow:'hidden' }}>
-                  <div style={{ height: `${(d.revenue/maxRevenue)*140}px`, background:'linear-gradient(180deg, var(--primary-container), var(--primary))', borderRadius:'var(--radius-sm) var(--radius-sm) 0 0', transition:'height 0.4s ease', minHeight:8 }} />
+          <div className="chart-scroll-wrap">
+            <div className="chart-inner-wrap" style={{ display:'flex', alignItems:'flex-end', gap:12, height:180, paddingBottom:8 }}>
+              {weeklyData.map(d => (
+                <div key={d.day} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:6, height:'100%', justifyContent:'flex-end' }}>
+                  <span style={{ fontSize:'0.7rem', fontWeight:700, color:'var(--primary-container)' }}>৳{(d.revenue/1000).toFixed(1)}k</span>
+                  <div style={{ width:'100%', position:'relative', borderRadius:'var(--radius-sm) var(--radius-sm) 0 0', overflow:'hidden' }}>
+                    <div style={{ height: `${(d.revenue/maxRevenue)*140}px`, background:'linear-gradient(180deg, var(--primary-container), var(--primary))', borderRadius:'var(--radius-sm) var(--radius-sm) 0 0', transition:'height 0.4s ease', minHeight:8 }} />
+                  </div>
+                  <span style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)', fontWeight:500 }}>{d.day}</span>
                 </div>
-                <span style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)', fontWeight:500 }}>{d.day}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 

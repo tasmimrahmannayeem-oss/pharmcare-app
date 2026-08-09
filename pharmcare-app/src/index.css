@@ -59,14 +59,19 @@
 
 /* ── Reset ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; }
+html { font-size: 16px; width: 100%; max-width: 100vw; overflow-x: hidden; }
 body {
   font-family: var(--font-body);
   background: var(--background);
   color: var(--on-surface);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
 }
+#root { width: 100%; max-width: 100vw; overflow-x: hidden; }
 a { text-decoration: none; color: inherit; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
 input, textarea, select { font-family: inherit; }
@@ -275,10 +280,31 @@ tr:last-child td { border-bottom: none; }
 ::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 999px; }
 
 /* ── App Layout Shell ──────────────────────────────────── */
-.app-shell { display: flex; min-height: 100vh; }
+.app-shell { display: flex; min-height: 100vh; width: 100%; max-width: 100vw; overflow-x: hidden; }
 .app-shell.collapsed { --sidebar-width: 80px; }
-.app-content { flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column; min-height: 100vh; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.page-main { flex: 1; padding: 32px; max-width: 1400px; margin: 0 auto; width: 100%; transition: padding 0.3s; }
+.app-content { flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.page-main { flex: 1; padding: 32px; max-width: 1400px; margin: 0 auto; width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box; transition: padding 0.3s; }
+
+/* Responsive Filter Row & Chart Wrappers */
+.filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.chart-scroll-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
+}
+
+.chart-inner-wrap {
+  min-width: 480px;
+}
 
 
 /* ── Animations ────────────────────────────────────────── */
