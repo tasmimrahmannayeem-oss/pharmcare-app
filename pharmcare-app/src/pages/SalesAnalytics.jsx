@@ -25,6 +25,28 @@ export default function SalesAnalytics() {
   const [pharmacyName, setPharmacyName] = useState('')
   const [forecast, setForecast] = useState(null)
   const [loadingAI, setLoadingAI] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    prescriptionsFilled: 0,
+    avgTransaction: 0,
+    newCustomers: 0,
+    weeklyData: [
+      { day:'Mon', revenue:0, prescriptions:0 },
+      { day:'Tue', revenue:0, prescriptions:0 },
+      { day:'Wed', revenue:0, prescriptions:0 },
+      { day:'Thu', revenue:0, prescriptions:0 },
+      { day:'Fri', revenue:0, prescriptions:0 },
+      { day:'Sat', revenue:0, prescriptions:0 },
+      { day:'Sun', revenue:0, prescriptions:0 },
+    ],
+    topProducts: [],
+    paymentMethods: [
+      { label:'bKash', pct:0, color:'var(--primary-container)', amount:'৳0' },
+      { label:'Nagad', pct:0, color:'var(--secondary)', amount:'৳0' },
+      { label:'Cash/Card', pct:0, color:'var(--outline)', amount:'৳0' },
+    ]
+  })
 
   useEffect(() => {
     const fetchPharmacyName = async () => {
@@ -47,8 +69,139 @@ export default function SalesAnalytics() {
   }, [userData])
 
   useEffect(() => {
+    const fetchSalesData = async () => {
+      try {
+        setLoading(true)
+        const token = userData?.token || localStorage.getItem('token')
+        const rawPharmacy = userData?.assignedPharmacy
+        const pharmacyId = rawPharmacy?._id ? rawPharmacy._id : rawPharmacy
+        const queryParam = pharmacyId ? `?pharmacy=${pharmacyId}` : ''
+        
+        const res = await fetch(`/api/orders${queryParam}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (!res.ok) throw new Error('Failed to fetch orders')
+        const allOrders = await res.json()
+
+        // Filter for paid/confirmed/delivered orders
+        const validOrders = Array.isArray(allOrders)
+          ? allOrders.filter(o => ['Confirmed', 'Being Processed', 'Dispatched', 'Delivered'].includes(o.status))
+          : []
+
+        // Filter by selected period
+        const now = new Date()
+        let periodFilteredOrders = [...validOrders]
+        if (period === 'Day') {
+          const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+          periodFilteredOrders = validOrders.filter(o => new Date(o.createdAt) >= startOfDay)
+        } else if (period === 'Week') {
+          const d = new Date()
+          const startOfWeek = new Date(d.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1))) // Monday
+          startOfWeek.setHours(0,0,0,0)
+          periodFilteredOrders = validOrders.filter(o => new Date(o.createdAt) >= startOfWeek)
+        } else if (period === 'Month') {
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+          periodFilteredOrders = validOrders.filter(o => new Date(o.createdAt) >= startOfMonth)
+        } else if (period === 'Year') {
+          const startOfYear = new Date(now.getFullYear(), 0, 1)
+          periodFilteredOrders = validOrders.filter(o => new Date(o.createdAt) >= startOfYear)
+        }
+
+        // 1. Calculations
+        const totalRevenue = periodFilteredOrders.reduce((acc, o) => acc + o.totalAmount, 0)
+        const avgTransaction = periodFilteredOrders.length > 0 ? (totalRevenue / periodFilteredOrders.length) : 0
+        const rxCount = periodFilteredOrders.filter(o => 
+          o.prescriptionImage || o.medicines.some(m => m.medicine?.requiresPrescription)
+        ).length
+        const uniqueCustomers = new Set(periodFilteredOrders.filter(o => o.customer).map(o => String(o.customer?._id || o.customer))).size
+
+        // 2. Weekly Chart
+        const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        const weeklyRevenue = weekdays.map(day => ({ day, revenue: 0, prescriptions: 0 }))
+        const d = new Date()
+        const startOfWeek = new Date(d.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1)))
+        startOfWeek.setHours(0,0,0,0)
+
+        validOrders.forEach(o => {
+          const orderDate = new Date(o.createdAt)
+          if (orderDate >= startOfWeek) {
+            let dayIndex = orderDate.getDay() - 1 // Sunday is 0
+            if (dayIndex === -1) dayIndex = 6 // Map Sunday to 6
+            weeklyRevenue[dayIndex].revenue += o.totalAmount
+            if (o.prescriptionImage || o.medicines.some(m => m.medicine?.requiresPrescription)) {
+              weeklyRevenue[dayIndex].prescriptions += 1
+            }
+          }
+        })
+
+        // 3. Top Products
+        const productMap = {}
+        validOrders.forEach(o => {
+          o.medicines.forEach(m => {
+            if (!m.medicine) return
+            const medId = m.medicine._id || m.medicine
+            const name = m.medicine.name || 'Unknown Item'
+            if (!productMap[medId]) {
+              productMap[medId] = { name, units: 0, revenue: 0 }
+            }
+            productMap[medId].units += m.quantity
+            productMap[medId].revenue += m.quantity * m.price
+          })
+        })
+        const sortedProducts = Object.values(productMap)
+          .sort((a, b) => b.revenue - a.revenue)
+          .slice(0, 4)
+        
+        const maxProductRevenue = sortedProducts.length > 0 ? Math.max(...sortedProducts.map(p => p.revenue)) : 1
+        const finalProducts = sortedProducts.map(p => ({
+          ...p,
+          pct: Math.round((p.revenue / maxProductRevenue) * 100),
+          revenue: `৳${p.revenue.toLocaleString('en-IN')}`
+        }))
+
+        // 4. Payment Methods
+        let bkashVal = 0, nagadVal = 0, cashCardVal = 0
+        validOrders.forEach(o => {
+          const note = o.statusTimeline?.[0]?.note || ''
+          if (note.toLowerCase().includes('nagad')) {
+            nagadVal += o.totalAmount
+          } else if (note.toLowerCase().includes('card') || note.toLowerCase().includes('cash')) {
+            cashCardVal += o.totalAmount
+          } else {
+            bkashVal += o.totalAmount
+          }
+        })
+        const totalPayment = bkashVal + nagadVal + cashCardVal || 1
+        const paymentMethods = [
+          { label: 'bKash', pct: Math.round((bkashVal / totalPayment) * 100), color: 'var(--primary-container)', amount: `৳${bkashVal.toLocaleString('en-IN')}` },
+          { label: 'Nagad', pct: Math.round((nagadVal / totalPayment) * 100), color: 'var(--secondary)', amount: `৳${nagadVal.toLocaleString('en-IN')}` },
+          { label: 'Cash/Card', pct: Math.round((cashCardVal / totalPayment) * 100), color: 'var(--outline)', amount: `৳${cashCardVal.toLocaleString('en-IN')}` }
+        ]
+
+        setStats({
+          totalRevenue,
+          prescriptionsFilled: rxCount,
+          avgTransaction,
+          newCustomers: uniqueCustomers,
+          weeklyData: weeklyRevenue,
+          topProducts: finalProducts,
+          paymentMethods
+        })
+      } catch (err) {
+        console.error('Failed to load sales data:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (userData?.token) {
+      fetchSalesData()
+    }
+  }, [userData?.assignedPharmacy, userData?.token, period])
+
+  useEffect(() => {
     const fetchAIForecast = async () => {
-      if (!userData) return;
+      if (!userData?.token) return;
       const pharmacyId = userData.assignedPharmacy 
         ? (typeof userData.assignedPharmacy === 'object' ? userData.assignedPharmacy._id : userData.assignedPharmacy) 
         : '';
@@ -70,6 +223,10 @@ export default function SalesAnalytics() {
     fetchAIForecast();
   }, [userData]);
 
+  const maxRevenue = Math.max(...stats.weeklyData.map(d => d.revenue)) || 1
+
+  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Calculating revenue matrix...</div>
+
   return (
     <div className="fade-up">
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
@@ -81,17 +238,16 @@ export default function SalesAnalytics() {
           {['Day','Week','Month','Year'].map(p => (
             <button key={p} className={`btn btn-sm ${period===p?'btn-primary':'btn-ghost'}`} onClick={() => setPeriod(p)}>{p}</button>
           ))}
-          <button className="btn btn-ghost btn-sm"><span className="material-icons" style={{fontSize:16}}>download</span></button>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid-4" style={{ marginBottom:28 }}>
         {[
-          { label:'Total Revenue', val:'৳28,420', delta:'+12.4%', icon:'trending_up', bg:'linear-gradient(135deg,var(--primary),var(--primary-container))', textColor:'white' },
-          { label:'Prescriptions Filled', val:'419', delta:'+8.2%', icon:'description', bg:'var(--secondary-fixed)', icolor:'var(--secondary)', textColor:'var(--on-surface)' },
-          { label:'Avg. Transaction', val:'৳67.82', delta:'+3.8%', icon:'receipt', bg:'var(--primary-fixed)', icolor:'var(--primary-container)', textColor:'var(--on-surface)' },
-          { label:'New Customers', val:'38', delta:'+15%', icon:'person_add', bg:'var(--tertiary-fixed)', icolor:'var(--tertiary-container)', textColor:'var(--on-surface)' },
+          { label:'Total Revenue', val:`৳${stats.totalRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, delta:'Sync Live', icon:'trending_up', bg:'linear-gradient(135deg,var(--primary),var(--primary-container))', textColor:'white' },
+          { label:'Prescriptions Filled', val:stats.prescriptionsFilled, delta:'Rx Tracked', icon:'description', bg:'var(--secondary-fixed)', icolor:'var(--secondary)', textColor:'var(--on-surface)' },
+          { label:'Avg. Transaction', val:`৳${stats.avgTransaction.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`, delta:'Average Ticket', icon:'receipt', bg:'var(--primary-fixed)', icolor:'var(--primary-container)', textColor:'var(--on-surface)' },
+          { label:'New Customers', val:stats.newCustomers, delta:'Unique patients', icon:'person_add', bg:'var(--tertiary-fixed)', icolor:'var(--tertiary-container)', textColor:'var(--on-surface)' },
         ].map(s => (
           <div className="stat-card" key={s.label} style={{ background: s.textColor==='white' ? s.bg : 'var(--surface-lowest)' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
@@ -111,11 +267,11 @@ export default function SalesAnalytics() {
         <div className="card">
           <div className="section-header">
             <h3 className="section-title">Daily Revenue — This Week</h3>
-            <span className="badge badge-success">↑ 12.4%</span>
+            <span className="badge badge-success">Live Sync</span>
           </div>
           <div className="chart-scroll-wrap">
             <div className="chart-inner-wrap" style={{ display:'flex', alignItems:'flex-end', gap:12, height:180, paddingBottom:8 }}>
-              {weeklyData.map(d => (
+              {stats.weeklyData.map(d => (
                 <div key={d.day} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:6, height:'100%', justifyContent:'flex-end' }}>
                   <span style={{ fontSize:'0.7rem', fontWeight:700, color:'var(--primary-container)' }}>৳{(d.revenue/1000).toFixed(1)}k</span>
                   <div style={{ width:'100%', position:'relative', borderRadius:'var(--radius-sm) var(--radius-sm) 0 0', overflow:'hidden' }}>
@@ -132,10 +288,11 @@ export default function SalesAnalytics() {
         <div className="card">
           <div className="section-header">
             <h3 className="section-title">Top Revenue Products</h3>
-            <button className="btn btn-ghost btn-sm">View All</button>
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-            {topProducts.map((p, i) => (
+            {stats.topProducts.length === 0 ? (
+              <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--on-surface-variant)' }}>No sales transactions found.</div>
+            ) : stats.topProducts.map((p, i) => (
               <div key={p.name}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -159,11 +316,7 @@ export default function SalesAnalytics() {
         <div className="card">
           <h3 className="section-title" style={{ marginBottom:14 }}>Payment Methods</h3>
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-            {[
-              { label:'bKash', pct:42, color:'var(--primary-container)', amount:'৳11,936' },
-              { label:'Nagad', pct:35, color:'var(--secondary)', amount:'৳9,947' },
-              { label:'Cash/Card', pct:23, color:'var(--outline)', amount:'৳6,537' },
-            ].map(m => (
+            {stats.paymentMethods.map(m => (
               <div key={m.label} style={{ display:'flex', alignItems:'center', gap:12 }}>
                 <div style={{ width:12, height:12, borderRadius:3, background:m.color, flexShrink:0 }} />
                 <span style={{ flex:1, fontSize:'0.875rem' }}>{m.label}</span>
