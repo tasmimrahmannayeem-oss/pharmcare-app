@@ -16,6 +16,7 @@ exports.getOrders = async (req, res) => {
       }
     }
     const orders = await Order.find(filter)
+      .sort({ createdAt: -1 })
       .populate('customer', 'name email')
       .populate('pharmacy', 'name location')
       .populate('medicines.medicine', 'name requiresPrescription');

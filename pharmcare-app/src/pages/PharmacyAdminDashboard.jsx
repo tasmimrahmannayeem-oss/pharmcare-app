@@ -56,13 +56,27 @@ export default function PharmacyAdminDashboard() {
         })
         .reduce((acc, o) => acc + o.totalAmount, 0)
 
-      const recent = dailyOrders.slice(0, 4).map(o => ({
-        id: o._id.slice(-6).toUpperCase(),
-        customer: o.customer?.name || 'Walk-in',
-        items: o.medicines.map(m => `${m.medicine?.name || 'Item'} ×${m.quantity}`).join(', '),
-        total: `৳${o.totalAmount.toLocaleString('en-IN')}`,
-        method: o.paymentMethod || 'Cash'
-      }))
+      // Sort orders by date descending to guarantee most recent are first
+      const sortedOrders = dailyOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
+      const recent = sortedOrders.slice(0, 4).map(o => {
+        // Parse actual payment method from status timeline notes (e.g. "completed via Nagad")
+        let method = 'Cash'
+        const firstTimeline = o.statusTimeline?.[0]
+        if (firstTimeline && firstTimeline.note) {
+          const match = firstTimeline.note.match(/via (\w+)/i)
+          if (match) {
+            method = match[1]
+          }
+        }
+        return {
+          id: o._id.slice(-6).toUpperCase(),
+          customer: o.customer?.name || 'Walk-in',
+          items: o.medicines.map(m => `${m.medicine?.name || 'Item'} ×${m.quantity}`).join(', '),
+          total: `৳${o.totalAmount.toLocaleString('en-IN')}`,
+          method
+        }
+      })
 
       // 2. Fetch Medicines
       const medRes = await fetch(`/api/medicines${queryParam}`, { headers })
