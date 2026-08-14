@@ -5,7 +5,16 @@ const Medicine = require('../models/Medicine');
 exports.getOrders = async (req, res) => {
   try {
     const filter = {};
-    // If not superadmin, maybe filter by pharmacy? (Future improvement)
+    if (req.user) {
+      if (req.user.role === 'Customer') {
+        filter.customer = req.user._id;
+      } else if (req.user.role !== 'Super Admin') {
+        const pharmacyId = req.user.assignedPharmacy || req.query.pharmacy;
+        if (pharmacyId) {
+          filter.pharmacy = pharmacyId;
+        }
+      }
+    }
     const orders = await Order.find(filter)
       .populate('customer', 'name email')
       .populate('pharmacy', 'name location')
@@ -15,6 +24,7 @@ exports.getOrders = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // @desc    Checkout / Place Order
 exports.createOrder = async (req, res) => {

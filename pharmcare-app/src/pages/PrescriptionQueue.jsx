@@ -18,22 +18,32 @@ const statusBadgeMap = {
   'Dispensed': 'badge-neutral'
 }
 
+import { useRole } from '../context/RoleContext'
+
 export default function PrescriptionQueue() {
   const navigate = useNavigate()
+  const { userData } = useRole()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
 
   useEffect(() => {
-    fetchOrders()
-  }, [])
+    if (userData?.token) {
+      fetchOrders()
+    }
+  }, [userData?.assignedPharmacy, userData?.token])
 
   const fetchOrders = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/orders', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      const token = userData?.token || localStorage.getItem('token')
+      const rawPharmacy = userData?.assignedPharmacy
+      const pharmacyId = rawPharmacy?._id ? rawPharmacy._id : rawPharmacy
+      const queryParam = pharmacyId ? `?pharmacy=${pharmacyId}` : ''
+      const res = await fetch(`/api/orders${queryParam}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       })
+
       const data = await res.json()
       const formatted = Array.isArray(data) ? data
         .filter(o => o.requiresPrescription) // Focus only on Rx orders

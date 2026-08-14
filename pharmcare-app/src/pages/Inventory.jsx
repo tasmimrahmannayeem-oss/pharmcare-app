@@ -17,15 +17,25 @@ export default function Inventory() {
   })
 
   useEffect(() => {
-    fetchInventory()
-    fetchPharmacyName()
-  }, [])
+    if (userData?.token) {
+      fetchInventory()
+      fetchPharmacyName()
+    }
+  }, [userData?.assignedPharmacy, userData?.token])
 
   const fetchInventory = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/medicines', {
-        headers: { 'Authorization': `Bearer ${userData?.token}` }
+      const token = userData?.token || localStorage.getItem('token')
+      // Resolve pharmacy ID (may be object or string)
+      const rawPharmacy = userData?.assignedPharmacy
+      const pharmacyId = rawPharmacy?._id ? rawPharmacy._id : rawPharmacy
+      // Pass pharmacy as query param so backend filters even if DB record has no assignedPharmacy yet
+      const url = pharmacyId && role !== 'superadmin'
+        ? `/api/medicines?pharmacy=${pharmacyId}`
+        : '/api/medicines'
+      const res = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await res.json()
       setInventory(Array.isArray(data) ? data : [])
@@ -82,15 +92,20 @@ export default function Inventory() {
 
   const handleStockUpdate = async (id, newQty) => {
     try {
+      const token = userData?.token || localStorage.getItem('token')
       const res = await fetch(`/api/medicines/${id}`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${userData?.token}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ stockQuantity: Math.max(0, newQty) })
       })
       if (res.ok) fetchInventory()
+      else {
+        const err = await res.json()
+        alert(err.message || 'Failed to update stock')
+      }
     } catch (err) { alert('Failed to update stock') }
   }
 
@@ -110,25 +125,30 @@ export default function Inventory() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+      const token = userData?.token || localStorage.getItem('token')
       const isEdit = !!formData._id
       const url = isEdit ? `/api/medicines/${formData._id}` : '/api/medicines'
       const method = isEdit ? 'PATCH' : 'POST'
       
-      if (!userData?.assignedPharmacy && role !== 'superadmin') {
+      // Resolve pharmacy ID — can be a string or an object with _id
+      const rawPharmacy = userData?.assignedPharmacy
+      const pharmacyId = rawPharmacy?._id ? rawPharmacy._id : rawPharmacy
+
+      if (!pharmacyId && role !== 'superadmin') {
         alert('You must be assigned to a pharmacy branch to manage inventory.')
         return
       }
+
+      const payload = { ...formData }
+      if (!isEdit && pharmacyId) payload.pharmacy = pharmacyId
 
       const res = await fetch(url, {
         method,
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${userData?.token}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          ...formData,
-          pharmacy: userData?.assignedPharmacy
-        })
+        body: JSON.stringify(payload)
       })
       if (res.ok) {
         setShowModal(false)
@@ -139,6 +159,9 @@ export default function Inventory() {
         })
         fetchInventory()
         alert(`Medicine ${isEdit ? 'updated' : 'added'} successfully!`)
+      } else {
+        const err = await res.json()
+        alert(err.message || 'Error saving medicine')
       }
     } catch (err) {
       alert('Error saving medicine')
@@ -156,7 +179,7 @@ export default function Inventory() {
     const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
     
     if (item.stockQuantity === 0) return 'badge-error'
-    if (item.stockQuantity < 20) return 'badge-warning'
+    if (item.stockQuantity < 10) return 'badge-warning'
     if (diffDays < 30) return 'badge-warning'
     return 'badge-success'
   }
@@ -167,7 +190,7 @@ export default function Inventory() {
     const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
 
     if (item.stockQuantity === 0) return 'Out of Stock'
-    if (item.stockQuantity < 20) return 'Low Stock'
+    if (item.stockQuantity < 10) return 'Low Stock'
     if (diffDays < 30) return 'Near Expiry'
     return 'In Stock'
   }

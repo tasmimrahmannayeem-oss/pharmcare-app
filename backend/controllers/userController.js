@@ -1,9 +1,14 @@
 const User = require('../models/User');
 
-// Get all users
+// Get all users (Super Admin sees all; Pharmacy Owner sees only their pharmacy's staff)
 exports.getUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password').populate('assignedPharmacy', 'name');
+    let filter = {};
+    if (req.user.role === 'Pharmacy Owner') {
+      // Only show users belonging to the same pharmacy as the logged-in owner
+      filter.assignedPharmacy = req.user.assignedPharmacy;
+    }
+    const users = await User.find(filter).select('-password').populate('assignedPharmacy', 'name');
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -29,7 +34,12 @@ exports.approveUser = async (req, res) => {
 // @desc    Get pending registrations
 exports.getPendingUsers = async (req, res) => {
   try {
-    const users = await User.find({ isApproved: false }).select('-password');
+    let filter = { isApproved: false };
+    if (req.user.role === 'Pharmacy Owner') {
+      // Pharmacy Owners only see pending users from their own pharmacy
+      filter.assignedPharmacy = req.user.assignedPharmacy;
+    }
+    const users = await User.find(filter).select('-password');
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -31,8 +31,12 @@ export default function FulfillmentStatus() {
     try {
       setLoading(true)
       setError(null)
-      const res = await fetch('/api/orders', {
-        headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
+      const token = userData?.token || localStorage.getItem('token')
+      const rawPharmacy = userData?.assignedPharmacy
+      const pharmacyId = rawPharmacy?._id ? rawPharmacy._id : rawPharmacy
+      const queryParam = pharmacyId ? `?pharmacy=${pharmacyId}` : ''
+      const res = await fetch(`/api/orders${queryParam}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await res.json()
       if (res.ok && Array.isArray(data)) {
@@ -46,7 +50,7 @@ export default function FulfillmentStatus() {
     } finally {
       setLoading(false)
     }
-  }, [userData])
+  }, [userData?.assignedPharmacy, userData?.token])
 
   useEffect(() => {
     fetchOrders()

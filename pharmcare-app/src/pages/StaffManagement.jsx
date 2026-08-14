@@ -14,17 +14,45 @@ export default function StaffManagement() {
   })
 
   useEffect(() => {
-    fetchStaff()
-  }, [])
+    if (userData?.token) {
+      fetchStaff()
+    }
+  }, [userData?.assignedPharmacy, userData?.token])
 
   const fetchStaff = async () => {
     try {
       setLoading(true)
+      const token = userData?.token || localStorage.getItem('token')
+      const currentRole = userData?.role || localStorage.getItem('userRole')
+      const isOwner = currentRole === 'Pharmacy Owner' || currentRole === 'owner'
+
+      // Resolve the owner's assignedPharmacy — use cached value or fetch from profile
+      let ownerPharmacyId = userData?.assignedPharmacy
+      if (isOwner && !ownerPharmacyId && userData?._id) {
+        try {
+          const profileRes = await fetch(`/api/users/${userData._id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          if (profileRes.ok) {
+            const profile = await profileRes.json()
+            ownerPharmacyId = profile.assignedPharmacy?._id || profile.assignedPharmacy
+          }
+        } catch (_) {}
+      }
+
       const res = await fetch('/api/users', {
-        headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await res.json()
-      const staffOnly = Array.isArray(data) ? data.filter(u => u.role !== 'Customer' && u.role !== 'Supplier') : []
+      let staffOnly = Array.isArray(data) ? data.filter(u => u.role !== 'Customer' && u.role !== 'Supplier') : []
+
+      // Client-side safety: Pharmacy Owner only sees staff from their own pharmacy
+      if (isOwner && ownerPharmacyId) {
+        staffOnly = staffOnly.filter(u => {
+          const staffPharmacyId = u.assignedPharmacy?._id || u.assignedPharmacy
+          return String(staffPharmacyId) === String(ownerPharmacyId)
+        })
+      }
       setTeam(staffOnly)
     } catch (err) {
       console.error('Failed to fetch staff', err)

@@ -18,18 +18,24 @@ export default function PharmacyAdminDashboard() {
   })
 
   useEffect(() => {
-    if (userData?.assignedPharmacy) {
+    if (userData?.token) {
       fetchAllData()
     }
-  }, [userData])
+  }, [userData?.assignedPharmacy, userData?.token])
 
   const fetchAllData = async () => {
     try {
       setLoading(true)
-      const headers = { 'Authorization': `Bearer ${userData?.token}` }
+      const token = userData?.token || localStorage.getItem('token')
+      const headers = { 'Authorization': `Bearer ${token}` }
+
+      // Resolve pharmacy ID from state
+      const rawPharmacy = userData?.assignedPharmacy
+      const pharmacyId = rawPharmacy?._id ? rawPharmacy._id : rawPharmacy
+      const queryParam = pharmacyId ? `?pharmacy=${pharmacyId}` : ''
 
       // 1. Fetch Orders
-      const ordersRes = await fetch('/api/orders', { headers })
+      const ordersRes = await fetch(`/api/orders${queryParam}`, { headers })
       const orders = await ordersRes.json()
       
       // Calculate Sales
@@ -40,8 +46,8 @@ export default function PharmacyAdminDashboard() {
 
       const dailyOrders = Array.isArray(orders) ? orders : []
       const todayTotal = dailyOrders
-        .filter(o => new Date(o.createdAt) >= today)
-        .reduce((acc, o) => acc + o.totalAmount, 0)
+         .filter(o => new Date(o.createdAt) >= today)
+         .reduce((acc, o) => acc + o.totalAmount, 0)
       
       const yesterdayTotal = dailyOrders
         .filter(o => {
@@ -59,7 +65,7 @@ export default function PharmacyAdminDashboard() {
       }))
 
       // 2. Fetch Medicines
-      const medRes = await fetch('/api/medicines', { headers })
+      const medRes = await fetch(`/api/medicines${queryParam}`, { headers })
       const medicines = await medRes.json()
       const medList = Array.isArray(medicines) ? medicines : []
       
@@ -72,7 +78,7 @@ export default function PharmacyAdminDashboard() {
       }).length
 
       // 3. Fetch Staff
-      const staffRes = await fetch('/api/users', { headers })
+      const staffRes = await fetch(`/api/users${queryParam}`, { headers })
       const users = await staffRes.json()
       const staffList = Array.isArray(users) ? users.slice(0, 5).map(u => ({
         name: u.name,

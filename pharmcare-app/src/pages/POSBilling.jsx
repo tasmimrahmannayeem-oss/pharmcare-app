@@ -15,10 +15,12 @@ export default function POSBilling() {
   const { userData } = useRole()
 
   useEffect(() => {
-    fetchMedicines()
-    fetchHistory()
-    if (userData.assignedPharmacy) fetchPharmacy()
-  }, [])
+    if (userData?.token) {
+      fetchMedicines()
+      fetchHistory()
+      if (userData.assignedPharmacy) fetchPharmacy()
+    }
+  }, [userData?.assignedPharmacy, userData?.token])
 
   const fetchPharmacy = async () => {
     try {
@@ -33,8 +35,12 @@ export default function POSBilling() {
 
   const fetchMedicines = async () => {
     try {
-      const res = await fetch('/api/medicines', {
-        headers: { 'Authorization': `Bearer ${userData.token}` }
+      const token = userData?.token || localStorage.getItem('token')
+      const rawPharmacy = userData?.assignedPharmacy
+      const pharmacyId = rawPharmacy?._id ? rawPharmacy._id : rawPharmacy
+      const queryParam = pharmacyId ? `?pharmacy=${pharmacyId}` : ''
+      const res = await fetch(`/api/medicines${queryParam}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await res.json()
       setMedicines(Array.isArray(data) ? data : [])
@@ -44,8 +50,12 @@ export default function POSBilling() {
   const fetchHistory = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/orders', {
-        headers: { 'Authorization': `Bearer ${userData.token}` }
+      const token = userData?.token || localStorage.getItem('token')
+      const rawPharmacy = userData?.assignedPharmacy
+      const pharmacyId = rawPharmacy?._id ? rawPharmacy._id : rawPharmacy
+      const queryParam = pharmacyId ? `?pharmacy=${pharmacyId}` : ''
+      const res = await fetch(`/api/orders${queryParam}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await res.json()
       // Filter for latest 5 POS-like orders, sorted by date
