@@ -95,12 +95,34 @@ export default function PrescriptionVerification() {
               <div style={{ fontFamily:'var(--font-headline)', fontSize:'1.25rem', fontWeight:800, color:'var(--primary-container)' }}>{mainMedicine.name}</div>
               <div style={{ color:'var(--on-surface-variant)', marginTop:4 }}>{order.medicines[0]?.quantity} Units · ID: {mainMedicine._id?.slice(-6).toUpperCase()}</div>
             </div>
-            {order.prescriptionImage && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: 8 }}>Scanned Prescription Copy:</div>
-                <img src={`/api/uploads/${order.prescriptionImage.split('\\').pop()}`} alt="Prescription" style={{ width: '100%', borderRadius: 8, maxHeight: 300, objectFit: 'contain', background: 'var(--surface-low)' }} />
-              </div>
-            )}
+            {order.prescriptionImage && (() => {
+              // Normalise path: stored as "uploads/prescriptions/file.jpg" or Windows backslashes
+              const normalised = order.prescriptionImage.replace(/\\/g, '/');
+              // Strip leading "uploads/" so the URL becomes /api/uploads/prescriptions/file.jpg
+              const relativePath = normalised.startsWith('uploads/')
+                ? normalised.slice('uploads/'.length)
+                : normalised;
+              const imageUrl = `/api/uploads/${relativePath}`;
+              return (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: 8, fontWeight: 600 }}>
+                    📎 Prescription Copy Uploaded by Customer:
+                  </div>
+                  <a href={imageUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                    <img
+                      src={imageUrl}
+                      alt="Prescription"
+                      onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
+                      style={{ width: '100%', borderRadius: 8, maxHeight: 320, objectFit: 'contain', background: 'var(--surface-low)', border: '1px solid var(--outline-variant)', cursor: 'zoom-in' }}
+                    />
+                  </a>
+                  <div style={{ display: 'none', alignItems: 'center', gap: 8, padding: '12px 14px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 8, fontSize: '0.8125rem', color: '#92400e', marginTop: 8 }}>
+                    <span className="material-icons" style={{ fontSize: 18 }}>broken_image</span>
+                    Could not load prescription image. <a href={imageUrl} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700, color: '#b45309' }}>Open directly →</a>
+                  </div>
+                </div>
+              );
+            })()}
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginTop:16 }}>
               {[['Total Items', order.medicines.length],['Total Amount', `৳${order.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`],['Order Date', new Date(order.createdAt).toLocaleDateString()]].map(([l,v]) => (
                 <div key={l} style={{ background:'var(--surface-low)', borderRadius:'var(--radius-sm)', padding:'10px 12px' }}>

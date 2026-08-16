@@ -46,17 +46,22 @@ export default function PrescriptionQueue() {
 
       const data = await res.json()
       const formatted = Array.isArray(data) ? data
-        .filter(o => o.requiresPrescription) // Focus only on Rx orders
+        // Show orders that have an uploaded prescription OR contain a medicine requiring one
+        .filter(o =>
+          o.prescriptionImage ||
+          o.medicines?.some(m => m.medicine?.requiresPrescription)
+        )
         .map(o => ({
           id: o._id,
           displayId: o._id.slice(-6).toUpperCase(),
           patient: o.customer?.name || 'Walk-in',
           drug: o.medicines[0]?.medicine?.name || 'Unknown Item',
           qty: `${o.medicines[0]?.quantity || 0} units`,
-          urgency: 'Urgent', // All orders in this queue are now Rx related
+          urgency: 'Urgent',
           status: statusMap[o.status] || o.status,
           time: new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          insurance: 'Verified'
+          insurance: 'Verified',
+          hasPrescriptionImage: !!o.prescriptionImage,
         })) : []
       setItems(formatted)
     } catch (err) {
@@ -121,13 +126,13 @@ export default function PrescriptionQueue() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>Rx ID</th><th>Patient</th><th>Medication</th><th>Urgency</th><th>Status</th><th>Time</th><th>Actions</th></tr>
+              <tr><th>Rx ID</th><th>Patient</th><th>Medication</th><th>Urgency</th><th>Status</th><th>Prescription</th><th>Time</th><th>Actions</th></tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="7" style={{ textAlign:'center', padding:40 }}>Loading queue...</td></tr>
+                <tr><td colSpan="8" style={{ textAlign:'center', padding:40 }}>Loading queue...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan="7" style={{ textAlign:'center', padding:40, color:'var(--on-surface-variant)' }}>No prescriptions found in this category.</td></tr>
+                <tr><td colSpan="8" style={{ textAlign:'center', padding:40, color:'var(--on-surface-variant)' }}>No prescriptions found in this category.</td></tr>
               ) : filtered.map(rx => (
                 <tr key={rx.id}>
                   <td><span style={{ fontFamily:'monospace', fontWeight:600, fontSize:'0.875rem' }}>#{rx.displayId}</span></td>
@@ -138,6 +143,14 @@ export default function PrescriptionQueue() {
                   </td>
                   <td><span className={`badge ${rx.urgency === 'Urgent' ? 'badge-error' : 'badge-neutral'}`}>{rx.urgency}</span></td>
                   <td><span className={`badge ${statusBadgeMap[rx.status] || 'badge-neutral'}`}>{rx.status}</span></td>
+                  <td>
+                    {rx.hasPrescriptionImage
+                      ? <span className="badge badge-success" style={{ display:'flex', alignItems:'center', gap:4 }}>
+                          <span className="material-icons" style={{ fontSize:13 }}>attach_file</span> Image Attached
+                        </span>
+                      : <span className="badge badge-neutral">No Image</span>
+                    }
+                  </td>
                   <td><span style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)' }}>{rx.time}</span></td>
                   <td>
                     <div style={{ display:'flex', gap:6 }}>
