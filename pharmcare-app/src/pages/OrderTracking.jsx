@@ -162,24 +162,41 @@ export default function OrderTracking() {
       {/* Prescription Image Viewer Modal */}
       {viewRxImage && (
         <div 
-          style={{ position:'fixed', inset:0, zIndex:999999, background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
+          style={{ position:'fixed', inset:0, zIndex:999999, background:'rgba(15, 23, 42, 0.5)', backdropFilter:'blur(6px)', WebkitBackdropFilter:'blur(6px)', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
           onClick={() => setViewRxImage(null)}
         >
           <div 
-            style={{ background:'white', borderRadius:14, padding:20, maxWidth:600, width:'100%', maxHeight:'90vh', overflowY:'auto', position:'relative' }}
+            style={{ background:'white', borderRadius:16, padding:'20px 24px', maxWidth:460, width:'92%', maxHeight:'85vh', overflowY:'auto', position:'relative', boxShadow:'0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-              <div style={{ fontWeight:800, fontSize:'1.1rem', color:'var(--on-surface)' }}>Uploaded Prescription</div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setViewRxImage(null)}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+              <div style={{ fontWeight:800, fontSize:'1.05rem', color:'var(--on-surface)', display:'flex', alignItems:'center', gap:8 }}>
+                <span className="material-icons" style={{ color:'var(--primary)', fontSize:20 }}>receipt_long</span>
+                Uploaded Prescription
+              </div>
+              <button 
+                className="btn btn-ghost btn-sm" 
+                onClick={() => setViewRxImage(null)}
+                style={{ padding:4, borderRadius:8 }}
+              >
                 <span className="material-icons">close</span>
               </button>
             </div>
-            <img 
-              src={viewRxImage} 
-              alt="Prescription" 
-              style={{ width:'100%', borderRadius:8, maxHeight:500, objectFit:'contain', background:'var(--surface-low)', border:'1px solid var(--outline-variant)' }} 
-            />
+
+            <div style={{ borderRadius:10, overflow:'hidden', border:'1px solid var(--outline-variant)', background:'#f8fafc', padding:8, display:'flex', justifyContent:'center' }}>
+              <img 
+                src={viewRxImage} 
+                alt="Prescription Copy" 
+                style={{ width:'100%', borderRadius:6, maxHeight:360, objectFit:'contain', display:'block' }} 
+              />
+            </div>
+
+            <div style={{ marginTop:16, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <span style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)' }}>✓ Verified customer upload</span>
+              <button className="btn btn-primary btn-sm" onClick={() => setViewRxImage(null)}>
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}
