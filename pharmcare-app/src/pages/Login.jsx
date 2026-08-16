@@ -23,6 +23,24 @@ export default function Login() {
     supplier: 'Supplier'
   }
 
+  const demoAccounts = [
+    { label: 'Admin', role: 'superadmin', email: 'admin@spmis.com', pass: 'admin123' },
+    { label: 'Owner', role: 'owner', email: 'owner@spmis.com', pass: 'admin123' },
+    { label: 'Pharmacist', role: 'pharmacist', email: 'pharmacist@spmis.com', pass: 'admin123' },
+    { label: 'Assistant', role: 'assistant', email: 'assistant@spmis.com', pass: 'admin123' },
+    { label: 'Customer', role: 'customer', email: 'customer@spmis.com', pass: 'admin123' },
+  ]
+
+  const handleQuickFill = (acc) => {
+    setForm(prev => ({
+      ...prev,
+      email: acc.email,
+      password: acc.pass,
+      role: acc.role
+    }))
+    setError('')
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
@@ -112,7 +130,7 @@ export default function Login() {
       console.error('Backend connection failed, returning simulated UI login:', err)
       setIsSandbox(true)
 
-      let simRole = 'customer'
+      let simRole = form.role || 'customer'
       if (form.email.includes('admin')) simRole = 'superadmin'
       else if (form.email.includes('owner')) simRole = 'owner'
       else if (form.email.includes('pharm')) simRole = 'pharmacist'
@@ -120,8 +138,8 @@ export default function Login() {
 
       setRole(simRole, {
         name: form.name || 'Demo User',
-        email: form.email,
-        role: simRole,
+        email: form.email || `${simRole}@spmis.com`,
+        role: roleMap[simRole] || 'Customer',
         assignedPharmacy: null
       })
       const dest = { superadmin: '/superadmin', owner: '/admin', pharmacist: '/prescriptions', assistant: '/pos', customer: '/home', supplier: '/supplier/dashboard' }
@@ -134,21 +152,30 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      {/* Left panel */}
+      {/* Subtle Background Glow */}
+      <div className="login-backdrop-glow"></div>
+
+      {/* Left Hero Panel */}
       <div className="login-panel-left">
+        {/* Floating Particles Effect */}
         <div className="particles">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div key={i} className="particle" style={{
-              width: Math.random() * 8 + 2 + 'px',
-              height: Math.random() * 8 + 2 + 'px',
-              left: Math.random() * 100 + '%',
-              top: Math.random() * 100 + '%',
-              animationDuration: Math.random() * 10 + 15 + 's',
-              animationDelay: Math.random() * 5 + 's'
-            }} />
+          {Array.from({ length: 25 }).map((_, i) => (
+            <div 
+              key={i} 
+              className="particle" 
+              style={{
+                width: `${(i % 5) * 2 + 3}px`,
+                height: `${(i % 5) * 2 + 3}px`,
+                left: `${(i * 17) % 95}%`,
+                top: `${(i * 23) % 95}%`,
+                animationDuration: `${(i % 4) * 4 + 14}s`,
+                animationDelay: `${(i % 5) * 1.5}s`
+              }} 
+            />
           ))}
         </div>
 
+        {/* Brand */}
         <div className="login-brand">
           <div className="login-brand-icon">
             <span className="material-icons">medication</span>
@@ -159,112 +186,190 @@ export default function Login() {
           </div>
         </div>
 
+        {/* Hero Content */}
         <div className="login-hero">
-          <h1 className="login-hero-title">প্রযুক্তির ছোঁয়ায়, <br />ফার্মেসীর উন্নয়ন</h1>
+          <div className="hero-pill">
+            <span className="hero-pill-dot"></span>
+            <span>Pharmacy Management Platform</span>
+          </div>
+
+          <h1 className="login-hero-title">
+            প্রযুক্তির ছোঁয়ায়, <br />
+            <span>ফার্মেসীর উন্নয়ন</span>
+          </h1>
+
           <p className="login-hero-sub">
-            ফার্মেসী ব্যবস্থাপনা কি জটিল মনে হচ্ছে?
-            এখন নয়।<br />
-            ইনভেন্টরি, অর্ডার ও ক্লিনিক্যাল তথ্য—
-            সবকিছু একসাথে, সহজ নিয়ন্ত্রণে।
+            ফার্মেসী ব্যবস্থাপনা কি জটিল মনে হচ্ছে? এখন নয়।<br />
+            ইনভেন্টরি, অর্ডার ও ক্লিনিক্যাল তথ্য— সবকিছু একসাথে, সহজ নিয়ন্ত্রণে।
           </p>
-          <div className="login-quote typewriter-tag">
+
+          <div className="login-quote">
             "Precision in every dose, clarity in every report."
           </div>
         </div>
 
+        {/* Features Row */}
         <div className="login-features">
           {[
-            { icon: 'inventory_2', text: 'Real-time Inventory Tracking' },
-            { icon: 'description', text: 'Digital Prescription Management' },
-            { icon: 'analytics', text: 'Sales & Compliance Analytics' },
+            { icon: 'inventory_2', title: 'Real-time Inventory Tracking', desc: 'Automatic stock & batch updates' },
+            { icon: 'description', title: 'Digital Prescription Management', desc: 'Pharmacist review & verification' },
+            { icon: 'analytics', title: 'Sales & Compliance Analytics', desc: 'Real-time revenue & audit reports' },
           ].map(f => (
-            <div className="login-feature-item" key={f.text}>
-              <span className="material-icons">{f.icon}</span>
-              <span>{f.text}</span>
+            <div className="login-feature-item" key={f.title}>
+              <div className="feature-item-icon">
+                <span className="material-icons">{f.icon}</span>
+              </div>
+              <div className="feature-item-text">
+                <div className="feature-item-title">{f.title}</div>
+                <div className="feature-item-desc">{f.desc}</div>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Right panel */}
+      {/* Right Form Panel */}
       <div className="login-panel-right">
         <div className="login-card">
-          <div className="login-card-logo">
-            <div className="login-brand-icon sm">
-              <span className="material-icons">medication</span>
+          <div className="login-card-header">
+            <div className="login-card-logo">
+              <div className="login-brand-icon sm">
+                <span className="material-icons">medication</span>
+              </div>
+              <span className="login-brand-name sm">SPMIS</span>
             </div>
-            <span className="login-brand-name sm">SPMIS</span>
+
+            {/* Tabs */}
+            <div className="login-tabs">
+              <button 
+                type="button" 
+                className={`login-tab ${tab === 'login' ? 'active' : ''}`} 
+                onClick={() => { setTab('login'); setError(''); }}
+              >
+                Sign In
+              </button>
+              <button 
+                type="button" 
+                className={`login-tab ${tab === 'register' ? 'active' : ''}`} 
+                onClick={() => {
+                  setTab('register');
+                  setError('');
+                  if (['superadmin', 'owner', 'assistant'].includes(form.role)) {
+                    setForm(p => ({ ...p, role: 'customer' }));
+                  }
+                }}
+              >
+                Register
+              </button>
+            </div>
           </div>
 
-          {/* Tabs */}
-          <div className="login-tabs">
-            <button className={`login-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => setTab('login')}>Sign In</button>
-            <button className={`login-tab ${tab === 'register' ? 'active' : ''}`} onClick={() => {
-              setTab('register');
-              if (['superadmin', 'owner', 'assistant'].includes(form.role)) {
-                setForm(p => ({ ...p, role: 'customer' }));
-              }
-            }}>Register</button>
-          </div>
-
-          {(tab === 'forgot' || tab === 'reset') && (
-            <div className="login-hero-sub" style={{marginBottom: 10}}>
-              {tab === 'forgot' ? 'Enter your email to receive a password reset OTP.' : 'Enter the OTP and your new password.'}
+          {/* Quick Demo Fill Helper */}
+          {tab === 'login' && (
+            <div className="demo-helper">
+              <span className="demo-helper-label">Demo Logins:</span>
+              <div className="demo-chips">
+                {demoAccounts.map(acc => (
+                  <button 
+                    key={acc.label} 
+                    type="button" 
+                    className={`demo-chip ${form.role === acc.role && form.email === acc.email ? 'active' : ''}`}
+                    onClick={() => handleQuickFill(acc)}
+                  >
+                    {acc.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
           {tab === 'register' && (
-            <div className="tab-pane" style={{ background: 'var(--primary-fixed)', color: 'var(--primary-container)', padding: '12px 14px', borderRadius: 8, fontSize: '0.8125rem', display: 'flex', alignItems: 'flex-start', gap: 10, border: '1px solid var(--primary-fixed-dim)' }}>
-              <span className="material-icons" style={{ fontSize: 18, marginTop: 2 }}>info</span>
+            <div className="tab-notice info">
+              <span className="material-icons">info</span>
               <div>
                 <strong>Want to register your Pharmacy?</strong><br />
-                Please contact our team at <a href="mailto:admin@spmis.com" style={{ fontWeight: 700, textDecoration: 'underline' }}>admin@spmis.com</a> to set up your business account.
+                Contact us at <a href="mailto:admin@spmis.com">admin@spmis.com</a> to onboard your branch.
               </div>
             </div>
           )}
 
           {isSandbox && (
-            <div className="error-shake" style={{ background: '#fff3e0', color: '#e65100', padding: '10px 14px', borderRadius: 8, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #ffe0b2' }}>
-              <span className="material-icons" style={{ fontSize: 18 }}>science</span>
-              <div><strong>Sandbox Mode:</strong> Backend server offline. Using simulated credentials.</div>
+            <div className="tab-notice warning">
+              <span className="material-icons">science</span>
+              <div><strong>Sandbox Mode:</strong> Server offline. Using simulated test credentials.</div>
             </div>
           )}
 
           {error && (
-            <div className="error-shake" style={{ background: '#fce4e4', color: '#c62828', padding: '10px 14px', borderRadius: 8, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span className="material-icons" style={{ fontSize: 18 }}>error</span>
-              {error}
+            <div className="tab-notice error">
+              <span className="material-icons">error</span>
+              <div>{error}</div>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="login-form tab-pane" key={tab}>
+          <form onSubmit={handleSubmit} className="login-form" key={tab}>
             {tab === 'register' && (
-              <div className={`floating-group ${form.name ? 'has-value' : ''}`}>
-                <input id="name" className="floating-input" type="text" placeholder=" " value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
-                <span className="material-icons floating-icon">badge</span>
-                <label className="floating-label" htmlFor="name">Full Name</label>
+              <div className="input-field-group">
+                <label className="field-label" htmlFor="name">Full Name</label>
+                <div className="field-control">
+                  <span className="material-icons field-icon">badge</span>
+                  <input 
+                    id="name" 
+                    className="field-input" 
+                    type="text" 
+                    placeholder="Enter your full name" 
+                    required
+                    value={form.name} 
+                    onChange={e => setForm(p => ({ ...p, name: e.target.value }))} 
+                  />
+                </div>
               </div>
             )}
 
-            <div className={`floating-group ${form.email ? 'has-value' : ''}`}>
-              <input id="email" className="floating-input" type="email" placeholder=" " value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
-              <span className="material-icons floating-icon">email</span>
-              <label className="floating-label" htmlFor="email">Email Address</label>
+            <div className="input-field-group">
+              <label className="field-label" htmlFor="email">Email Address</label>
+              <div className="field-control">
+                <span className="material-icons field-icon">email</span>
+                <input 
+                  id="email" 
+                  className="field-input" 
+                  type="email" 
+                  placeholder="Enter your email" 
+                  required
+                  value={form.email} 
+                  onChange={e => setForm(p => ({ ...p, email: e.target.value }))} 
+                />
+              </div>
             </div>
 
-            <div className={`floating-group ${form.password ? 'has-value' : ''}`}>
-              <input id="password" className="floating-input" type={showPassword ? 'text' : 'password'} placeholder=" " value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} />
-              <span className="material-icons floating-icon">lock</span>
-              <label className="floating-label" htmlFor="password">Password</label>
-              <button type="button" tabIndex="-1" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-                <span className="material-icons">{showPassword ? 'visibility_off' : 'visibility'}</span>
-              </button>
+            <div className="input-field-group">
+              <label className="field-label" htmlFor="password">Password</label>
+              <div className="field-control">
+                <span className="material-icons field-icon">lock</span>
+                <input 
+                  id="password" 
+                  className="field-input" 
+                  type={showPassword ? 'text' : 'password'} 
+                  placeholder="Enter your password" 
+                  required
+                  value={form.password} 
+                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))} 
+                />
+                <button 
+                  type="button" 
+                  tabIndex="-1" 
+                  className="field-toggle-btn" 
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <span className="material-icons">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                </button>
+              </div>
             </div>
 
             {/* Role selector */}
             {(tab === 'login' || tab === 'register') && (
               <div className="role-select-box">
-                <label className="role-label-text">Access Role</label>
+                <label className="role-label-text">Select Role</label>
                 <div className="role-select-grid">
                   {[
                     { key: 'customer', icon: 'person', label: 'Customer' },
@@ -282,7 +387,7 @@ export default function Login() {
                         onClick={() => setForm(p => ({ ...p, role: r.key }))}
                       >
                         <span className="material-icons">{r.icon}</span>
-                        {r.label}
+                        <span>{r.label}</span>
                       </button>
                     ))}
                 </div>
@@ -294,7 +399,7 @@ export default function Login() {
                 <button
                   type="button"
                   className="btn btn-ghost"
-                  style={{ padding: '4px 0', fontSize: '0.875rem' }}
+                  style={{ padding: '2px 0', fontSize: '0.8125rem', color: 'var(--primary-container)' }}
                   onClick={() => setTab('forgot')}
                 >
                   Forgot Password?
@@ -304,37 +409,68 @@ export default function Login() {
 
             {tab === 'reset' && (
               <>
-                <div className={`floating-group ${form.otp ? 'has-value' : ''}`}>
-                  <input id="otp" className="floating-input" type="text" placeholder=" " value={form.otp} onChange={e => setForm(p => ({ ...p, otp: e.target.value }))} />
-                  <span className="material-icons floating-icon">vpn_key</span>
-                  <label className="floating-label" htmlFor="otp">OTP Code</label>
+                <div className="input-field-group">
+                  <label className="field-label" htmlFor="otp">OTP Code</label>
+                  <div className="field-control">
+                    <span className="material-icons field-icon">vpn_key</span>
+                    <input 
+                      id="otp" 
+                      className="field-input" 
+                      type="text" 
+                      placeholder="Enter 6-digit OTP" 
+                      value={form.otp} 
+                      onChange={e => setForm(p => ({ ...p, otp: e.target.value }))} 
+                    />
+                  </div>
                 </div>
-                <div className={`floating-group ${form.newPassword ? 'has-value' : ''}`}>
-                  <input id="newPassword" className="floating-input" type={showPassword ? 'text' : 'password'} placeholder=" " value={form.newPassword} onChange={e => setForm(p => ({ ...p, newPassword: e.target.value }))} />
-                  <span className="material-icons floating-icon">lock_reset</span>
-                  <label className="floating-label" htmlFor="newPassword">New Password</label>
-                  <button type="button" tabIndex="-1" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-                    <span className="material-icons">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                  </button>
+                <div className="input-field-group">
+                  <label className="field-label" htmlFor="newPassword">New Password</label>
+                  <div className="field-control">
+                    <span className="material-icons field-icon">lock_reset</span>
+                    <input 
+                      id="newPassword" 
+                      className="field-input" 
+                      type={showPassword ? 'text' : 'password'} 
+                      placeholder="Enter new password" 
+                      value={form.newPassword} 
+                      onChange={e => setForm(p => ({ ...p, newPassword: e.target.value }))} 
+                    />
+                    <button 
+                      type="button" 
+                      tabIndex="-1" 
+                      className="field-toggle-btn" 
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      <span className="material-icons">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                    </button>
+                  </div>
                 </div>
               </>
             )}
 
             <button type="submit" className="btn-cta" disabled={loading}>
-              <span className={`material-icons ${loading ? 'spinner' : ''}`}>{loading ? 'sync' : (tab === 'forgot' ? 'send' : (tab === 'reset' ? 'lock_reset' : 'login'))}</span>
-              {loading ? 'Processing...' : (tab === 'login' ? 'Sign In to SPMIS' : (tab === 'register' ? 'Create Account' : (tab === 'forgot' ? 'Send OTP' : 'Reset Password')))}
+              <span className={`material-icons ${loading ? 'spinner' : ''}`}>
+                {loading ? 'sync' : (tab === 'forgot' ? 'send' : (tab === 'reset' ? 'lock_reset' : 'arrow_forward'))}
+              </span>
+              <span>
+                {loading ? 'Processing...' : (tab === 'login' ? 'Sign In to SPMIS' : (tab === 'register' ? 'Create Account' : (tab === 'forgot' ? 'Send OTP' : 'Reset Password')))}
+              </span>
             </button>
           </form>
 
-          <div>
-            <p className="login-footer-text" style={{ marginBottom: 12 }}>
+          <div className="login-card-footer">
+            <p className="login-footer-text">
               {(tab === 'login' || tab === 'forgot' || tab === 'reset') ? "Don't have an account? " : 'Already registered? '}
-              <button className="btn-ghost" style={{ padding: 0, fontWeight: 600, color: 'var(--primary-container)', fontSize: 'inherit' }} onClick={() => setTab((tab === 'login' || tab === 'forgot' || tab === 'reset') ? 'register' : 'login')}>
+              <button 
+                type="button"
+                className="login-footer-link" 
+                onClick={() => setTab((tab === 'login' || tab === 'forgot' || tab === 'reset') ? 'register' : 'login')}
+              >
                 {(tab === 'login' || tab === 'forgot' || tab === 'reset') ? 'Register' : 'Sign In'}
               </button>
             </p>
             <p className="login-disclaimer">
-              By continuing, you agree to our Terms of Service and Privacy Policy.
+              By continuing, you agree to SPMIS Terms of Service and Privacy Policy.
             </p>
           </div>
         </div>

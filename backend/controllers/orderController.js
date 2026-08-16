@@ -30,8 +30,20 @@ exports.getOrders = async (req, res) => {
 // @desc    Checkout / Place Order
 exports.createOrder = async (req, res) => {
   try {
-    const { pharmacy, medicines, totalAmount } = req.body;
+    let { pharmacy, medicines, totalAmount } = req.body;
     
+    if (typeof medicines === 'string') {
+      try {
+        medicines = JSON.parse(medicines);
+      } catch (err) {
+        return res.status(400).json({ message: 'Invalid medicines format' });
+      }
+    }
+
+    if (!Array.isArray(medicines)) {
+      return res.status(400).json({ message: 'Medicines must be an array' });
+    }
+
     // Check if any medicine requires a prescription
     const medsRequiringRx = await Medicine.find({
       _id: { $in: medicines.map(m => m.medicine) },
@@ -61,8 +73,20 @@ exports.createOrder = async (req, res) => {
 // @desc    POS Sale (Staff Walk-in)
 exports.createPOSOrder = async (req, res) => {
   try {
-    const { pharmacy, medicines, totalAmount, paymentMethod } = req.body;
+    let { pharmacy, medicines, totalAmount, paymentMethod } = req.body;
     
+    if (typeof medicines === 'string') {
+      try {
+        medicines = JSON.parse(medicines);
+      } catch (err) {
+        return res.status(400).json({ message: 'Invalid medicines format' });
+      }
+    }
+
+    if (!Array.isArray(medicines)) {
+      return res.status(400).json({ message: 'Medicines must be an array' });
+    }
+
     // Decrement stock immediately
     for (const item of medicines) {
       const medicine = await Medicine.findById(item.medicine);
