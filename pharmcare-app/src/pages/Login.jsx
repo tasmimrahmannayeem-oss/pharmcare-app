@@ -214,6 +214,19 @@ export default function Login() {
 
       {/* Right Form Panel */}
       <div className="login-panel-right">
+        {/* Pharmacy Themed Watermark Background */}
+        <div className="pharmacy-bg-watermarks">
+          <span className="material-icons wm-icon wm-1">local_pharmacy</span>
+          <span className="material-icons wm-icon wm-2">medication</span>
+          <span className="material-icons wm-icon wm-3">medical_services</span>
+          <span className="material-icons wm-icon wm-4">vaccines</span>
+          <span className="material-icons wm-icon wm-5">health_and_safety</span>
+          <span className="material-icons wm-icon wm-6">healing</span>
+          <svg className="wm-ecg-line" viewBox="0 0 500 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 50 L120 50 L140 20 L160 80 L180 30 L200 65 L215 50 L500 50" stroke="rgba(37, 99, 235, 0.09)" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+        </div>
+
         <div className="login-card">
           <div className="login-card-header">
             <div className="login-card-logo">

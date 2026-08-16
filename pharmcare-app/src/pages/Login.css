@@ -233,7 +233,10 @@
 /* ── Right Form Panel ───────────────────────────────────────── */
 .login-panel-right {
   flex: 0.9;
-  background: #f8fafc;
+  background: 
+    radial-gradient(circle at 90% 12%, rgba(37, 99, 235, 0.07) 0%, transparent 40%),
+    radial-gradient(circle at 10% 88%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+    linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -241,16 +244,87 @@
   min-height: 100vh;
   position: relative;
   z-index: 20;
+  overflow: hidden;
+}
+
+/* Pharmacy Background Watermarks */
+.pharmacy-bg-watermarks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.wm-icon {
+  position: absolute;
+  color: rgba(30, 64, 175, 0.045);
+  user-select: none;
+  pointer-events: none;
+}
+
+.wm-1 {
+  font-size: 170px;
+  top: -30px;
+  right: -30px;
+  transform: rotate(15deg);
+}
+
+.wm-2 {
+  font-size: 140px;
+  bottom: -20px;
+  left: -20px;
+  transform: rotate(-25deg);
+}
+
+.wm-3 {
+  font-size: 90px;
+  top: 45%;
+  right: 20px;
+  transform: rotate(10deg);
+}
+
+.wm-4 {
+  font-size: 110px;
+  bottom: 12%;
+  right: 18%;
+  transform: rotate(-15deg);
+}
+
+.wm-5 {
+  font-size: 85px;
+  top: 15%;
+  left: 25px;
+  transform: rotate(-10deg);
+}
+
+.wm-6 {
+  font-size: 75px;
+  top: 60%;
+  left: 35px;
+  transform: rotate(20deg);
+}
+
+.wm-ecg-line {
+  position: absolute;
+  bottom: 60px;
+  left: 0;
+  width: 100%;
+  opacity: 0.85;
 }
 
 .login-card {
+  position: relative;
+  z-index: 5;
   width: 100%;
   max-width: 440px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-lg);
   padding: 36px 32px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.85);
   display: flex;
   flex-direction: column;
   gap: 20px;
