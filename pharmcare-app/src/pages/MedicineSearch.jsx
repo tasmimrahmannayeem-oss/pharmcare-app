@@ -225,31 +225,91 @@ export default function MedicineSearch() {
 
             <div style={{ textAlign: 'center' }}>
               <input type="file" id="rx-upload-search" hidden onChange={handleFileChange} accept="image/*,application/pdf" />
-              <label htmlFor="rx-upload-search" style={{ border: prescriptionFile ? '2px solid #006c49' : '2px dashed #ddd', borderRadius: 12, padding: 40, background: '#f8f9fa', cursor: 'pointer', display: 'block' }}>
-                <span className="material-icons" style={{ fontSize: 48, color: prescriptionFile ? '#006c49' : '#00288e' }}>{prescriptionFile ? 'task' : 'upload_file'}</span>
-                <p style={{ marginTop: 12, fontWeight: 500, color: '#1a1c1e' }}>{prescriptionFile ? prescriptionFile.name : 'Click to upload prescription'}</p>
-                <p style={{ fontSize: '0.75rem', color: '#666' }}>JPG, PNG or PDF (Max 5MB)</p>
+              <label htmlFor="rx-upload-search" style={{ border: prescriptionFile ? '2px solid #006c49' : '2px dashed #ddd', borderRadius: 12, padding: prescriptionFile ? 20 : 36, background: '#f8f9fa', cursor: 'pointer', display: 'block' }}>
+                {prescriptionFile ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                    {prescriptionFile.type.startsWith('image/') ? (
+                      <img 
+                        src={URL.createObjectURL(prescriptionFile)} 
+                        alt="Rx Preview" 
+                        style={{ maxHeight: 180, maxWidth: '100%', borderRadius: 8, objectFit: 'contain', border: '1px solid #ddd' }} 
+                      />
+                    ) : (
+                      <span className="material-icons" style={{ fontSize: 56, color: '#006c49' }}>picture_as_pdf</span>
+                    )}
+                    <div>
+                      <p style={{ fontWeight: 700, color: '#1a1c1e', fontSize: '0.9375rem' }}>{prescriptionFile.name}</p>
+                      <p style={{ fontSize: '0.75rem', color: '#006c49', fontWeight: 600, marginTop: 2 }}>✓ Prescription Image Attached</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <span className="material-icons" style={{ fontSize: 48, color: '#00288e' }}>upload_file</span>
+                    <p style={{ marginTop: 12, fontWeight: 500, color: '#1a1c1e' }}>Click to upload prescription photo</p>
+                    <p style={{ fontSize: '0.75rem', color: '#666' }}>JPG, PNG, WEBP or PDF (Max 10MB)</p>
+                  </>
+                )}
               </label>
               
-              <button 
-                style={{ width: '100%', marginTop: 24, padding: '14px', background: '#00288e', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
-                onClick={() => prescriptionFile ? completePendingAdd() : document.getElementById('rx-upload-search').click()}
-              >
-                {prescriptionFile 
-                  ? (pendingItem ? `Add ${pendingItem.name} & Continue` : 'Continue Shopping')
-                  : 'Browse Files'}
-              </button>
+              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                {!prescriptionFile ? (
+                  <button 
+                    style={{ width: '100%', padding: '14px', background: '#00288e', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => document.getElementById('rx-upload-search').click()}
+                  >
+                    Browse Files
+                  </button>
+                ) : (
+                  <>
+                    <button 
+                      style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                      onClick={() => document.getElementById('rx-upload-search').click()}
+                    >
+                      Change Photo
+                    </button>
+                    <button 
+                      style={{ flex: 1.5, padding: '12px', background: '#00288e', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                      onClick={() => { closeRxModal(); navigate('/checkout'); }}
+                    >
+                      Proceed to Checkout →
+                    </button>
+                  </>
+                )}
+              </div>
               
               <button 
-                style={{ width: '100%', marginTop: 8, padding: '12px', background: 'none', border: 'none', cursor: 'pointer', color: '#666', fontWeight: 500 }}
+                style={{ width: '100%', marginTop: 8, padding: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#666', fontWeight: 500 }}
                 onClick={closeRxModal}
               >
-                Cancel
+                Close
               </button>
             </div>
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Floating active prescription indicator for customer */}
+      {prescriptionFile && (
+        <div style={{ 
+          position: 'fixed', bottom: 24, right: 24, zIndex: 9999, 
+          background: 'var(--surface-lowest)', border: '2px solid var(--primary)', 
+          borderRadius: 14, padding: '14px 20px', boxShadow: 'var(--shadow-modal)', 
+          display: 'flex', alignItems: 'center', gap: 14, animation: 'fadeUp 0.3s ease'
+        }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--secondary-fixed)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="material-icons" style={{ color: 'var(--secondary)', fontSize: 22 }}>task</span>
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--on-surface)' }}>
+              Rx Attached: {prescriptionFile.name.length > 20 ? prescriptionFile.name.slice(0, 18) + '...' : prescriptionFile.name}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Ready to attach to order</div>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => navigate('/checkout')}>
+            Checkout →
+          </button>
+        </div>
       )}
     </div>
   )
