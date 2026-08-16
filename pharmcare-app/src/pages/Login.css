@@ -318,53 +318,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* Demo helper */
-.demo-helper {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-}
 
-.demo-helper-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.demo-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.demo-chip {
-  padding: 3px 8px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #334155;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.demo-chip:hover {
-  background: var(--primary-fixed);
-  border-color: var(--primary);
-  color: var(--primary-container);
-}
-
-.demo-chip.active {
-  background: var(--primary-container);
-  border-color: var(--primary-container);
-  color: #ffffff;
-}
 
 /* Tab Notices */
 .tab-notice {

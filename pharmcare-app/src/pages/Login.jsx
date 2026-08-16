@@ -23,23 +23,7 @@ export default function Login() {
     supplier: 'Supplier'
   }
 
-  const demoAccounts = [
-    { label: 'Admin', role: 'superadmin', email: 'admin@spmis.com', pass: 'admin123' },
-    { label: 'Owner', role: 'owner', email: 'owner@spmis.com', pass: 'admin123' },
-    { label: 'Pharmacist', role: 'pharmacist', email: 'pharmacist@spmis.com', pass: 'admin123' },
-    { label: 'Assistant', role: 'assistant', email: 'assistant@spmis.com', pass: 'admin123' },
-    { label: 'Customer', role: 'customer', email: 'customer@spmis.com', pass: 'admin123' },
-  ]
 
-  const handleQuickFill = (acc) => {
-    setForm(prev => ({
-      ...prev,
-      email: acc.email,
-      password: acc.pass,
-      role: acc.role
-    }))
-    setError('')
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -264,24 +248,7 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Quick Demo Fill Helper */}
-          {tab === 'login' && (
-            <div className="demo-helper">
-              <span className="demo-helper-label">Demo Logins:</span>
-              <div className="demo-chips">
-                {demoAccounts.map(acc => (
-                  <button 
-                    key={acc.label} 
-                    type="button" 
-                    className={`demo-chip ${form.role === acc.role && form.email === acc.email ? 'active' : ''}`}
-                    onClick={() => handleQuickFill(acc)}
-                  >
-                    {acc.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+
 
           {tab === 'register' && (
             <div className="tab-notice info">
