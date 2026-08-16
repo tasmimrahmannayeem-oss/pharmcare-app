@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom'
+
 export default function InvoiceModal({ order, onClose }) {
   if (!order) return null
 
@@ -37,12 +39,10 @@ export default function InvoiceModal({ order, onClose }) {
               margin: 0 !important;
               padding: 0 !important;
             }
-            /* Prevent grid and table rows from being cut */
             div[style*="grid"], tr {
               page-break-inside: avoid;
               break-inside: avoid;
             }
-            /* Ensure the totals section never gets split from the table */
             #printable-invoice > div:last-child {
               page-break-before: auto;
               break-before: auto;
@@ -66,8 +66,8 @@ export default function InvoiceModal({ order, onClose }) {
   const subtotal = order.totalAmount ? (order.totalAmount / 1.08) : 0
   const tax = order.totalAmount ? (order.totalAmount - subtotal) : 0
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
+  return createPortal(
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 999999 }}>
       <div 
         className="modal-content fade-up" 
         onClick={e => e.stopPropagation()} 
@@ -80,7 +80,8 @@ export default function InvoiceModal({ order, onClose }) {
           maxHeight: '92vh', 
           display: 'flex', 
           flexDirection: 'column',
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)' 
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
+          margin: 'auto'
         }}
       >
         {/* Top Navbar Header (UI Only) */}
@@ -214,6 +215,7 @@ export default function InvoiceModal({ order, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

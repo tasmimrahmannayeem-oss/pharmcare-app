@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import InvoiceModal from '../components/InvoiceModal'
 
 const statusSteps = {
@@ -160,13 +161,13 @@ export default function OrderTracking() {
       )}
 
       {/* Prescription Image Viewer Modal */}
-      {viewRxImage && (
+      {viewRxImage && createPortal(
         <div 
-          style={{ position:'fixed', inset:0, zIndex:999999, background:'rgba(15, 23, 42, 0.5)', backdropFilter:'blur(6px)', WebkitBackdropFilter:'blur(6px)', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
+          style={{ position:'fixed', inset:0, zIndex:999999, background:'rgba(15, 23, 42, 0.65)', backdropFilter:'blur(6px)', WebkitBackdropFilter:'blur(6px)', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
           onClick={() => setViewRxImage(null)}
         >
           <div 
-            style={{ background:'white', borderRadius:16, padding:'20px 24px', maxWidth:460, width:'92%', maxHeight:'85vh', overflowY:'auto', position:'relative', boxShadow:'0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
+            style={{ background:'white', borderRadius:16, padding:'20px 24px', maxWidth:460, width:'92%', maxHeight:'85vh', overflowY:'auto', position:'relative', boxShadow:'0 25px 50px -12px rgba(0, 0, 0, 0.25)', margin:'auto' }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
@@ -198,7 +199,8 @@ export default function OrderTracking() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
