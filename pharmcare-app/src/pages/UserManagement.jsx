@@ -127,12 +127,14 @@ export default function UserManagement() {
   }
 
   const handleExport = () => {
-    const headers = ['Name', 'Email', 'Role', 'Status']
+    const headers = ['Name', 'Email', 'Role', 'Workplace', 'Status', 'Joined']
     const exportData = filtered.map(u => ({
       name: u.name,
       email: u.email,
       role: u.role,
-      status: u.isApproved ? 'Active' : 'Pending'
+      workplace: u.assignedPharmacy?.name ? `${u.assignedPharmacy.name} (${u.assignedPharmacy.location || ''})` : (u.role === 'Super Admin' ? 'All Branches (Global)' : 'Unassigned'),
+      status: u.isApproved ? 'Active' : 'Pending',
+      joined: new Date(u.createdAt).toLocaleDateString()
     }))
     exportToCSV(exportData, 'SystemUsers', headers)
   }
@@ -198,11 +200,18 @@ export default function UserManagement() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>User</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Workplace / Branch</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
+                </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="5" className="text-center" style={{ padding:40 }}>Loading users...</td></tr>
+                  <tr><td colSpan="6" className="text-center" style={{ padding:40 }}>Loading users...</td></tr>
                 ) : filtered.map(u => (
                   <tr key={u._id}>
                     <td>
@@ -217,6 +226,30 @@ export default function UserManagement() {
                       </div>
                     </td>
                     <td><span className={`badge ${roleBadge[u.role]}`}>{u.role}</span></td>
+                    <td>
+                      {u.role === 'Super Admin' ? (
+                        <span className="badge badge-neutral" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px' }}>
+                          <span className="material-icons" style={{ fontSize: 14, color: 'var(--primary-container)' }}>public</span>
+                          All Branches
+                        </span>
+                      ) : u.assignedPharmacy ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--primary-fixed)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span className="material-icons" style={{ fontSize: 16, color: 'var(--primary-container)' }}>storefront</span>
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{u.assignedPharmacy.name || u.assignedPharmacy}</div>
+                            {u.assignedPharmacy.location && (
+                              <div style={{ fontSize: '0.72rem', color: 'var(--on-surface-variant)' }}>{u.assignedPharmacy.location}</div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--outline)' }}>
+                          {['Customer', 'Supplier'].includes(u.role) ? '—' : 'Not Assigned'}
+                        </span>
+                      )}
+                    </td>
                     <td>
                       <span className={`badge ${u.isApproved ? 'badge-success' : 'badge-warning'}`}>{u.isApproved ? 'Active' : 'Pending'}</span>
                     </td>

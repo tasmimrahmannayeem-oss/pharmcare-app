@@ -8,7 +8,7 @@ exports.getUsers = async (req, res) => {
       // Only show users belonging to the same pharmacy as the logged-in owner
       filter.assignedPharmacy = req.user.assignedPharmacy;
     }
-    const users = await User.find(filter).select('-password').populate('assignedPharmacy', 'name');
+    const users = await User.find(filter).select('-password').populate('assignedPharmacy', 'name location address');
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });

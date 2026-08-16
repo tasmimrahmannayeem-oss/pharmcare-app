@@ -62,10 +62,11 @@ export default function StaffManagement() {
   }
 
   const handleExport = () => {
-    const headers = ['Name', 'Role', 'Email', 'Phone', 'Joined']
+    const headers = ['Name', 'Role', 'Workplace', 'Email', 'Phone', 'Joined']
     const exportData = filtered.map(s => ({
       name: s.name,
       role: s.role,
+      workplace: s.assignedPharmacy?.name ? `${s.assignedPharmacy.name} (${s.assignedPharmacy.location || ''})` : 'Primary Branch',
       email: s.email,
       phone: s.phone || '',
       joined: new Date(s.createdAt).toLocaleDateString()
@@ -90,12 +91,12 @@ export default function StaffManagement() {
           ...formData, 
           password: isEdit ? undefined : 'temp123', 
           isApproved: true,
-          assignedPharmacy: userData?.assignedPharmacy // Auto-link new staff to current branch
+          assignedPharmacy: formData.assignedPharmacy || userData?.assignedPharmacy // Auto-link new staff to current branch
         }) 
       })
       if (res.ok) {
         setShowModal(false)
-        setFormData({ name: '', email: '', phone: '', role: 'Pharmacist', password: 'temp123' })
+        setFormData({ name: '', email: '', phone: '', role: 'Pharmacist', password: 'temp123', assignedPharmacy: '' })
         fetchStaff()
         alert(`Staff ${isEdit ? 'updated' : 'registered'} successfully!`)
       } else {
@@ -113,7 +114,8 @@ export default function StaffManagement() {
       name: staff.name,
       email: staff.email,
       phone: staff.phone || '',
-      role: staff.role
+      role: staff.role,
+      assignedPharmacy: staff.assignedPharmacy?._id || staff.assignedPharmacy || ''
     })
     setShowModal(true)
   }
@@ -151,7 +153,7 @@ export default function StaffManagement() {
               <span className="material-icons" style={{fontSize:18}}>download</span> Export CSV
             </button>
             <button className="btn btn-primary" onClick={() => {
-              setFormData({ name: '', email: '', phone: '', role: 'Pharmacist', password: 'temp123' })
+              setFormData({ name: '', email: '', phone: '', role: 'Pharmacist', password: 'temp123', assignedPharmacy: '' })
               setShowModal(true)
             }}>
               <span className="material-icons" style={{fontSize:18}}>person_add</span> Add Staff
@@ -202,6 +204,20 @@ export default function StaffManagement() {
                   </div>
                   <span className={`badge ${statusBadge(s)}`}>{s.isApproved ? 'Active' : 'Pending'}</span>
                 </div>
+
+                {/* Workplace / Branch Highlight */}
+                <div style={{ background:'var(--surface-low)', borderRadius:8, padding:'8px 12px', display:'flex', alignItems:'center', gap:10, border:'1px solid var(--outline-variant)' }}>
+                  <div style={{ width:28, height:28, borderRadius:6, background:'var(--primary-fixed)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <span className="material-icons" style={{ color:'var(--primary-container)', fontSize:16 }}>storefront</span>
+                  </div>
+                  <div style={{ minWidth:0, flex:1 }}>
+                    <div style={{ fontSize:'0.68rem', color:'var(--on-surface-variant)', fontWeight:600, textTransform:'uppercase' }}>Working At</div>
+                    <div style={{ fontWeight:700, fontSize:'0.8125rem', color:'var(--on-surface)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                      {s.assignedPharmacy?.name ? `${s.assignedPharmacy.name}${s.assignedPharmacy.location ? ` (${s.assignedPharmacy.location})` : ''}` : 'Branch Not Specified'}
+                    </div>
+                  </div>
+                </div>
+
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                   {[
                     ['Email', s.email, 'email'],
