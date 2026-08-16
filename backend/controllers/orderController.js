@@ -161,8 +161,8 @@ exports.verifyOrder = async (req, res) => {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
-    if (order.status !== 'Confirmed') {
-      return res.status(400).json({ message: 'Order must be Confirmed before verification' });
+    if (!['Pending', 'Confirmed', 'Being Processed'].includes(order.status)) {
+      return res.status(400).json({ message: `Cannot verify order in ${order.status} state` });
     }
 
     if (action === 'Approve') {
@@ -171,7 +171,6 @@ exports.verifyOrder = async (req, res) => {
     } else {
       order.status = 'Rejected';
       order.statusTimeline.push({ status: 'Rejected', note: note || 'Prescription rejected by pharmacist' });
-      // Logic for refund could go here
     }
 
     await order.save();

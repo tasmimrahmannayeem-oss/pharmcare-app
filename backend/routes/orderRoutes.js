@@ -13,7 +13,7 @@ router.get('/:id', orderController.getOrderById);
 
 // Order Lifecycle
 router.patch('/:id/confirm', orderController.confirmOrder);
-router.patch('/:id/verify', authorize('Pharmacist', 'Pharmacy Owner'), orderController.verifyOrder);
+router.patch('/:id/verify', authorize('Pharmacist', 'Pharmacy Owner', 'Super Admin'), orderController.verifyOrder);
 router.patch('/:id/status', authorize('Pharmacist', 'Store Assistant', 'Pharmacy Owner'), orderController.updateOrderStatus);
 router.delete('/:id/cancel', orderController.cancelOrder);
 

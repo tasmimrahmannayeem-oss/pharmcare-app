@@ -15,7 +15,10 @@ export default function PrescriptionVerification() {
   const fetchOrder = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/orders/${id}`)
+      const token = localStorage.getItem('token')
+      const res = await fetch(`/api/orders/${id}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
       const data = await res.json()
       setOrder(data)
     } catch (err) {
@@ -27,13 +30,17 @@ export default function PrescriptionVerification() {
 
   const handleVerify = async (action) => {
     try {
+      const token = localStorage.getItem('token')
       const res = await fetch(`/api/orders/${id}/verify`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ action, note: notes })
       })
       if (res.ok) {
-        alert(`Order ${action}d successfully`)
+        alert(`Prescription ${action === 'Approve' ? 'Approved' : 'Rejected'} successfully!`)
         navigate('/prescriptions')
       } else {
         const err = await res.json()
