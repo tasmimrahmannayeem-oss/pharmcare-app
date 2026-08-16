@@ -26,10 +26,11 @@ export const api = async (endpoint, options = {}) => {
     const response = await fetch(url, config);
     
     // Auto-logout on 401 Unauthorized (unless we're already on login page)
-    if (response.status === 401 && !window.location.pathname.includes('/login')) {
+    if (response.status === 401 && window.location.pathname !== '/' && !window.location.pathname.includes('/login')) {
       localStorage.removeItem('token');
       localStorage.removeItem('userRole');
-      window.location.href = '/login';
+      localStorage.removeItem('userData');
+      window.location.href = '/';
       return;
     }
 

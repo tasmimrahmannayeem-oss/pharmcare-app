@@ -41,8 +41,25 @@ export const roles = {
   },
 }
 
+export function normalizeRole(raw) {
+  if (!raw) return 'customer'
+  const lower = String(raw).toLowerCase()
+  if (lower.includes('owner')) return 'owner'
+  if (lower.includes('pharmacist')) return 'pharmacist'
+  if (lower.includes('assistant')) return 'assistant'
+  if (lower.includes('admin')) return 'superadmin'
+  if (lower.includes('supplier')) return 'supplier'
+  if (lower.includes('customer')) return 'customer'
+  return lower
+}
+
 export function RoleProvider({ children }) {
-  const [role, _setRole] = useState(localStorage.getItem('userRole') || 'customer')
+  const [role, _setRole] = useState(() => {
+    const savedRole = localStorage.getItem('userRole')
+    const savedData = JSON.parse(localStorage.getItem('userData') || '{}')
+    return normalizeRole(savedRole || savedData.role)
+  })
+
   const [userData, _setUserData] = useState(() => {
     const saved = JSON.parse(localStorage.getItem('userData') || '{}')
     const savedToken = localStorage.getItem('token')
@@ -55,11 +72,12 @@ export function RoleProvider({ children }) {
   })
 
   const setRole = (newRole, data = null) => {
-    localStorage.setItem('userRole', newRole)
-    _setRole(newRole)
+    const normalized = normalizeRole(newRole || data?.role)
+    localStorage.setItem('userRole', normalized)
+    _setRole(normalized)
+
     if (data) {
       const existingData = JSON.parse(localStorage.getItem('userData') || '{}')
-      // If the incoming data has a different _id or email, we shouldn't merge with the old user's data
       const isNewUser = (data._id && existingData._id && data._id !== existingData._id) || 
                         (data.email && existingData.email && data.email !== existingData.email);
                         
@@ -85,13 +103,11 @@ export function RoleProvider({ children }) {
 
           let matched = null
           if (role === 'owner') {
-            // Match the pharmacy where this user is listed as the owner
             matched = branches.find(b => {
               const ownerId = b.owner?._id || b.owner
               return String(ownerId) === String(userData._id)
             })
           }
-          // Fallback to first branch for pharmacists/assistants or unmatched owners
           const resolvedBranch = matched || branches[0]
           const resolvedId = resolvedBranch._id
 
@@ -102,7 +118,6 @@ export function RoleProvider({ children }) {
             return updated
           })
 
-          // Persist resolved pharmacy to user's DB record so next login includes it
           if (savedToken && userData?._id) {
             fetch(`/api/users/${userData._id}`, {
               method: 'PATCH',

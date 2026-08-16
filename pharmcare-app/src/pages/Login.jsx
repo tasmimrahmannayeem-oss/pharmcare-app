@@ -23,6 +23,29 @@ export default function Login() {
     supplier: 'Supplier'
   }
 
+  // Auto-redirect if user is already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const savedRole = localStorage.getItem('userRole')
+    if (token && savedRole) {
+      const dest = {
+        superadmin: '/superadmin',
+        owner: '/admin',
+        pharmacist: '/prescriptions',
+        assistant: '/pos',
+        customer: '/home',
+        supplier: '/supplier/dashboard'
+      }
+      const lower = savedRole.toLowerCase()
+      const normalized = lower.includes('owner') ? 'owner' :
+                         lower.includes('pharmacist') ? 'pharmacist' :
+                         lower.includes('assistant') ? 'assistant' :
+                         lower.includes('admin') ? 'superadmin' :
+                         lower.includes('supplier') ? 'supplier' : 'customer'
+      navigate(dest[normalized] || '/home', { replace: true })
+    }
+  }, [navigate])
+
 
 
   const handleSubmit = async (e) => {

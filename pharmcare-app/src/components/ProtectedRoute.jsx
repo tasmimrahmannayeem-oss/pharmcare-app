@@ -1,11 +1,19 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useRole } from '../context/RoleContext'
+import { useRole, normalizeRole } from '../context/RoleContext'
 
 export default function ProtectedRoute({ allowedRoles }) {
-  const { role } = useRole()
+  const { role, userData } = useRole()
+  const token = localStorage.getItem('token')
 
-  if (!role || (allowedRoles && !allowedRoles.includes(role))) {
-    // If the user's role is not in the allowed list, redirect to login
+  const currentRole = normalizeRole(role || userData?.role || localStorage.getItem('userRole'))
+
+  // If token is missing, user is logged out -> redirect to login
+  if (!token) {
+    return <Navigate to="/" replace />
+  }
+
+  // Check if role is authorized
+  if (allowedRoles && !allowedRoles.includes(currentRole)) {
     return <Navigate to="/" replace />
   }
 
