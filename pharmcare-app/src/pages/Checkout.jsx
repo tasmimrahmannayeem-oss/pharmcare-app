@@ -4,7 +4,7 @@ import { useRole } from '../context/RoleContext'
 import { useNavigate } from 'react-router-dom'
 
 export default function Checkout() {
-  const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart, prescriptionFile, selectedPharmacy } = useCart()
+  const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart, prescriptionFile, setPrescriptionFile, selectedPharmacy } = useCart()
   const { userData } = useRole()
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
@@ -14,8 +14,20 @@ export default function Checkout() {
   const [selectedPharmacyId, setSelectedPharmacyId] = useState(selectedPharmacy?._id || '')
   const [shippingAddress, setShippingAddress] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery')
+  const [previewUrl, setPreviewUrl] = useState(null)
 
   const token = localStorage.getItem('token')
+
+  // Generate preview URL when prescription file changes
+  useEffect(() => {
+    if (prescriptionFile) {
+      const url = URL.createObjectURL(prescriptionFile)
+      setPreviewUrl(url)
+      return () => URL.revokeObjectURL(url)
+    } else {
+      setPreviewUrl(null)
+    }
+  }, [prescriptionFile])
 
   // Load pharmacies
   useEffect(() => {
@@ -37,15 +49,23 @@ export default function Checkout() {
       .then(res => res.json())
       .then(data => {
         if (data.address) setShippingAddress(data.address)
-        else if (data.phone) setShippingAddress('')  // reset placeholder if no address
+        else if (data.phone) setShippingAddress('')
       })
       .catch(() => {})
   }, [userData?._id])
 
+  const hasRxItem = cartItems.some(i => i.requiresPrescription)
   const subtotal = cartTotal
   const delivery = 3.99
   const tax = subtotal * 0.08
   const total = subtotal + delivery + tax
+
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = error => reject(error)
+  })
 
   const handlePlaceOrder = async () => {
     if (!selectedPharmacyId) {
@@ -53,6 +73,13 @@ export default function Checkout() {
       setStep(2)
       return
     }
+
+    if (hasRxItem && !prescriptionFile) {
+      alert('Your cart contains prescription medicines. Please upload a prescription image before checking out.')
+      setStep(1)
+      return
+    }
+
     try {
       setLoading(true)
       const formData = new FormData()
@@ -67,6 +94,12 @@ export default function Checkout() {
       
       if (prescriptionFile) {
         formData.append('prescriptionImage', prescriptionFile)
+        try {
+          const base64 = await fileToBase64(prescriptionFile)
+          formData.append('prescriptionDataUri', base64)
+        } catch (e) {
+          console.error('Base64 conversion failed', e)
+        }
       }
 
       const res = await fetch('/api/orders', {
@@ -74,7 +107,7 @@ export default function Checkout() {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: formData // Fetch automatically sets multipart/form-data for FormData
+        body: formData
       })
       
       if (res.ok) {
@@ -107,8 +140,8 @@ export default function Checkout() {
         <span className="material-icons" style={{ fontSize:44, color:'var(--secondary)' }}>check_circle</span>
       </div>
       <h2 style={{ fontFamily:'var(--font-headline)', fontSize:'1.75rem', fontWeight:800 }}>Order Placed!</h2>
-      <p style={{ color:'var(--on-surface-variant)', maxWidth:360 }}>Thank you! Your order has been registered and is being processed.</p>
-      <div style={{ display:'flex', gap:12 }}>
+      <p style={{ color:'var(--on-surface-variant)', maxWidth:360 }}>Thank you! Your order has been registered and is being processed by our pharmacy team.</p>
+      <div style={{ display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center' }}>
         <button className="btn btn-primary" onClick={() => navigate('/catalogue')}>Continue Shopping</button>
         <button className="btn btn-ghost" onClick={() => navigate('/orders')}>Track My Order</button>
       </div>
@@ -119,17 +152,17 @@ export default function Checkout() {
     <div className="fade-up">
       <div className="page-header">
         <h1 className="page-title">Checkout</h1>
-        <p className="page-subtitle">Review your cart and confirm your delivery</p>
+        <p className="page-subtitle">Review your cart, attach prescription, and confirm delivery</p>
       </div>
 
       <div style={{ display:'flex', gap:0, marginBottom:32 }}>
-        {['Review', 'Delivery', 'Confirm'].map((s, i) => (
+        {['Review & Rx', 'Delivery', 'Confirm'].map((s, i) => (
           <div key={s} style={{ display:'flex', alignItems:'center', flex:1 }}>
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
               <div style={{ width:32, height:32, borderRadius:'50%', background: step > i ? 'var(--primary-container)' : step === i+1 ? 'var(--primary-container)' : 'var(--surface-high)', color: 'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.875rem', fontWeight:700 }}>
                 {step > i+1 ? <span className="material-icons" style={{fontSize:16}}>check</span> : i+1}
               </div>
-              <span style={{ fontSize:'0.75rem', fontWeight:step===i+1?700:500, color:step===i+1?'var(--primary-container)':'var(--on-surface-variant)' }}>{s}</span>
+              <span style={{ fontSize:'0.75rem', fontWeight:step===i+1?700:500, color:step===i+1?'var(--primary-container)':'var(--on-surface-variant)', textAlign:'center' }}>{s}</span>
             </div>
             {i < 2 && <div style={{ flex:1, height:2, background: step > i+1 ? 'var(--primary-container)' : 'var(--outline-variant)', margin:'0 8px', marginBottom:20 }} />}
           </div>
@@ -137,33 +170,132 @@ export default function Checkout() {
       </div>
 
       <div className="checkout-layout">
-        <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
           {step === 1 && (
-            <div className="card" style={{ padding:0 }}>
-              <div style={{ padding:'16px 24px', borderBottom:'1px solid var(--outline-variant)' }}>
-                <h3 className="title-md">Cart Items ({cartItems.length})</h3>
-              </div>
-              {Array.isArray(cartItems) && cartItems.map((item, i) => (
-                <div key={item._id} style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderBottom: i < cartItems.length-1 ? '1px solid rgba(196,197,213,0.3)' : 'none', flexWrap:'wrap' }}>
-                  <div style={{ width:44, height:44, borderRadius:10, background:'var(--primary-fixed)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <span className="material-icons" style={{ color:'var(--primary-container)', fontSize:22 }}>medication</span>
-                  </div>
-                  <div style={{ flex:1, minWidth:120 }}>
-                    <div style={{ fontWeight:600, fontSize:'0.9375rem' }}>{item.name}</div>
-                    <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)' }}>{item.genericName || 'Medicine'}</div>
-                  </div>
-                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                    <button className="btn btn-ghost btn-sm" style={{ padding:'4px 8px' }} onClick={() => updateQuantity(item._id, item.quantity - 1)}>−</button>
-                    <span style={{ fontWeight:700, minWidth:20, textAlign:'center' }}>{item.quantity}</span>
-                    <button className="btn btn-ghost btn-sm" style={{ padding:'4px 8px' }} onClick={() => updateQuantity(item._id, item.quantity + 1)}>+</button>
-                  </div>
-                  <div style={{ fontWeight:700, color:'var(--primary-container)', minWidth:60, textAlign:'right', fontSize:'0.9375rem' }}>৳{((item.sellPrice || 0) * item.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                  <button className="btn btn-ghost btn-sm" style={{ color:'var(--error)', padding:4 }} onClick={() => removeFromCart(item._id)}>
-                    <span className="material-icons" style={{fontSize:18}}>delete</span>
-                  </button>
+            <>
+              {/* Cart Items Card */}
+              <div className="card" style={{ padding:0 }}>
+                <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--outline-variant)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <h3 className="title-md">Cart Items ({cartItems.length})</h3>
+                  {hasRxItem && (
+                    <span className="badge badge-error" style={{ display:'flex', alignItems:'center', gap:4 }}>
+                      <span className="material-icons" style={{ fontSize:14 }}>priority_high</span> Prescription Required
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
+                {Array.isArray(cartItems) && cartItems.map((item, i) => (
+                  <div key={item._id} style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderBottom: i < cartItems.length-1 ? '1px solid rgba(196,197,213,0.3)' : 'none', flexWrap:'wrap' }}>
+                    <div style={{ width:44, height:44, borderRadius:10, background:'var(--primary-fixed)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <span className="material-icons" style={{ color:'var(--primary-container)', fontSize:22 }}>medication</span>
+                    </div>
+                    <div style={{ flex:1, minWidth:120 }}>
+                      <div style={{ fontWeight:600, fontSize:'0.9375rem', display:'flex', alignItems:'center', gap:6 }}>
+                        {item.name}
+                        {item.requiresPrescription && <span className="badge badge-error" style={{ fontSize:'0.65rem', padding:'2px 6px' }}>Rx</span>}
+                      </div>
+                      <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)' }}>{item.genericName || 'Medicine'}</div>
+                    </div>
+                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                      <button className="btn btn-ghost btn-sm" style={{ padding:'4px 8px' }} onClick={() => updateQuantity(item._id, item.quantity - 1)}>−</button>
+                      <span style={{ fontWeight:700, minWidth:20, textAlign:'center' }}>{item.quantity}</span>
+                      <button className="btn btn-ghost btn-sm" style={{ padding:'4px 8px' }} onClick={() => updateQuantity(item._id, item.quantity + 1)}>+</button>
+                    </div>
+                    <div style={{ fontWeight:700, color:'var(--primary-container)', minWidth:60, textAlign:'right', fontSize:'0.9375rem' }}>৳{((item.sellPrice || 0) * item.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                    <button className="btn btn-ghost btn-sm" style={{ color:'var(--error)', padding:4 }} onClick={() => removeFromCart(item._id)}>
+                      <span className="material-icons" style={{fontSize:18}}>delete</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Dedicated Prescription Upload Card */}
+              <div className="card" style={{ border: hasRxItem && !prescriptionFile ? '2px dashed var(--error)' : '1px solid var(--outline-variant)' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12, flexWrap:'wrap', gap:8 }}>
+                  <div>
+                    <h3 className="title-md" style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <span className="material-icons" style={{ color:'var(--primary)' }}>receipt_long</span>
+                      Prescription Upload {hasRxItem ? <span style={{ color:'var(--error)', fontSize:'0.85rem' }}>*Required for Rx items</span> : <span style={{ color:'var(--on-surface-variant)', fontSize:'0.85rem', fontWeight:400 }}>(Optional)</span>}
+                    </h3>
+                    <p style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)', marginTop:2 }}>
+                      Upload a photo or scan of your doctor's prescription so our pharmacists can verify and dispense your medicines safely.
+                    </p>
+                  </div>
+                  {prescriptionFile && (
+                    <button className="btn btn-ghost btn-sm" style={{ color:'var(--error)', padding:'4px 8px' }} onClick={() => setPrescriptionFile(null)}>
+                      <span className="material-icons" style={{ fontSize:16 }}>close</span> Remove File
+                    </button>
+                  )}
+                </div>
+
+                <input 
+                  type="file" 
+                  id="checkout-rx-file" 
+                  hidden 
+                  accept="image/*,application/pdf"
+                  onChange={e => {
+                    if (e.target.files && e.target.files[0]) {
+                      setPrescriptionFile(e.target.files[0])
+                    }
+                  }} 
+                />
+
+                {!prescriptionFile ? (
+                  <label 
+                    htmlFor="checkout-rx-file"
+                    style={{
+                      border: '2px dashed #cbd5e1',
+                      borderRadius: 12,
+                      padding: '24px 20px',
+                      background: '#f8fafc',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      cursor: 'pointer',
+                      transition: 'border-color 0.2s',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <div style={{ width:48, height:48, borderRadius:'50%', background:'var(--primary-fixed)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{ color:'var(--primary-container)', fontSize:26 }}>add_photo_alternate</span>
+                    </div>
+                    <div style={{ fontWeight:700, fontSize:'0.9375rem', color:'var(--primary-container)' }}>
+                      Tap here to upload your Prescription
+                    </div>
+                    <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)' }}>
+                      Supports JPG, PNG, WEBP or PDF (Max 10MB)
+                    </div>
+                  </label>
+                ) : (
+                  <div style={{ display:'flex', alignItems:'center', gap:16, background:'var(--surface-low)', padding:'14px 16px', borderRadius:10, flexWrap:'wrap' }}>
+                    {previewUrl && (
+                      <img 
+                        src={previewUrl} 
+                        alt="Prescription Preview" 
+                        style={{ width:64, height:64, borderRadius:8, objectFit:'cover', border:'1px solid var(--outline-variant)' }} 
+                      />
+                    )}
+                    <div style={{ flex:1, minWidth:160 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <span className="material-icons" style={{ color:'var(--secondary)', fontSize:18 }}>check_circle</span>
+                        <span style={{ fontWeight:700, fontSize:'0.9rem' }}>{prescriptionFile.name}</span>
+                      </div>
+                      <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)', marginTop:2 }}>
+                        {(prescriptionFile.size / 1024).toFixed(1)} KB · Ready to submit with order
+                      </div>
+                    </div>
+                    <label 
+                      htmlFor="checkout-rx-file" 
+                      className="btn btn-ghost btn-sm" 
+                      style={{ cursor:'pointer', border:'1px solid var(--outline-variant)', borderRadius:8 }}
+                    >
+                      <span className="material-icons" style={{ fontSize:16 }}>swap_horiz</span> Replace
+                    </label>
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           {step === 2 && (
@@ -186,8 +318,9 @@ export default function Checkout() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 10 }}>
                     {['Cash on Delivery', 'bKash', 'Card'].map(m => (
                       <button key={m}
+                        type="button"
                         className={`btn btn-sm ${paymentMethod === m ? 'btn-primary' : 'btn-ghost'}`}
-                        style={{ border: paymentMethod === m ? 'none' : '1.5px solid var(--outline-variant)' }}
+                        style={{ border: paymentMethod === m ? 'none' : '1.5px solid var(--outline-variant)', justifyContent:'center' }}
                         onClick={() => setPaymentMethod(m)}
                       >{m}</button>
                     ))}
@@ -195,7 +328,7 @@ export default function Checkout() {
                 </div>
 
                 <div className="input-group"><label className="input-label">Contact Phone</label><input className="input" defaultValue="+880 1711-000000" /></div>
-                <div className="input-group"><label className="input-label">Delivery Notes</label><input className="input" placeholder="Optional" /></div>
+                <div className="input-group"><label className="input-label">Delivery Notes</label><input className="input" placeholder="Optional notes for delivery" /></div>
               </div>
             </div>
           )}
@@ -203,46 +336,53 @@ export default function Checkout() {
           {step === 3 && (
             <div className="card">
               <h3 className="title-md" style={{ marginBottom:16 }}>Order Confirmation</h3>
-              <p style={{ color:'var(--on-surface-variant)' }}>Please review your order. Clicking "Place Order" will confirm your purchase.</p>
-              <div style={{ background:'var(--surface-low)', borderRadius:'var(--radius)', padding:16, marginTop:16 }}>
+              <p style={{ color:'var(--on-surface-variant)' }}>Please review your order details before placing it.</p>
+              
+              <div style={{ background:'var(--surface-low)', borderRadius:'var(--radius)', padding:16, marginTop:16, display:'flex', flexDirection:'column', gap:8 }}>
                 {Array.isArray(cartItems) && cartItems.map(i => (
-                  <div key={i._id} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0' }}>
-                    <span>{i.name} × {i.quantity}</span><span style={{ fontWeight:600 }}>৳{((i.sellPrice || 0) * i.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  <div key={i._id} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', fontSize:'0.875rem' }}>
+                    <span>{i.name} × {i.quantity}</span>
+                    <span style={{ fontWeight:600 }}>৳{((i.sellPrice || 0) * i.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                 ))}
+                
+                {prescriptionFile && (
+                  <div style={{ borderTop:'1px dashed var(--outline-variant)', paddingTop:8, marginTop:4, display:'flex', alignItems:'center', gap:8, fontSize:'0.8125rem', color:'var(--secondary)' }}>
+                    <span className="material-icons" style={{ fontSize:16 }}>attach_file</span>
+                    <span>Prescription Attached: <strong>{prescriptionFile.name}</strong></span>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          <div style={{ display:'flex', gap:12, justifyContent:'flex-end' }}>
+          <div style={{ display:'flex', gap:12, justifyContent:'flex-end', flexWrap:'wrap' }}>
             {step > 1 && <button className="btn btn-ghost" onClick={() => setStep(s => s-1)}>Back</button>}
             <button 
               className="btn btn-primary" 
-              disabled={loading} 
-              onClick={() => {
-                if (step === 2 && !selectedPharmacyId) {
-                  alert('Please select a pharmacy branch for order fulfillment before continuing.')
-                  return
-                }
-                step < 3 ? setStep(s => s+1) : handlePlaceOrder()
-              }}
+              disabled={loading}
+              onClick={() => step < 3 ? setStep(s => s+1) : handlePlaceOrder()}
             >
-              {loading ? 'Processing...' : step < 3 ? 'Continue' : 'Place Order'}
+              {loading ? 'Processing Order...' : step < 3 ? 'Proceed to Next Step' : 'Confirm & Place Order'}
             </button>
           </div>
         </div>
 
-        <div className="card" style={{ height:'fit-content', position:'sticky', top: 100 }}>
-          <h3 className="title-md" style={{ marginBottom:16 }}>Order Total</h3>
+        {/* Order Summary Sidebar */}
+        <div className="card" style={{ height:'fit-content', display:'flex', flexDirection:'column', gap:16 }}>
+          <h3 className="title-md">Order Summary</h3>
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
             <div style={{ display:'flex', justifyContent:'space-between' }}><span className="text-muted">Subtotal</span><span>৳{(subtotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
             <div style={{ display:'flex', justifyContent:'space-between' }}><span className="text-muted">Delivery</span><span>৳{(delivery || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-            <div style={{ display:'flex', justifyContent:'space-between' }}><span className="text-muted">Tax</span><span>৳{(tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-            <div style={{ height:1, background:'var(--outline-variant)', margin:'4px 0' }} />
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:'1.25rem', fontWeight:800 }}>
-              <span>Total</span>
-              <span style={{ color:'var(--primary-container)' }}>৳{(total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+            <div style={{ display:'flex', justifyContent:'space-between' }}><span className="text-muted">Tax (VAT 8%)</span><span>৳{(tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+            <div style={{ borderTop:'1px solid var(--outline-variant)', paddingTop:12, display:'flex', justifyContent:'space-between', fontSize:'1.25rem', fontWeight:800, color:'var(--primary-container)' }}>
+              <span>Total</span><span>৳{(total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
             </div>
+          </div>
+          
+          <div style={{ background:'var(--surface-low)', padding:12, borderRadius:8, fontSize:'0.75rem', color:'var(--on-surface-variant)', display:'flex', alignItems:'center', gap:6 }}>
+            <span className="material-icons" style={{ fontSize:16, color:'var(--secondary)' }}>verified_user</span>
+            <span>All medicines are verified & dispensed by certified pharmacists.</span>
           </div>
         </div>
       </div>

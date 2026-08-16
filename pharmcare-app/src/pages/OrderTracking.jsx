@@ -18,6 +18,7 @@ export default function OrderTracking() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [showInvoice, setShowInvoice] = useState(null)
+  const [viewRxImage, setViewRxImage] = useState(null)
 
   useEffect(() => {
     fetchOrders()
@@ -40,37 +41,46 @@ export default function OrderTracking() {
     }
   }
 
-  const handlePay = async (id) => {
+  const handlePay = async (orderId) => {
     try {
-      const res = await fetch(`/api/orders/${id}/confirm`, { 
+      const res = await fetch(`/api/orders/${orderId}/confirm`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         }
       })
       if (res.ok) {
-        alert('Payment successful!')
+        alert('Payment simulated successfully! Status updated.')
         fetchOrders()
       } else {
-        const err = await res.json()
-        alert(`Payment failed: ${err.message}`)
+        alert('Payment failed')
       }
-    } catch (err) { alert('Error connecting to server') }
+    } catch {
+      alert('Connection error')
+    }
   }
+
   return (
     <div className="fade-up">
       <div className="page-header">
         <h1 className="page-title">Order Tracking</h1>
-        <p className="page-subtitle">Track your pharmacy orders in real-time</p>
+        <p className="page-subtitle">Track fulfillment and verification status of your medicine orders</p>
       </div>
 
       <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
         {loading ? (
-          <div className="card text-center" style={{ padding:60 }}>Loading your orders...</div>
+          <div style={{ padding: 40, textAlign: 'center' }}>Loading your orders...</div>
         ) : items.length === 0 ? (
-          <div className="card text-center" style={{ padding:60 }}>No orders found.</div>
+          <div className="card text-center" style={{ padding: 60 }}>
+            <span className="material-icons" style={{ fontSize: 48, color: 'var(--outline)' }}>local_shipping</span>
+            <p style={{ marginTop: 12 }}>No active or past orders found.</p>
+          </div>
         ) : items.map(o => {
           const currentStep = statusSteps[o.status] ?? 0;
+          const rxImg = o.prescriptionImage;
+          const rxUrl = rxImg ? (rxImg.startsWith('data:') || rxImg.startsWith('http') ? rxImg : `/api/uploads/${rxImg.replace(/\\/g, '/').replace(/^uploads\//, '')}`) : null;
+
           return (
             <div key={o._id} className="card">
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20, flexWrap:'wrap', gap:12 }}>
@@ -78,6 +88,15 @@ export default function OrderTracking() {
                   <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4, flexWrap:'wrap' }}>
                     <span style={{ fontFamily:'var(--font-headline)', fontWeight:800, fontSize:'1rem' }}>ORD-{o._id.slice(-6).toUpperCase()}</span>
                     <span className={`badge ${statusBadge[o.status] || 'badge-neutral'}`}>{o.status}</span>
+                    {rxUrl && (
+                      <button 
+                        className="badge badge-info" 
+                        style={{ cursor:'pointer', border:'none', display:'inline-flex', alignItems:'center', gap:4 }}
+                        onClick={() => setViewRxImage(rxUrl)}
+                      >
+                        <span className="material-icons" style={{ fontSize:13 }}>attach_file</span> Prescription Attached
+                      </button>
+                    )}
                   </div>
                   <div style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)', lineHeight:1.4 }}>
                     Placed on {new Date(o.createdAt).toLocaleDateString()} · 
@@ -88,6 +107,12 @@ export default function OrderTracking() {
                 <div style={{ textAlign:'right', display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
                   <div style={{ fontFamily:'var(--font-headline)', fontWeight:800, fontSize:'1.125rem', color:'var(--primary-container)' }}>৳{o.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                   <div style={{ marginTop:8, display:'flex', gap:8, justifyContent:'flex-end', flexWrap:'wrap' }}>
+                    {rxUrl && (
+                      <button className="btn btn-ghost btn-sm" onClick={() => setViewRxImage(rxUrl)}>
+                        <span className="material-icons" style={{fontSize:16}}>visibility</span>
+                        View Rx
+                      </button>
+                    )}
                     {o.status === 'Pending' && (
                       <button className="btn btn-primary btn-sm" onClick={() => handlePay(o._id)}>Pay Now</button>
                     )}
@@ -132,6 +157,31 @@ export default function OrderTracking() {
           order={showInvoice} 
           onClose={() => setShowInvoice(null)} 
         />
+      )}
+
+      {/* Prescription Image Viewer Modal */}
+      {viewRxImage && (
+        <div 
+          style={{ position:'fixed', inset:0, zIndex:999999, background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
+          onClick={() => setViewRxImage(null)}
+        >
+          <div 
+            style={{ background:'white', borderRadius:14, padding:20, maxWidth:600, width:'100%', maxHeight:'90vh', overflowY:'auto', position:'relative' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+              <div style={{ fontWeight:800, fontSize:'1.1rem', color:'var(--on-surface)' }}>Uploaded Prescription</div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setViewRxImage(null)}>
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            <img 
+              src={viewRxImage} 
+              alt="Prescription" 
+              style={{ width:'100%', borderRadius:8, maxHeight:500, objectFit:'contain', background:'var(--surface-low)', border:'1px solid var(--outline-variant)' }} 
+            />
+          </div>
+        </div>
       )}
     </div>
   )
