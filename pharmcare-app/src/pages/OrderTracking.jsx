@@ -73,21 +73,21 @@ export default function OrderTracking() {
           const currentStep = statusSteps[o.status] ?? 0;
           return (
             <div key={o._id} className="card">
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
-                <div>
-                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20, flexWrap:'wrap', gap:12 }}>
+                <div style={{ minWidth:200, flex:1 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4, flexWrap:'wrap' }}>
                     <span style={{ fontFamily:'var(--font-headline)', fontWeight:800, fontSize:'1rem' }}>ORD-{o._id.slice(-6).toUpperCase()}</span>
                     <span className={`badge ${statusBadge[o.status] || 'badge-neutral'}`}>{o.status}</span>
                   </div>
-                  <div style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)' }}>
+                  <div style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)', lineHeight:1.4 }}>
                     Placed on {new Date(o.createdAt).toLocaleDateString()} · 
                     {o.medicines.map(m => ` ${m.medicine?.name || 'Item'} ×${m.quantity}`).join(', ')} · 
                     Method: {o.paymentMethod || 'N/A'}
                   </div>
                 </div>
-                <div style={{ textAlign:'right' }}>
+                <div style={{ textAlign:'right', display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
                   <div style={{ fontFamily:'var(--font-headline)', fontWeight:800, fontSize:'1.125rem', color:'var(--primary-container)' }}>৳{o.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                  <div style={{ marginTop:8, display:'flex', gap:8, justifyContent:'flex-end' }}>
+                  <div style={{ marginTop:8, display:'flex', gap:8, justifyContent:'flex-end', flexWrap:'wrap' }}>
                     {o.status === 'Pending' && (
                       <button className="btn btn-primary btn-sm" onClick={() => handlePay(o._id)}>Pay Now</button>
                     )}
@@ -102,23 +102,25 @@ export default function OrderTracking() {
               </div>
 
               {/* Progress tracker */}
-              <div style={{ display:'flex', alignItems:'center', gap:0 }}>
-                {steps.map((s, i) => (
-                  <div key={s} style={{ display:'flex', alignItems:'center', flex: i < steps.length-1 ? 1 : 0 }}>
-                    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-                      <div style={{ 
-                        width:28, height:28, borderRadius:'50%', 
-                        background: i < currentStep ? 'var(--secondary)' : i === currentStep ? 'var(--secondary)' : 'var(--surface-high)', 
-                        color: i <= currentStep ? 'white' : 'var(--on-surface-variant)', 
-                        display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.8rem', fontWeight:700, flexShrink:0 
-                      }}>
-                        {i < currentStep ? <span className="material-icons" style={{fontSize:14}}>check</span> : i+1}
+              <div className="chart-scroll-wrap">
+                <div style={{ minWidth: 460, display:'flex', alignItems:'center', gap:0, paddingBottom: 4 }}>
+                  {steps.map((s, i) => (
+                    <div key={s} style={{ display:'flex', alignItems:'center', flex: i < steps.length-1 ? 1 : 0 }}>
+                      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                        <div style={{ 
+                          width:28, height:28, borderRadius:'50%', 
+                          background: i < currentStep ? 'var(--secondary)' : i === currentStep ? 'var(--secondary)' : 'var(--surface-high)', 
+                          color: i <= currentStep ? 'white' : 'var(--on-surface-variant)', 
+                          display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.8rem', fontWeight:700, flexShrink:0 
+                        }}>
+                          {i < currentStep ? <span className="material-icons" style={{fontSize:14}}>check</span> : i+1}
+                        </div>
+                        <span style={{ fontSize:'0.65rem', fontWeight: i<=currentStep ? 700 : 400, color: i<=currentStep ? 'var(--secondary)' : 'var(--on-surface-variant)', whiteSpace:'nowrap', textAlign:'center' }}>{s}</span>
                       </div>
-                      <span style={{ fontSize:'0.65rem', fontWeight: i<=currentStep ? 700 : 400, color: i<=currentStep ? 'var(--secondary)' : 'var(--on-surface-variant)', whiteSpace:'nowrap', textAlign:'center' }}>{s}</span>
+                      {i < steps.length-1 && <div style={{ flex:1, height:2, background: i < currentStep ? 'var(--secondary)' : 'var(--outline-variant)', margin:'0 4px', marginBottom:18 }} />}
                     </div>
-                    {i < steps.length-1 && <div style={{ flex:1, height:2, background: i < currentStep ? 'var(--secondary)' : 'var(--outline-variant)', margin:'0 4px', marginBottom:18 }} />}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           )

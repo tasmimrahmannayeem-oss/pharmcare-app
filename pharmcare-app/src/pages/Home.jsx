@@ -43,46 +43,35 @@ export default function Home() {
   return (
     <div className="fade-up">
       {/* Hero banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '40px 48px',
-        color: 'white',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 32,
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <div style={{ position: 'absolute', right: -40, top: -40, width: 280, height: 280, background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }} />
-        <div style={{ position: 'absolute', right: 60, bottom: -60, width: 200, height: 200, background: 'rgba(255,255,255,0.04)', borderRadius: '50%' }} />
-        <div>
-          <p style={{ fontSize: '0.8125rem', fontWeight: 600, opacity: 0.75, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>PharmaCare — Certified Clinical Pharmacy</p>
-          <h2 style={{ fontFamily: 'var(--font-headline)', fontSize: '2rem', fontWeight: 800, lineHeight: 1.2, marginBottom: 12, maxWidth: 440 }}>
+      <div className="home-hero">
+        <div className="home-hero-bg-circle1" />
+        <div className="home-hero-bg-circle2" />
+        <div className="home-hero-content">
+          <p className="home-hero-badge">PharmaCare — Certified Clinical Pharmacy</p>
+          <h2 className="home-hero-title">
             Access certified pharmacy services from the comfort of your home.
           </h2>
-          <p style={{ opacity: 0.8, fontSize: '1rem', marginBottom: 24 }}>High-quality medicines delivered with professional care.</p>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button className="btn" style={{ background: 'white', color: 'var(--primary-container)', fontWeight: 700 }} onClick={() => navigate('/catalogue')}>
+          <p className="home-hero-desc">High-quality medicines delivered with professional care.</p>
+          <div className="home-hero-actions">
+            <button className="btn btn-hero-shop" onClick={() => navigate('/catalogue')}>
               <span className="material-icons">shopping_bag</span>
               Shop Now
             </button>
-            <button className="btn" style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: '1.5px solid rgba(255,255,255,0.3)' }} onClick={() => setShowRxModal(true)}>
+            <button className="btn btn-hero-rx" onClick={() => setShowRxModal(true)}>
               <span className="material-icons">description</span>
               {prescriptionFile ? 'Rx Uploaded ✓' : 'Upload Prescription'}
             </button>
           </div>
         </div>
-        <div style={{ display:'flex', gap:16, flexShrink:0 }}>
+        <div className="home-hero-stats">
           {[
             { val: '10k+', label: 'Medicines' },
             { val: '24/7', label: 'Support' },
             { val: '2hr', label: 'Delivery' },
           ].map(s => (
-            <div key={s.val} style={{ textAlign:'center', background:'rgba(255,255,255,0.12)', borderRadius:12, padding:'16px 20px' }}>
-              <div style={{ fontSize:'1.75rem', fontWeight: 800, fontFamily:'var(--font-headline)' }}>{s.val}</div>
-              <div style={{ fontSize:'0.75rem', opacity:0.75, marginTop:2 }}>{s.label}</div>
+            <div key={s.val} className="home-hero-stat-card">
+              <div className="home-hero-stat-val">{s.val}</div>
+              <div className="home-hero-stat-label">{s.label}</div>
             </div>
           ))}
         </div>
