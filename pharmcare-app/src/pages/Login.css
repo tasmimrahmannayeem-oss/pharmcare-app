@@ -232,15 +232,15 @@
 
 /* ── Right Form Panel ───────────────────────────────────────── */
 .login-panel-right {
-  flex: 0.9;
+  flex: 1;
   background: 
-    radial-gradient(circle at 90% 12%, rgba(37, 99, 235, 0.07) 0%, transparent 40%),
-    radial-gradient(circle at 10% 88%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 90% 12%, rgba(37, 99, 235, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 10% 88%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
     linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: 48px 36px;
   min-height: 100vh;
   position: relative;
   z-index: 20;
@@ -258,76 +258,74 @@
 
 .wm-icon {
   position: absolute;
-  color: rgba(30, 64, 175, 0.045);
+  color: rgba(30, 64, 175, 0.05);
   user-select: none;
   pointer-events: none;
 }
 
 .wm-1 {
-  font-size: 170px;
+  font-size: 180px;
   top: -30px;
   right: -30px;
   transform: rotate(15deg);
 }
 
 .wm-2 {
-  font-size: 140px;
+  font-size: 150px;
   bottom: -20px;
   left: -20px;
   transform: rotate(-25deg);
 }
 
 .wm-3 {
-  font-size: 90px;
+  font-size: 100px;
   top: 45%;
-  right: 20px;
+  right: 25px;
   transform: rotate(10deg);
 }
 
 .wm-4 {
-  font-size: 110px;
-  bottom: 12%;
-  right: 18%;
+  font-size: 120px;
+  bottom: 10%;
+  right: 16%;
   transform: rotate(-15deg);
 }
 
 .wm-5 {
-  font-size: 85px;
-  top: 15%;
-  left: 25px;
+  font-size: 95px;
+  top: 12%;
+  left: 30px;
   transform: rotate(-10deg);
 }
 
 .wm-6 {
-  font-size: 75px;
+  font-size: 85px;
   top: 60%;
-  left: 35px;
+  left: 40px;
   transform: rotate(20deg);
 }
 
 .wm-ecg-line {
   position: absolute;
-  bottom: 60px;
+  bottom: 50px;
   left: 0;
   width: 100%;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .login-card {
   position: relative;
   z-index: 5;
   width: 100%;
-  max-width: 440px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: var(--radius-lg);
-  padding: 36px 32px;
-  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(226, 232, 240, 0.85);
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 40px 36px;
+  box-shadow: 0 16px 40px -10px rgba(15, 23, 42, 0.12), 0 0 0 1px #e2e8f0;
+  border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
 }
 
 .login-card-header {
@@ -342,10 +340,10 @@
   gap: 10px;
 }
 
-.login-brand-icon.sm {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+.login-card-logo .login-brand-icon.sm {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   background: linear-gradient(135deg, var(--primary), var(--primary-container));
   display: flex;
   align-items: center;
@@ -354,11 +352,11 @@
 }
 
 .login-brand-icon.sm .material-icons {
-  font-size: 20px;
+  font-size: 22px;
 }
 
 .login-brand-name.sm {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--primary-container);
   font-family: var(--font-headline);
@@ -368,15 +366,15 @@
 .login-tabs {
   display: flex;
   background: #f1f5f9;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 4px;
 }
 
 .login-tab {
   flex: 1;
-  padding: 9px;
-  border-radius: 8px;
-  font-size: 0.875rem;
+  padding: 11px;
+  border-radius: 9px;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--on-surface-variant);
   transition: all 0.2s ease;
@@ -392,17 +390,15 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-
-
 /* Tab Notices */
 .tab-notice {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 0.8125rem;
-  line-height: 1.4;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.45;
 }
 
 .tab-notice.info {
@@ -433,20 +429,20 @@
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .input-field-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
   width: 100%;
 }
 
 .field-label {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #334155;
+  color: #1e293b;
 }
 
 .field-control {
@@ -458,7 +454,7 @@
 
 .field-icon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   color: #64748b;
   font-size: 20px;
   pointer-events: none;
@@ -467,14 +463,14 @@
 
 .field-input {
   width: 100%;
-  padding: 12px 14px 12px 40px;
-  font-size: 0.9375rem;
+  padding: 13px 16px 13px 44px;
+  font-size: 0.95rem;
   color: #0f172a;
   font-family: inherit;
   font-weight: 500;
   background: #ffffff;
   border: 1.5px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: all 0.2s ease;
   outline: none;
 }
@@ -496,7 +492,7 @@
 
 .field-toggle-btn {
   position: absolute;
-  right: 12px;
+  right: 14px;
   color: #64748b;
   cursor: pointer;
   transition: color 0.2s;
@@ -517,13 +513,13 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .role-label-text {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #334155;
+  color: #1e293b;
 }
 
 .role-select-grid {
@@ -537,11 +533,11 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 6px;
-  border-radius: var(--radius-sm);
+  padding: 10px 8px;
+  border-radius: 10px;
   border: 1.5px solid var(--outline-variant);
   background: #ffffff;
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--on-surface-variant);
   transition: all 0.2s ease;
@@ -550,7 +546,7 @@
 }
 
 .role-chip .material-icons {
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .role-chip:hover {
@@ -565,16 +561,15 @@
   box-shadow: 0 2px 8px rgba(30, 64, 175, 0.12);
 }
 
-/* Submit CTA */
 .btn-cta {
   background: linear-gradient(135deg, var(--primary), var(--primary-container));
   border: none;
   color: white;
-  border-radius: var(--radius-sm);
-  padding: 13px;
+  border-radius: 10px;
+  padding: 15px;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -583,7 +578,7 @@
   box-shadow: 0 4px 14px rgba(30, 64, 175, 0.25);
   transition: all 0.2s;
   cursor: pointer;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .btn-cta:hover:not(:disabled) {
