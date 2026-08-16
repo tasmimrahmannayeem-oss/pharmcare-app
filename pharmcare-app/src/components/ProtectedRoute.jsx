@@ -3,18 +3,29 @@ import { useRole, normalizeRole } from '../context/RoleContext'
 
 export default function ProtectedRoute({ allowedRoles }) {
   const { role, userData } = useRole()
-  const token = localStorage.getItem('token')
+  const rawToken = localStorage.getItem('token')
+  const hasToken = !!(rawToken && rawToken !== 'undefined' && rawToken !== 'null')
 
   const currentRole = normalizeRole(role || userData?.role || localStorage.getItem('userRole'))
 
-  // If token is missing, user is logged out -> redirect to login
-  if (!token) {
+  // If no valid token present, redirect to Login
+  if (!hasToken) {
     return <Navigate to="/" replace />
   }
 
-  // Check if role is authorized
+  // If role is specified but current user is not authorized, redirect to their role's dashboard
   if (allowedRoles && !allowedRoles.includes(currentRole)) {
-    return <Navigate to="/" replace />
+    const defaultRoute = currentRole === 'superadmin' ? '/superadmin' :
+                         currentRole === 'owner' ? '/admin' :
+                         currentRole === 'pharmacist' ? '/prescriptions' :
+                         currentRole === 'assistant' ? '/pos' :
+                         currentRole === 'supplier' ? '/supplier/dashboard' : '/home'
+    
+    // Prevent self-looping if already on default route
+    if (window.location.pathname === defaultRoute) {
+      return <Outlet />
+    }
+    return <Navigate to={defaultRoute} replace />
   }
 
   return <Outlet />

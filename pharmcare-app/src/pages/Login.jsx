@@ -25,9 +25,11 @@ export default function Login() {
 
   // Auto-redirect if user is already logged in
   useEffect(() => {
-    const token = localStorage.getItem('token')
+    const rawToken = localStorage.getItem('token')
     const savedRole = localStorage.getItem('userRole')
-    if (token && savedRole) {
+    const hasToken = !!(rawToken && rawToken !== 'undefined' && rawToken !== 'null')
+
+    if (hasToken && savedRole && window.location.pathname === '/') {
       const dest = {
         superadmin: '/superadmin',
         owner: '/admin',
