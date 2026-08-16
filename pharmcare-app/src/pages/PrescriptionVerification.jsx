@@ -96,24 +96,27 @@ export default function PrescriptionVerification() {
               <div style={{ color:'var(--on-surface-variant)', marginTop:4 }}>{order.medicines[0]?.quantity} Units · ID: {mainMedicine._id?.slice(-6).toUpperCase()}</div>
             </div>
             {order.prescriptionImage && (() => {
-              // Normalise path: stored as "uploads/prescriptions/file.jpg" or Windows backslashes
-              const normalised = order.prescriptionImage.replace(/\\/g, '/');
-              // Strip leading "uploads/" so the URL becomes /api/uploads/prescriptions/file.jpg
-              const relativePath = normalised.startsWith('uploads/')
-                ? normalised.slice('uploads/'.length)
-                : normalised;
-              const imageUrl = `/api/uploads/${relativePath}`;
+              const imgVal = order.prescriptionImage;
+              let imageUrl = imgVal;
+              if (!imgVal.startsWith('data:') && !imgVal.startsWith('http')) {
+                const normalised = imgVal.replace(/\\/g, '/');
+                const relativePath = normalised.startsWith('uploads/')
+                  ? normalised.slice('uploads/'.length)
+                  : normalised;
+                imageUrl = `/api/uploads/${relativePath}`;
+              }
               return (
                 <div style={{ marginTop: 16 }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: 8, fontWeight: 600 }}>
-                    📎 Prescription Copy Uploaded by Customer:
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--primary)', marginBottom: 8, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="material-icons" style={{ fontSize: 18 }}>attach_file</span>
+                    Prescription Copy Uploaded by Customer
                   </div>
                   <a href={imageUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
                     <img
                       src={imageUrl}
                       alt="Prescription"
-                      onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
-                      style={{ width: '100%', borderRadius: 8, maxHeight: 320, objectFit: 'contain', background: 'var(--surface-low)', border: '1px solid var(--outline-variant)', cursor: 'zoom-in' }}
+                      onError={e => { e.target.style.display='none'; if (e.target.nextSibling) e.target.nextSibling.style.display='flex'; }}
+                      style={{ width: '100%', borderRadius: 8, maxHeight: 380, objectFit: 'contain', background: 'var(--surface-low)', border: '1.5px solid var(--primary-fixed)', cursor: 'zoom-in', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}
                     />
                   </a>
                   <div style={{ display: 'none', alignItems: 'center', gap: 8, padding: '12px 14px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 8, fontSize: '0.8125rem', color: '#92400e', marginTop: 8 }}>

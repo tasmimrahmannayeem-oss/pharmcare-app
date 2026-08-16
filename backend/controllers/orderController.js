@@ -50,7 +50,16 @@ exports.createOrder = async (req, res) => {
       requiresPrescription: true
     });
 
-    if (medsRequiringRx.length > 0 && !req.file) {
+    let prescriptionImage = null;
+    if (req.file && req.file.buffer) {
+      prescriptionImage = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    } else if (req.file && req.file.path) {
+      prescriptionImage = req.file.path;
+    } else if (req.body.prescriptionImage) {
+      prescriptionImage = req.body.prescriptionImage;
+    }
+
+    if (medsRequiringRx.length > 0 && !prescriptionImage) {
       return res.status(400).json({ message: 'Order contains prescription-only medicine. Please upload a prescription copy.' });
     }
 
@@ -59,7 +68,7 @@ exports.createOrder = async (req, res) => {
       pharmacy,
       medicines,
       totalAmount,
-      prescriptionImage: req.file ? req.file.path : null,
+      prescriptionImage,
       statusTimeline: [{ status: 'Pending', note: 'Order placed by customer' }]
     });
 

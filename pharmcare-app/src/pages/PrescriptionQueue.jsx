@@ -154,9 +154,9 @@ export default function PrescriptionQueue() {
                   <td><span style={{ fontSize:'0.8125rem', color:'var(--on-surface-variant)' }}>{rx.time}</span></td>
                   <td>
                     <div style={{ display:'flex', gap:6 }}>
-                      {rx.status === 'Pending Verification' && (
-                        <button className="btn btn-primary btn-sm" onClick={() => navigate(`/prescriptions/${rx.id}`)}>Verify</button>
-                      )}
+                      <button className="btn btn-primary btn-sm" onClick={() => navigate(`/prescriptions/${rx.id}`)}>
+                        {rx.status === 'Pending Verification' ? 'Verify' : 'View'}
+                      </button>
                       <button className="btn btn-ghost btn-sm" onClick={() => handleSkip(rx.id)}>Skip</button>
                     </div>
                   </td>
