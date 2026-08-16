@@ -279,26 +279,57 @@ tr:last-child td { border-bottom: none; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 999px; }
 
-/* ── App Layout Shell ──────────────────────────────────────── */
-.app-shell { display: flex; min-height: 100vh; width: 100%; overflow-x: hidden; }
-.app-shell.collapsed { --sidebar-width: 80px; }
+/* ── App Layout Shell (Mobile First) ───────────────────────── */
+.app-shell { 
+  display: flex; 
+  flex-direction: column; 
+  min-height: 100vh; 
+  width: 100%; 
+  max-width: 100%;
+  overflow-x: hidden; 
+}
+
 .app-content {
   flex: 1;
   min-width: 0;
-  margin-left: var(--sidebar-width);
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   overflow-x: hidden;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .page-main {
   flex: 1;
-  padding: 28px 32px;
+  padding: 16px 12px;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   overflow-x: hidden;
   box-sizing: border-box;
+}
+
+/* Desktop layout enhancement (>= 769px) */
+@media (min-width: 769px) {
+  :root {
+    --sidebar-width: 260px;
+    --topbar-height: 64px;
+  }
+  .app-shell {
+    flex-direction: row;
+  }
+  .app-shell.collapsed {
+    --sidebar-width: 80px;
+  }
+  .app-content {
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .page-main {
+    padding: 28px 32px;
+  }
 }
 
 /* Responsive Filter Row & Chart Wrappers */

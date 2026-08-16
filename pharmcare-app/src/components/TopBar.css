@@ -102,7 +102,7 @@
 
 /* Mobile Hamburger Menu Button */
 .mobile-menu-btn {
-  display: none;
+  display: flex;
   width: 40px; height: 40px;
   border-radius: var(--radius-sm);
   align-items: center; justify-content: center;
@@ -116,14 +116,18 @@
 .mobile-menu-btn:hover { background: var(--surface-high); }
 .mobile-menu-btn .material-icons { font-size: 22px; }
 
+/* Desktop Enhancement (>= 769px) */
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none !important;
+  }
+}
+
 /* Responsive TopBar Media Queries */
 @media (max-width: 768px) {
   .topbar {
     padding: 0 12px;
     height: 60px;
-  }
-  .mobile-menu-btn {
-    display: flex;
   }
   .topbar-title {
     font-size: 1rem;
