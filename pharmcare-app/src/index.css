@@ -672,43 +672,103 @@ tr:last-child td { border-bottom: none; }
   }
 
   /* Critical: collapse the sidebar margin so content fills full width */
-  .app-content {
-    margin-left: 0 !important;
+  html, body, #root, .app-shell, .app-content, .page-main {
     width: 100% !important;
-    max-width: 100vw !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
   }
 
   .app-shell {
-    flex-direction: column;
+    display: block !important;
   }
 
-  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-  .grid-2-resp { grid-template-columns: 1fr; }
-  .pos-products-grid { grid-template-columns: repeat(2, 1fr); }
-  .pos-layout { grid-template-columns: 1fr; }
-  .checkout-layout { grid-template-columns: 1fr; }
-  .page-main { padding: 16px 12px; }
+  .app-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .page-main {
+    padding: 16px 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .grid-2, .grid-3, .grid-4, .grid-auto, .grid-2-resp {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .pos-products-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  .pos-layout { grid-template-columns: 1fr !important; }
+  .checkout-layout { grid-template-columns: 1fr !important; }
+
+  /* Generic page headers stack vertically on mobile */
+  .page-main > div > div:first-child[style*="display: flex"][style*="justify-content: space-between"],
+  .page-main > div > div:first-child[style*="display:flex"][style*="justifyContent:'space-between'"],
+  .page-main > div > div:first-child[style*="display: flex"][style*="justifyContent: 'space-between'"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+    margin-bottom: 20px !important;
+  }
 
   .page-header {
     flex-direction: column;
     align-items: flex-start !important;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 16px;
   }
-  .page-title { font-size: 1.4rem; }
-  .page-subtitle { font-size: 0.85rem; }
+  .page-title { font-size: 1.35rem; line-height: 1.25; }
+  .page-subtitle { font-size: 0.8125rem; }
 
-  .stat-card { padding: 16px; }
-  .stat-card .stat-value { font-size: 1.5rem; }
+  .stat-card { padding: 14px 16px; }
+  .stat-card .stat-value { font-size: 1.4rem; }
 
   .card {
-    padding: 16px;
+    padding: 16px 14px;
     border-radius: var(--radius-sm);
+    max-width: 100% !important;
+    overflow-x: hidden;
+  }
+
+  .card > .table-wrap {
+    margin-left: -14px;
+    margin-right: -14px;
+    width: calc(100% + 28px) !important;
+    max-width: calc(100% + 28px) !important;
+  }
+
+  /* Tables inside table-wrap */
+  .table-wrap table {
+    min-width: 520px;
+  }
+
+  /* Tabs horizontal scroll */
+  .tabs {
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    border-bottom: 1px solid var(--outline-variant);
+  }
+  .tab {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Filter row */
+  .filter-row {
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   /* Touch targets */
-  .btn { min-height: 42px; }
-  .input { min-height: 44px; }
+  .btn { min-height: 40px; }
+  .input { min-height: 42px; }
 
   /* Prevent any fixed-width containers from overflowing */
   * { max-width: 100%; box-sizing: border-box; }
@@ -717,10 +777,9 @@ tr:last-child td { border-bottom: none; }
 
 @media (max-width: 480px) {
   .pos-products-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .page-main { padding: 12px 8px; }
-  .card { padding: 14px 12px; }
+  .page-main { padding: 12px 8px !important; }
+  .card { padding: 12px 10px; }
   .page-title { font-size: 1.25rem; }
-  .tabs { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .tab { padding: 8px 12px; font-size: 0.85rem; white-space: nowrap; }
+  .btn { padding: 8px 14px; font-size: 0.85rem; }
 }
 

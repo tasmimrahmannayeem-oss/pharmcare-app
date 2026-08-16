@@ -135,7 +135,7 @@ export default function CustomerProfile() {
         )}
 
         {/* Profile header */}
-        <div className="card" style={{ marginBottom: 24, background: 'linear-gradient(135deg, var(--primary-fixed) 0%, var(--surface-lowest) 100%)', display: 'flex', gap: 24, alignItems: 'center' }}>
+        <div className="card" style={{ marginBottom: 24, background: 'linear-gradient(135deg, var(--primary-fixed) 0%, var(--surface-lowest) 100%)', display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--primary-container))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <span className="material-icons" style={{ color: 'white', fontSize: 40 }}>person</span>
           </div>

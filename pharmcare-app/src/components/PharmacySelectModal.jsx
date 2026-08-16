@@ -65,7 +65,7 @@ export default function PharmacySelectModal({ isOpen, onClose }) {
         ) : error ? (
           <div style={{ padding: 20, color: 'var(--error)', textAlign: 'center' }}>{error}</div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="grid-2-resp">
             {pharmacies.map(p => (
               <div 
                 key={p._id} 

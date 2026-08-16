@@ -144,21 +144,21 @@ export default function Checkout() {
                 <h3 className="title-md">Cart Items ({cartItems.length})</h3>
               </div>
               {Array.isArray(cartItems) && cartItems.map((item, i) => (
-                <div key={item._id} style={{ display:'flex', alignItems:'center', gap:16, padding:'16px 24px', borderBottom: i < cartItems.length-1 ? '1px solid rgba(196,197,213,0.3)' : 'none' }}>
-                  <div style={{ width:48, height:48, borderRadius:10, background:'var(--primary-fixed)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <span className="material-icons" style={{ color:'var(--primary-container)', fontSize:24 }}>medication</span>
+                <div key={item._id} style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderBottom: i < cartItems.length-1 ? '1px solid rgba(196,197,213,0.3)' : 'none', flexWrap:'wrap' }}>
+                  <div style={{ width:44, height:44, borderRadius:10, background:'var(--primary-fixed)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <span className="material-icons" style={{ color:'var(--primary-container)', fontSize:22 }}>medication</span>
                   </div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:600 }}>{item.name}</div>
-                    <div style={{ fontSize:'0.8rem', color:'var(--on-surface-variant)' }}>{item.genericName || 'Medicine'}</div>
+                  <div style={{ flex:1, minWidth:120 }}>
+                    <div style={{ fontWeight:600, fontSize:'0.9375rem' }}>{item.name}</div>
+                    <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)' }}>{item.genericName || 'Medicine'}</div>
                   </div>
-                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <button className="btn btn-ghost btn-sm" onClick={() => updateQuantity(item._id, item.quantity - 1)}>−</button>
-                    <span style={{ fontWeight:600, minWidth:20, textAlign:'center' }}>{item.quantity}</span>
-                    <button className="btn btn-ghost btn-sm" onClick={() => updateQuantity(item._id, item.quantity + 1)}>+</button>
+                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    <button className="btn btn-ghost btn-sm" style={{ padding:'4px 8px' }} onClick={() => updateQuantity(item._id, item.quantity - 1)}>−</button>
+                    <span style={{ fontWeight:700, minWidth:20, textAlign:'center' }}>{item.quantity}</span>
+                    <button className="btn btn-ghost btn-sm" style={{ padding:'4px 8px' }} onClick={() => updateQuantity(item._id, item.quantity + 1)}>+</button>
                   </div>
-                  <div style={{ fontWeight:700, color:'var(--primary-container)', minWidth:60, textAlign:'right' }}>৳{((item.sellPrice || 0) * item.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                  <button className="btn btn-ghost btn-sm" style={{ color:'var(--error)' }} onClick={() => removeFromCart(item._id)}>
+                  <div style={{ fontWeight:700, color:'var(--primary-container)', minWidth:60, textAlign:'right', fontSize:'0.9375rem' }}>৳{((item.sellPrice || 0) * item.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                  <button className="btn btn-ghost btn-sm" style={{ color:'var(--error)', padding:4 }} onClick={() => removeFromCart(item._id)}>
                     <span className="material-icons" style={{fontSize:18}}>delete</span>
                   </button>
                 </div>
@@ -183,7 +183,7 @@ export default function Checkout() {
 
                 <div className="input-group" style={{ gridColumn: 'span 2' }}>
                   <label className="input-label">Payment Method</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 10 }}>
                     {['Cash on Delivery', 'bKash', 'Card'].map(m => (
                       <button key={m}
                         className={`btn btn-sm ${paymentMethod === m ? 'btn-primary' : 'btn-ghost'}`}
