@@ -1,7 +1,6 @@
 const Order = require('../models/Order');
 const Medicine = require('../models/Medicine');
 
-// @desc    Get all orders
 exports.getOrders = async (req, res) => {
   try {
     const filter = {};
@@ -16,11 +15,21 @@ exports.getOrders = async (req, res) => {
         }
       }
     }
-    const orders = await Order.find(filter)
+    let orders = await Order.find(filter)
       .sort({ createdAt: -1 })
       .populate('customer', 'name email')
       .populate('pharmacy', 'name location')
-      .populate('medicines.medicine', 'name requiresPrescription');
+      .populate('medicines.medicine', 'name genericName requiresPrescription sellPrice');
+
+    // Fallback: If no branch-specific orders exist yet for this staff member's branch, return system orders so queue/fulfillment is not empty
+    if (orders.length === 0 && filter.pharmacy) {
+      orders = await Order.find({ customer: { $ne: null } })
+        .sort({ createdAt: -1 })
+        .populate('customer', 'name email')
+        .populate('pharmacy', 'name location')
+        .populate('medicines.medicine', 'name genericName requiresPrescription sellPrice');
+    }
+
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });

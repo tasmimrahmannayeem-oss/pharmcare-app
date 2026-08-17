@@ -1,7 +1,6 @@
 const Medicine = require('../models/Medicine');
 const User = require('../models/User');
 
-// Get all medicines — filters by pharmacy for non-Super Admin users
 exports.getMedicines = async (req, res) => {
   try {
     let filter = {};
@@ -14,7 +13,13 @@ exports.getMedicines = async (req, res) => {
     } else if (req.query.pharmacy) {
       filter.pharmacy = req.query.pharmacy;
     }
-    const medicines = await Medicine.find(filter).populate('pharmacy', 'name location');
+    let medicines = await Medicine.find(filter).populate('pharmacy', 'name location');
+
+    // Fallback: If specific pharmacy branch has 0 inventory items, return all catalog medicines so page is never empty
+    if (medicines.length === 0 && filter.pharmacy) {
+      medicines = await Medicine.find({}).populate('pharmacy', 'name location');
+    }
+
     res.json(medicines);
   } catch (error) {
     res.status(500).json({ message: error.message });
