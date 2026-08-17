@@ -98,68 +98,38 @@ exports.getSystemWideAnalytics = async (req, res) => {
       { $group: { _id: '$pharmacy', count: { $sum: 1 } } }
     ]);
 
-    // 4. Pharmacy Network detailed Breakdown
-    const pharmacyStats = await Order.aggregate([
-      { $match: { status: { $ne: 'Cancelled' } } },
+    // 4. Pharmacy Network detailed Breakdown — query real pharmacies from DB
+    const allPharmacies = await Pharmacy.find().populate('owner', 'name');
+    
+    // Group order revenue by pharmacy ObjectId
+    const orderRevenues = await Order.aggregate([
+      { $match: { pharmacy: { $exists: true, $ne: null }, status: { $ne: 'Cancelled' } } },
       { 
         $group: { 
           _id: '$pharmacy', 
           revenue: { $sum: '$totalAmount' },
           orderCount: { $sum: 1 }
         } 
-      },
-      {
-        $lookup: {
-          from: 'pharmacies',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'details'
-        }
-      },
-      { $unwind: { path: '$details', preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'details.owner',
-          foreignField: '_id',
-          as: 'owner'
-        }
-      },
-      { 
-        $project: {
-          name: { $ifNull: ['$details.name', 'Unnamed Branch'] },
-          location: { $ifNull: ['$details.location', 'Unknown'] },
-          ownerName: { $ifNull: [{ $arrayElemAt: ['$owner.name', 0] }, 'N/A'] },
-          revenue: 1,
-          orderCount: 1,
-          status: { $literal: 'Online' }
-        }
       }
     ]);
 
-    // Map rxToday and alerts to pharmacyStats safely
-    const finalStats = (pharmacyStats || []).filter(s => s._id).map(stat => {
-      const rxToday = rxTodayData.find(r => r._id && r._id.toString() === stat._id.toString())?.count || 0;
-      const alerts = alertsData.find(a => a._id && a._id.toString() === stat._id.toString())?.count || 0;
-      return { ...stat, rxToday, alerts };
-    });
+    const finalStats = allPharmacies.map(p => {
+      const pIdStr = p._id.toString();
+      const orderStat = orderRevenues.find(r => r._id && r._id.toString() === pIdStr);
+      const rxToday = rxTodayData.find(r => r._id && r._id.toString() === pIdStr)?.count || 0;
+      const alerts = alertsData.find(a => a._id && a._id.toString() === pIdStr)?.count || 0;
 
-    // Also include pharmacies with NO orders yet
-    const allPharmacies = await Pharmacy.find().populate('owner', 'name');
-    allPharmacies.forEach(p => {
-      if (!finalStats.find(s => s._id && s._id.toString() === p._id.toString())) {
-        finalStats.push({
-          _id: p._id,
-          name: p.name,
-          location: p.location,
-          ownerName: p.owner?.name || 'N/A',
-          revenue: 0,
-          orderCount: 0,
-          status: 'Online',
-          rxToday: 0,
-          alerts: 0
-        });
-      }
+      return {
+        _id: p._id,
+        name: p.name,
+        location: p.location || 'Dhaka',
+        ownerName: p.owner?.name || 'N/A',
+        revenue: orderStat ? orderStat.revenue : 0,
+        orderCount: orderStat ? orderStat.orderCount : 0,
+        status: 'Online',
+        rxToday,
+        alerts
+      };
     });
 
     res.json({
