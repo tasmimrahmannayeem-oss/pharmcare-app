@@ -57,13 +57,23 @@ export default function UserManagement() {
       const url = isEdit ? `/api/users/${formData._id}` : '/api/auth/register'
       const method = isEdit ? 'PATCH' : 'POST'
 
+      // Build payload — strip assignedPharmacy if empty to avoid MongoDB BSONError
+      const payload = {
+        ...formData,
+        password: isEdit ? undefined : 'temp123',
+        isApproved: true
+      }
+      if (!payload.assignedPharmacy || payload.assignedPharmacy === '' || payload.role === 'Super Admin') {
+        delete payload.assignedPharmacy
+      }
+
       const res = await fetch(url, {
         method,
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ ...formData, password: isEdit ? undefined : 'temp123', isApproved: true })
+        body: JSON.stringify(payload)
       })
       if (res.ok) {
         setShowModal(false)
