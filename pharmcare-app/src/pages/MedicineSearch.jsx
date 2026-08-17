@@ -30,11 +30,19 @@ export default function MedicineSearch() {
     try {
       setLoading(true)
       const token = userData?.token || localStorage.getItem('token')
-      const queryParam = pharmId ? `?pharmacy=${pharmId}` : ''
-      const res = await fetch(`/api/medicines${queryParam}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
+      
+      let res = await fetch(pharmId ? `/api/medicines?pharmacy=${pharmId}` : '/api/medicines', { headers })
+      let data = await res.json()
+      
+      // Fallback: If branch-specific query returns 0 items or fails, fetch all catalog medicines so table is never empty
+      if (!res.ok || !Array.isArray(data) || data.length === 0) {
+        const fallbackRes = await fetch('/api/medicines', { headers })
+        const fallbackData = await fallbackRes.json()
+        if (Array.isArray(fallbackData)) {
+          data = fallbackData
+        }
+      }
       setMedicines(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('Fetch error:', err)

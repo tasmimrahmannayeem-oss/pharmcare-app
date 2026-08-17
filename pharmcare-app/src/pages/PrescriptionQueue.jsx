@@ -37,14 +37,21 @@ export default function PrescriptionQueue() {
     try {
       setLoading(true)
       const token = userData?.token || localStorage.getItem('token')
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
       const rawPharmacy = userData?.assignedPharmacy
       const pharmacyId = rawPharmacy?._id ? rawPharmacy._id : rawPharmacy
-      const queryParam = pharmacyId ? `?pharmacy=${pharmacyId}` : ''
-      const res = await fetch(`/api/orders${queryParam}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      
+      let res = await fetch(pharmacyId ? `/api/orders?pharmacy=${pharmacyId}` : '/api/orders', { headers })
+      let data = await res.json()
 
-      const data = await res.json()
+      if (!res.ok || !Array.isArray(data) || data.length === 0) {
+        const fallbackRes = await fetch('/api/orders', { headers })
+        const fallbackData = await fallbackRes.json()
+        if (Array.isArray(fallbackData)) {
+          data = fallbackData
+        }
+      }
+
       const formatted = Array.isArray(data) ? data
         .filter(o =>
           o.prescriptionImage ||

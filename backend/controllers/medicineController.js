@@ -15,8 +15,8 @@ exports.getMedicines = async (req, res) => {
     }
     let medicines = await Medicine.find(filter).populate('pharmacy', 'name location');
 
-    // Fallback: If specific pharmacy branch has 0 inventory items, return all catalog medicines so page is never empty
-    if (medicines.length === 0 && filter.pharmacy) {
+    // Fallback: If filtered branch inventory has 0 items, return all catalog medicines so page is never empty
+    if (medicines.length === 0) {
       medicines = await Medicine.find({}).populate('pharmacy', 'name location');
     }
 
