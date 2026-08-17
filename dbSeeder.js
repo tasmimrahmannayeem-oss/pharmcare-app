@@ -125,6 +125,139 @@ const sampleMedicines = [
   }
 ];
 
+const createBranchMedicines = (pharmacyId, branchCode) => [
+  {
+    pharmacy: pharmacyId,
+    name: 'Napa Extra 500mg',
+    genericName: 'Paracetamol + Caffeine',
+    description: 'Relief from fever, headache, body aches, and mild pain.',
+    batchNumber: `${branchCode}-2026-001`,
+    stockQuantity: branchCode === 'DHN' ? 180 : (branchCode === 'UTR' ? 35 : 8),
+    purchasePrice: 1.80,
+    sellPrice: 2.50,
+    manufacturer: 'Beximco Pharmaceuticals Ltd.',
+    requiresPrescription: false,
+    expiryDate: new Date('2027-12-31')
+  },
+  {
+    pharmacy: pharmacyId,
+    name: 'Seclo 20mg Capsule',
+    genericName: 'Omeprazole',
+    description: 'Treatment for acid reflux, heartburn, and stomach ulcers.',
+    batchNumber: `${branchCode}-2026-002`,
+    stockQuantity: branchCode === 'DHN' ? 220 : (branchCode === 'UTR' ? 85 : 190),
+    purchasePrice: 4.50,
+    sellPrice: 6.00,
+    manufacturer: 'Square Pharmaceuticals Ltd.',
+    requiresPrescription: false,
+    expiryDate: new Date('2027-10-15')
+  },
+  {
+    pharmacy: pharmacyId,
+    name: 'Sergel 20mg Capsule',
+    genericName: 'Esomeprazole',
+    description: 'Proton pump inhibitor for hyperacidity and GERD relief.',
+    batchNumber: `${branchCode}-2026-003`,
+    stockQuantity: branchCode === 'DHN' ? 140 : (branchCode === 'UTR' ? 12 : 65),
+    purchasePrice: 5.20,
+    sellPrice: 7.00,
+    manufacturer: 'Incepta Pharmaceuticals Ltd.',
+    requiresPrescription: false,
+    expiryDate: new Date('2027-11-20')
+  },
+  {
+    pharmacy: pharmacyId,
+    name: 'Ace 500mg Tablet',
+    genericName: 'Paracetamol',
+    description: 'Fast acting pain reliever and fever reducer.',
+    batchNumber: `${branchCode}-2026-004`,
+    stockQuantity: branchCode === 'DHN' ? 310 : (branchCode === 'UTR' ? 175 : 0),
+    purchasePrice: 1.50,
+    sellPrice: 2.00,
+    manufacturer: 'Square Pharmaceuticals Ltd.',
+    requiresPrescription: false,
+    expiryDate: new Date('2028-01-30')
+  },
+  {
+    pharmacy: pharmacyId,
+    name: 'Ciprocin 500mg Tablet',
+    genericName: 'Ciprofloxacin',
+    description: 'Broad spectrum antibiotic for bacterial infections.',
+    batchNumber: `${branchCode}-2026-005`,
+    stockQuantity: branchCode === 'DHN' ? 95 : (branchCode === 'UTR' ? 40 : 110),
+    purchasePrice: 11.00,
+    sellPrice: 15.00,
+    manufacturer: 'Square Pharmaceuticals Ltd.',
+    requiresPrescription: true,
+    expiryDate: new Date('2027-08-15')
+  },
+  {
+    pharmacy: pharmacyId,
+    name: 'Azithrocin 500mg',
+    genericName: 'Azithromycin',
+    description: 'Antibiotic for respiratory and soft tissue bacterial infections.',
+    batchNumber: `${branchCode}-2026-006`,
+    stockQuantity: branchCode === 'DHN' ? 50 : (branchCode === 'UTR' ? 95 : 20),
+    purchasePrice: 26.00,
+    sellPrice: 35.00,
+    manufacturer: 'Beximco Pharmaceuticals Ltd.',
+    requiresPrescription: true,
+    expiryDate: new Date('2027-09-10')
+  },
+  {
+    pharmacy: pharmacyId,
+    name: 'Monas 10mg Tablet',
+    genericName: 'Montelukast',
+    description: 'For asthma prevention and seasonal allergic rhinitis.',
+    batchNumber: `${branchCode}-2026-007`,
+    stockQuantity: branchCode === 'DHN' ? 130 : (branchCode === 'UTR' ? 60 : 150),
+    purchasePrice: 12.00,
+    sellPrice: 16.00,
+    manufacturer: 'Acme Laboratories Ltd.',
+    requiresPrescription: false,
+    expiryDate: new Date('2027-07-25')
+  },
+  {
+    pharmacy: pharmacyId,
+    name: 'Compathide 50mg',
+    genericName: 'Losartan Potassium',
+    description: 'Anti-hypertensive medication for blood pressure control.',
+    batchNumber: `${branchCode}-2026-008`,
+    stockQuantity: branchCode === 'DHN' ? 75 : (branchCode === 'UTR' ? 140 : 45),
+    purchasePrice: 7.50,
+    sellPrice: 10.00,
+    manufacturer: 'Incepta Pharmaceuticals Ltd.',
+    requiresPrescription: true,
+    expiryDate: new Date('2027-10-05')
+  },
+  {
+    pharmacy: pharmacyId,
+    name: 'Becosules Syrup 200ml',
+    genericName: 'Vitamin B Complex + Vitamin C',
+    description: 'Nutritional supplement to boost immunity and energy.',
+    batchNumber: `${branchCode}-2026-009`,
+    stockQuantity: branchCode === 'DHN' ? 60 : (branchCode === 'UTR' ? 25 : 80),
+    purchasePrice: 90.00,
+    sellPrice: 120.00,
+    manufacturer: 'Renata Limited',
+    requiresPrescription: false,
+    expiryDate: new Date('2027-06-30')
+  },
+  {
+    pharmacy: pharmacyId,
+    name: 'Fast 500mg Tablet',
+    genericName: 'Paracetamol',
+    description: 'Rapid onset analgesic and antipyretic.',
+    batchNumber: `${branchCode}-2026-010`,
+    stockQuantity: branchCode === 'DHN' ? 240 : (branchCode === 'UTR' ? 110 : 300),
+    purchasePrice: 1.80,
+    sellPrice: 2.50,
+    manufacturer: 'Renata Limited',
+    requiresPrescription: false,
+    expiryDate: new Date('2028-02-14')
+  }
+];
+
 const seedDatabase = async () => {
   try {
     console.log('🌱 Starting automatic database seeding...');
@@ -161,61 +294,29 @@ const seedDatabase = async () => {
       console.log('✅ Localized (BD) Pharmacies created.');
     }
 
-    // 3. Seed Medicines for Each Pharmacy
-    const medCount = await Medicine.countDocuments();
-    if (medCount === 0) {
-      for (const pharmacy of pharmacies) {
-        const branchMeds = sampleMedicines.map(m => ({
-          ...m,
-          pharmacy: pharmacy._id
-        }));
+    // 3. Seed or Update Medicines for Each Pharmacy with Branch-Unique Data
+    for (const pharmacy of pharmacies) {
+      const pName = pharmacy.name || '';
+      const branchCode = pName.includes('Uttara') ? 'UTR' : (pName.includes('Ananda') ? 'AND' : 'DHN');
+      
+      const count = await Medicine.countDocuments({ pharmacy: pharmacy._id });
+      if (count === 0) {
+        const branchMeds = createBranchMedicines(pharmacy._id, branchCode);
         await Medicine.insertMany(branchMeds);
-      }
-      console.log(`✅ Sample medicines seeded for ${pharmacies.length} pharmacy branches.`);
-    }
-    
-    // 4. Seed Historical Orders for AI/ML Validation
-    const Order = require('./models/Order');
-    const orderCount = await Order.countDocuments();
-    if (pharmacies.length > 0) {
-      console.log(`📊 Current order count: ${orderCount}. Seeding extra historical AI/ML test data (Orders)...`);
-      
-      const admin = await User.findOne({ email: 'admin@spmis.com' });
-      const medicines = await Medicine.find();
-      
-      const mockOrders = [];
-      const past30Days = [...Array(30).keys()].map(i => {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        return d;
-      });
-
-      past30Days.forEach(date => {
-        // Create 2-5 random orders per day
-        const ordersPerDay = Math.floor(Math.random() * 4) + 2;
-        for (let i=0; i<ordersPerDay; i++) {
-          const med = medicines[Math.floor(Math.random() * medicines.length)];
-          const qty = Math.floor(Math.random() * 5) + 1; // 1 to 5 items
-          
-          mockOrders.push({
-            customer: admin._id,
-            pharmacy: med.pharmacy,
-            medicines: [{
-              medicine: med._id,
-              quantity: qty,
-              price: med.sellPrice
-            }],
-            totalAmount: med.sellPrice * qty,
-            status: 'Delivered',
-            paymentStatus: 'Paid',
-            createdAt: date,
-            updatedAt: date
-          });
+        console.log(`✅ Branch-unique inventory created for ${pharmacy.name}`);
+      } else {
+        // Ensure existing medicine batch numbers use branchCode so inventory is visibly distinct
+        const existing = await Medicine.find({ pharmacy: pharmacy._id });
+        for (const med of existing) {
+          if (!med.batchNumber || !med.batchNumber.startsWith(branchCode)) {
+            const num = (med.batchNumber || '').slice(-3) || '001';
+            med.batchNumber = `${branchCode}-2026-${num}`;
+            if (branchCode === 'UTR') med.stockQuantity = Math.max(5, Math.round(med.stockQuantity * 0.4));
+            if (branchCode === 'AND') med.stockQuantity = Math.max(0, Math.round(med.stockQuantity * 0.7));
+            await med.save();
+          }
         }
-      });
-
-      await Order.insertMany(mockOrders);
-      console.log(`✅ Inserted ${mockOrders.length} historical orders for AI/ML Smart Insights validation.`);
+      }
     }
 
     console.log('✨ Seeding complete.');

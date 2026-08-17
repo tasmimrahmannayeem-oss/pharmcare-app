@@ -249,20 +249,25 @@ export default function Inventory() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>Medicine</th><th>Batch #</th><th>Quantity</th><th>Price (Sell)</th><th>Expiry</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>Medicine</th><th>Branch</th><th>Batch #</th><th>Quantity</th><th>Price (Sell)</th><th>Expiry</th><th>Status</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="7" style={{ textAlign:'center', padding: 40 }}>Loading inventory...</td></tr>
+                  <tr><td colSpan="8" style={{ textAlign:'center', padding: 40 }}>Loading inventory...</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan="7" style={{ textAlign:'center', padding: 40 }}>No medicines found.</td></tr>
+                  <tr><td colSpan="8" style={{ textAlign:'center', padding: 40 }}>No medicines found.</td></tr>
                 ) : filtered.map(item => (
                   <tr key={item._id}>
                     <td>
                       <div style={{ fontWeight:600 }}>{item.name}</div>
                       <div style={{ fontSize:'0.75rem', color:'var(--on-surface-variant)' }}>{item.genericName}</div>
                     </td>
-                    <td><code style={{ fontSize:'0.8rem' }}>{item.batchNumber}</code></td>
+                    <td>
+                      <span className="badge badge-neutral" style={{ fontSize:'0.75rem', whiteSpace: 'nowrap' }}>
+                        {item.pharmacy?.name ? item.pharmacy.name.replace('SPMIS - ', '') : 'Assigned Branch'}
+                      </span>
+                    </td>
+                    <td><code style={{ fontSize:'0.8rem', fontWeight: 700, color: 'var(--primary-container)' }}>{item.batchNumber}</code></td>
                     <td>
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                         <button className="btn btn-ghost btn-sm" style={{padding:'2px 6px', height:'auto'}} onClick={() => handleStockUpdate(item._id, item.stockQuantity - 1)}>−</button>

@@ -14,7 +14,7 @@ exports.getMedicines = async (req, res) => {
     } else if (req.query.pharmacy) {
       filter.pharmacy = req.query.pharmacy;
     }
-    const medicines = await Medicine.find(filter);
+    const medicines = await Medicine.find(filter).populate('pharmacy', 'name location');
     res.json(medicines);
   } catch (error) {
     res.status(500).json({ message: error.message });
