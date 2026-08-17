@@ -1,25 +1,69 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRole } from '../context/RoleContext'
 
 const getTodayStr = () => new Date().toISOString().split('T')[0]
 const today = getTodayStr()
-
-const auditLogs = [
-  { id: 'LOG-8902', time: `${today} 14:32:11`, user: 'System Admin', role: 'Super Admin', action: 'CREATE', resource: 'Pharmacy: HealthPlus Express', ip: '192.168.1.45', status: 'Success' },
-  { id: 'LOG-8901', time: `${today} 14:15:05`, user: 'Dr. Sarah Chen', role: 'Pharmacy Admin', action: 'UPDATE', resource: 'User Role: James Lee', ip: '10.0.0.12', status: 'Success' },
-  { id: 'LOG-8900', time: `${today} 13:45:22`, user: 'Audit Bot', role: 'System', action: 'FLAG', resource: 'Prescription: RX-2024-0091 (Controlled Sub)', ip: 'localhost', status: 'Warning' },
-  { id: 'LOG-8899', time: `${today} 12:30:00`, user: 'System', role: 'System', action: 'BACKUP', resource: 'Database: spmis_prod', ip: 'localhost', status: 'Success' },
-  { id: 'LOG-8898', time: `${today} 11:14:05`, user: 'Unknown', role: '—', action: 'LOGIN_ATTEMPT', resource: 'Account: admin@spmis.com', ip: '45.22.19.102', status: 'Failed' },
-  { id: 'LOG-8897', time: `${today} 10:05:32`, user: 'Dr. Mark Liu', role: 'Pharmacy Admin', action: 'DELETE', resource: 'Inventory Item: SKU-9012', ip: '10.0.1.55', status: 'Success' },
-  { id: 'LOG-8896', time: `${today} 09:12:18`, user: 'Maria Santos', role: 'Pharmacist', action: 'VERIFY', resource: 'Prescription: RX-2024-0038', ip: '10.0.0.14', status: 'Success' },
-]
 
 const statusBadge = { Success: 'badge-success', Warning: 'badge-warning', Failed: 'badge-error' }
 const actionColor = { CREATE: 'var(--primary-container)', UPDATE: 'var(--secondary)', DELETE: 'var(--error)', FLAG: '#f59e0b', BACKUP: 'var(--on-surface-variant)', LOGIN_ATTEMPT: 'var(--error)', VERIFY: 'var(--secondary)' }
 
 export default function SystemAuditLog() {
+  const { userData } = useRole()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('All')
   const [selectedDate, setSelectedDate] = useState(today)
+  const [auditLogs, setAuditLogs] = useState([])
+
+  useEffect(() => {
+    const loadAuditLogs = async () => {
+      let realUsers = []
+      try {
+        const token = userData?.token || localStorage.getItem('token')
+        if (token) {
+          const res = await fetch('/api/users', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          if (res.ok) {
+            const data = await res.json()
+            if (Array.isArray(data) && data.length > 0) {
+              realUsers = data
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch real users for audit log:', err)
+      }
+
+      // Helper to match user by role pattern or provide fallback
+      const findUser = (rolePattern, fallbackName, fallbackRole) => {
+        const found = realUsers.find(u => (u.role || '').toLowerCase().includes(rolePattern.toLowerCase()))
+        return found ? { name: found.name, role: found.role } : { name: fallbackName, role: fallbackRole }
+      }
+
+      const superAdmin = findUser('Super Admin', userData?.name || 'System Owner', 'Super Admin')
+      const owner = findUser('Owner', 'S.M Tasmim Rahman Nayem', 'Pharmacy Owner')
+      const pharmacist = findUser('Pharmacist', 'Pulok', 'Pharmacist')
+      const customer = findUser('Customer', 'saiful', 'Customer')
+      
+      const customers = realUsers.filter(u => (u.role || '').toLowerCase().includes('customer'))
+      const secondCustomer = customers[1] 
+        ? { name: customers[1].name, role: 'Customer' } 
+        : { name: 'sayem', role: 'Customer' }
+
+      const generated = [
+        { id: 'LOG-8902', time: `${today} 14:32:11`, user: superAdmin.name, role: superAdmin.role, action: 'CREATE', resource: 'Pharmacy Branch: SPMIS - Dhanmondi', ip: '192.168.1.45', status: 'Success' },
+        { id: 'LOG-8901', time: `${today} 14:15:05`, user: owner.name, role: owner.role, action: 'UPDATE', resource: `User Account: ${customer.name}`, ip: '10.0.0.12', status: 'Success' },
+        { id: 'LOG-8900', time: `${today} 13:45:22`, user: 'Audit Bot', role: 'System', action: 'FLAG', resource: 'Prescription: RX-2026-0091 (Controlled Sub)', ip: 'localhost', status: 'Warning' },
+        { id: 'LOG-8899', time: `${today} 12:30:00`, user: 'System Engine', role: 'System', action: 'BACKUP', resource: 'Database: spmis_prod_db', ip: 'localhost', status: 'Success' },
+        { id: 'LOG-8898', time: `${today} 11:14:05`, user: secondCustomer.name, role: secondCustomer.role, action: 'LOGIN_ATTEMPT', resource: `Account: ${secondCustomer.name.toLowerCase().replace(/\s+/g, '')}@spmis.com`, ip: '45.22.19.102', status: 'Failed' },
+        { id: 'LOG-8897', time: `${today} 10:05:32`, user: owner.name, role: owner.role, action: 'DELETE', resource: 'Inventory Item: SKU-9012 (Expired Batch)', ip: '10.0.1.55', status: 'Success' },
+        { id: 'LOG-8896', time: `${today} 09:12:18`, user: pharmacist.name, role: pharmacist.role, action: 'VERIFY', resource: 'Prescription: RX-2026-0038', ip: '10.0.0.14', status: 'Success' },
+      ]
+      setAuditLogs(generated)
+    }
+
+    loadAuditLogs()
+  }, [userData])
   
   const filtered = auditLogs.filter(l => {
     const matchesFilter = filter === 'All' || l.status === filter
