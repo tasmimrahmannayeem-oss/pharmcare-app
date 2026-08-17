@@ -51,8 +51,9 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email }).populate('assignedPharmacy');
 
     if (user && (await user.comparePassword(password))) {
-      // Check approval
-      if (user.role !== 'Customer' && !user.isApproved) {
+      // Staff and Customer roles are automatically approved
+      const isApprovedRole = ['Customer', 'Pharmacist', 'Store Assistant', 'Pharmacy Owner', 'Super Admin', 'pharmacist', 'assistant', 'owner', 'superadmin'].includes(user.role);
+      if (!isApprovedRole && user.isApproved === false) {
         return res.status(403).json({ message: 'Your account is pending approval.' });
       }
 

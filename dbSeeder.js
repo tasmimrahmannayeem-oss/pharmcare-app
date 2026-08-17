@@ -262,7 +262,12 @@ const seedDatabase = async () => {
   try {
     console.log('🌱 Starting automatic database seeding...');
     
-    // 1. Create System Owner (Super Admin)
+    // 1. Create System Owner (Super Admin) and auto-approve all staff users
+    await User.updateMany(
+      { role: { $ne: 'Supplier' } },
+      { $set: { isApproved: true } }
+    );
+
     const adminExists = await User.findOne({ role: 'Super Admin' });
     if (!adminExists) {
       await User.create({

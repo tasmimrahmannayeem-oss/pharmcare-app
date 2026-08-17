@@ -97,15 +97,22 @@ export function RoleProvider({ children }) {
       })
         .then(res => res.ok ? res.json() : null)
         .then(profile => {
-          if (profile && profile.assignedPharmacy) {
+          if (profile) {
             _setUserData(prev => {
-              const currentId = prev?.assignedPharmacy?._id || prev?.assignedPharmacy
-              const profileId = profile.assignedPharmacy?._id || profile.assignedPharmacy
-              if (currentId === profileId && typeof prev?.assignedPharmacy === 'object') return prev
+              const currentPharmId = prev?.assignedPharmacy?._id || prev?.assignedPharmacy
+              const profilePharmId = profile.assignedPharmacy?._id || profile.assignedPharmacy
               
+              if (prev?.isApproved === profile.isApproved && 
+                  currentPharmId === profilePharmId && 
+                  typeof prev?.assignedPharmacy === 'object') {
+                return prev
+              }
+
               const updated = {
                 ...prev,
-                assignedPharmacy: profile.assignedPharmacy
+                name: profile.name || prev?.name,
+                isApproved: profile.isApproved,
+                assignedPharmacy: profile.assignedPharmacy || prev?.assignedPharmacy
               }
               localStorage.setItem('userData', JSON.stringify(updated))
               return updated

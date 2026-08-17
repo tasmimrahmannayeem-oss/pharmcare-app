@@ -16,8 +16,9 @@ exports.protect = async (req, res, next) => {
     req.user = await User.findById(decoded.id).populate('assignedPharmacy');
     if (!req.user) return res.status(404).json({ message: 'No user found with this id' });
     
-    // Check if approved (except for Customer)
-    if (req.user.role !== 'Customer' && !req.user.isApproved) {
+    // Check if approved (Staff roles: Pharmacist, Assistant, Owner, Super Admin and Customer are approved)
+    const isApprovedRole = ['Customer', 'Pharmacist', 'Store Assistant', 'Pharmacy Owner', 'Super Admin', 'pharmacist', 'assistant', 'owner', 'superadmin'].includes(req.user.role);
+    if (!isApprovedRole && req.user.isApproved === false) {
       return res.status(403).json({ message: 'Your account is pending approval by an admin.' });
     }
 
