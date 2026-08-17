@@ -189,7 +189,7 @@ export default function UserManagement() {
             <input className="input" placeholder="Search by name or email…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {['All', 'Pharmacy Owner', 'Pharmacist', 'Store Assistant', 'Supplier', 'Customer'].map(r => (
+            {['All', 'Super Admin', 'Pharmacy Owner', 'Pharmacist', 'Store Assistant', 'Supplier', 'Customer'].map(r => (
               <button key={r} className={`badge ${roleFilter === r ? 'badge-info' : 'badge-neutral'}`}
                 style={{ cursor: 'pointer', padding: '7px 12px', fontSize: '0.8rem' }} onClick={() => setRoleFilter(r)}>{r}</button>
             ))}
@@ -294,6 +294,7 @@ export default function UserManagement() {
                 <div className="input-group">
                   <label className="input-label">Role</label>
                   <select className="input" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                    <option value="Super Admin">Super Admin</option>
                     <option value="Pharmacy Owner">Pharmacy Owner</option>
                     <option value="Pharmacist">Pharmacist</option>
                     <option value="Store Assistant">Store Assistant</option>
@@ -301,6 +302,7 @@ export default function UserManagement() {
                     <option value="Customer">Customer</option>
                   </select>
                 </div>
+                {formData.role !== 'Super Admin' && (
                 <div className="input-group">
                   <label className="input-label">Assign Branch</label>
                   <select className="input" value={formData.assignedPharmacy} onChange={e => setFormData({...formData, assignedPharmacy: e.target.value})}>
@@ -310,6 +312,7 @@ export default function UserManagement() {
                     ))}
                   </select>
                 </div>
+                )}
               </div>
               <div style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'flex-end', alignItems: 'center' }}>
                 {formData._id && (
