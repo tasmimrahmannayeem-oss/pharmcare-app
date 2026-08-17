@@ -4,7 +4,72 @@ export default function InvoiceModal({ order, onClose }) {
   if (!order) return null
 
   const handlePrint = () => {
-    window.print()
+    const invoiceEl = document.getElementById('printable-invoice')
+    if (!invoiceEl) return
+
+    // Remove any existing print iframe
+    const oldFrame = document.getElementById('spmis-invoice-print-frame')
+    if (oldFrame) oldFrame.remove()
+
+    // Create a hidden iframe
+    const iframe = document.createElement('iframe')
+    iframe.id = 'spmis-invoice-print-frame'
+    iframe.style.position = 'fixed'
+    iframe.style.right = '0'
+    iframe.style.bottom = '0'
+    iframe.style.width = '0'
+    iframe.style.height = '0'
+    iframe.style.border = '0'
+    iframe.style.visibility = 'hidden'
+    document.body.appendChild(iframe)
+
+    const doc = iframe.contentWindow.document
+    doc.open()
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice - ${order._id?.slice(-8).toUpperCase() || 'SPMIS'}</title>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 15mm 12mm;
+            }
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+              color: #0f172a;
+              background: #ffffff;
+              padding: 20px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            #printable-invoice {
+              width: 100% !important;
+              max-width: 100% !important;
+              display: block !important;
+              overflow: visible !important;
+              height: auto !important;
+              background: #ffffff !important;
+            }
+          </style>
+        </head>
+        <body>
+          ${invoiceEl.outerHTML}
+        </body>
+      </html>
+    `)
+    doc.close()
+
+    setTimeout(() => {
+      iframe.contentWindow.focus()
+      iframe.contentWindow.print()
+    }, 300)
   }
 
   const subtotal = order.totalAmount ? (order.totalAmount / 1.08) : 0
@@ -12,65 +77,6 @@ export default function InvoiceModal({ order, onClose }) {
 
   return createPortal(
     <div className="modal-overlay invoice-modal-overlay" onClick={onClose} style={{ zIndex: 999999 }}>
-      <style>{`
-        @media print {
-          @page {
-            size: A4 portrait;
-            margin: 10mm;
-          }
-          body {
-            background: white !important;
-            color: #0f172a !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          #root {
-            display: none !important;
-          }
-          .sidebar, .topbar, .mobile-menu-btn, .no-print, header, nav, aside {
-            display: none !important;
-          }
-          .modal-overlay.invoice-modal-overlay {
-            position: relative !important;
-            inset: auto !important;
-            background: white !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            z-index: 9999999 !important;
-            display: block !important;
-            width: 100% !important;
-            height: auto !important;
-            overflow: visible !important;
-          }
-          .invoice-modal-overlay .modal-content {
-            position: relative !important;
-            box-shadow: none !important;
-            border: none !important;
-            max-width: 100% !important;
-            width: 100% !important;
-            max-height: none !important;
-            height: auto !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            background: white !important;
-            overflow: visible !important;
-          }
-          .invoice-modal-header,
-          .invoice-modal-footer {
-            display: none !important;
-          }
-          #printable-invoice {
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100% !important;
-            max-height: none !important;
-            height: auto !important;
-            overflow: visible !important;
-            display: block !important;
-          }
-        }
-      `}</style>
       <div 
         className="modal-content fade-up" 
         onClick={e => e.stopPropagation()} 
