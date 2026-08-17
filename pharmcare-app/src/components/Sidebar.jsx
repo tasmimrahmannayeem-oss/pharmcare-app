@@ -15,13 +15,11 @@ const navConfig = {
     { icon: 'description', label: 'Prescription Queue', to: '/prescriptions' },
     { icon: 'inventory', label: 'Fulfillment Status', to: '/fulfillment' },
     { icon: 'search', label: 'Medicine Search', to: '/search' },
-    { icon: 'psychology', label: 'AI Smart Insights', to: '/smart-insights' },
   ],
   assistant: [
     { icon: 'point_of_sale', label: 'POS Billing', to: '/pos' },
     { icon: 'inventory', label: 'Fulfillment Status', to: '/fulfillment' },
     { icon: 'search', label: 'Medicine Search', to: '/search' },
-    { icon: 'psychology', label: 'AI Smart Insights', to: '/smart-insights' },
   ],
   owner: [
     { icon: 'dashboard', label: 'Admin Dashboard', to: '/admin' },
@@ -29,6 +27,7 @@ const navConfig = {
     { icon: 'bar_chart', label: 'Inventory Reports', to: '/inventory/reports' },
     { icon: 'point_of_sale', label: 'POS Billing', to: '/pos' },
     { icon: 'analytics', label: 'Sales Analytics', to: '/analytics' },
+    { icon: 'psychology', label: 'AI Smart Insights', to: '/smart-insights' },
     { icon: 'groups', label: 'Staff Management', to: '/staff' },
     { icon: 'local_shipping', label: 'Supplier Management', to: '/suppliers' },
     { icon: 'description', label: 'Prescription Queue', to: '/prescriptions' },
