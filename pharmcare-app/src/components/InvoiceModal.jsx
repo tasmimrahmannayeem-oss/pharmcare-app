@@ -114,10 +114,10 @@ export default function InvoiceModal({ order, onClose }) {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary-container)', marginBottom: 8 }}>
                 <span className="material-icons" style={{ fontSize: 26, color: 'var(--primary-container)' }}>medication</span>
-                <span style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--primary-container)' }}>PharMCare</span>
+                <span style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--primary-container)' }}>SPMIS</span>
               </div>
               <div style={{ fontSize: '0.8125rem', color: '#475569', lineHeight: 1.5 }}>
-                <strong style={{ color: '#0f172a' }}>{order.pharmacy?.name || 'PharMCare Pharmacy'}</strong><br />
+                <strong style={{ color: '#0f172a' }}>{order.pharmacy?.name || 'SPMIS Pharmacy'}</strong><br />
                 {order.pharmacy?.address || order.pharmacy?.location || 'Dhaka, Bangladesh'}<br />
                 P: {order.pharmacy?.contactPhone || '+880 1711-000000'}
               </div>
