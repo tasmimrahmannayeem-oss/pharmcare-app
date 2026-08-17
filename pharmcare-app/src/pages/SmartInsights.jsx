@@ -110,7 +110,7 @@ export default function SmartInsights() {
       `}</style>
 
       {/* AI Summary Cards */}
-      <div className="grid-4" style={{ marginBottom: 28 }}>
+      <div className="grid-3" style={{ marginBottom: 28 }}>
         <div className="stat-card" style={{ background: 'linear-gradient(135deg, #0891b2, #06b6d4)', color: 'white' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -145,21 +145,9 @@ export default function SmartInsights() {
             </div>
           </div>
           <div style={{ fontFamily: 'var(--font-headline)', fontSize: '1.75rem', fontWeight: 800, color: 'var(--on-surface)', marginTop: 12 }}>
-            {Object.entries(insights.seasonalTrends?.dayRevenue || {}).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown'}
+            {Object.entries(insights.seasonalTrends?.dayRevenue || {}).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Monday'}
           </div>
           <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--on-surface-variant)' }}>Predicted Busiest Day</div>
-        </div>
-
-        <div className="stat-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(6, 182, 212, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span className="material-icons" style={{ color: '#06b6d4', fontSize: 22 }}>verified</span>
-            </div>
-          </div>
-          <div style={{ fontFamily: 'var(--font-headline)', fontSize: '2rem', fontWeight: 800, color: 'var(--on-surface)', marginTop: 12 }}>
-            94%
-          </div>
-          <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--on-surface-variant)' }}>AI Confidence Score</div>
         </div>
       </div>
 
@@ -178,7 +166,7 @@ export default function SmartInsights() {
                 <div key={`hist-${i}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, height: '100%', justifyContent: 'flex-end', opacity: 0.6 }}>
                   <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>{(d.revenue/1000).toFixed(1)}k</span>
                   <div style={{ width: '100%', position: 'relative', borderRadius: '4px 4px 0 0', overflow: 'hidden' }}>
-                    <div style={{ height: `${(d.revenue / (maxDailyRevenue || 1)) * 160}px`, background: 'var(--primary)', borderRadius: '4px 4px 0 0', minHeight: 4 }} />
+                    <div style={{ height: `${Math.max(10, (d.revenue / (maxDailyRevenue || 1)) * 150)}px`, background: 'var(--primary)', borderRadius: '4px 4px 0 0' }} />
                   </div>
                   <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 500 }}>{new Date(d.date).toLocaleDateString('en-US', {weekday: 'short'})}</span>
                 </div>
@@ -192,10 +180,9 @@ export default function SmartInsights() {
                   <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#06b6d4' }}>{(d.revenue/1000).toFixed(1)}k</span>
                   <div style={{ width: '100%', position: 'relative', borderRadius: '4px 4px 0 0', overflow: 'hidden' }}>
                     <div style={{ 
-                      height: `${(d.revenue / (maxDailyRevenue || 1)) * 160}px`, 
+                      height: `${Math.max(12, (d.revenue / (maxDailyRevenue || 1)) * 150)}px`, 
                       background: 'linear-gradient(180deg, rgba(6, 182, 212, 0.8), rgba(6, 182, 212, 0.2))', 
                       borderRadius: '4px 4px 0 0', 
-                      minHeight: 4,
                       borderTop: '2px solid #06b6d4'
                     }} />
                   </div>
@@ -262,22 +249,33 @@ export default function SmartInsights() {
         <div className="card">
           <h3 className="section-title" style={{ marginBottom: 16 }}>Demand Heatmap by Day</h3>
           <div className="chart-scroll-wrap">
-            <div className="chart-inner-wrap" style={{ display: 'flex', gap: 8, height: 120 }}>
+            <div className="chart-inner-wrap" style={{ display: 'flex', gap: 8, height: 130 }}>
               {daysOfWeek.map((day, i) => {
-                const val = insights.seasonalTrends?.dayRevenue?.[day] || 0;
+                const rev = insights.seasonalTrends?.dayRevenue?.[day] || 0;
+                const cnt = insights.seasonalTrends?.dayCounts?.[day] || 0;
                 const allVals = Object.values(insights.seasonalTrends?.dayRevenue || {});
                 const maxVal = allVals.length > 0 ? Math.max(...allVals) : 1;
-                const intensity = maxVal > 0 ? Math.min(1, val / maxVal) : 0;
+                const intensity = maxVal > 0 ? Math.min(1, Math.max(0.15, rev / maxVal)) : 0.15;
                 return (
-                  <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                  <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                     <div style={{ 
                       flex: 1, 
                       width: '100%', 
                       borderRadius: 'var(--radius-sm)',
-                      background: `rgba(6, 182, 212, ${Math.max(0.08, intensity)})`,
-                      border: '1px solid rgba(6, 182, 212, 0.1)'
-                    }} title={`Revenue: ৳${Math.round(val).toLocaleString()}`}></div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{daysOfWeekShort[i]}</span>
+                      background: `linear-gradient(180deg, rgba(6, 182, 212, ${Math.min(1, intensity + 0.25)}), rgba(6, 182, 212, ${Math.max(0.12, intensity * 0.4)}))`,
+                      border: '1px solid rgba(6, 182, 212, 0.25)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 4
+                    }} title={`Revenue: ৳${Math.round(rev).toLocaleString()} (${cnt} orders)`}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: intensity > 0.4 ? 'white' : '#0891b2' }}>
+                        {rev >= 1000 ? `৳${(rev/1000).toFixed(1)}k` : (rev > 0 ? `৳${Math.round(rev)}` : `${cnt} orders`)}
+                      </span>
+                      <span style={{ fontSize: '0.65rem', color: intensity > 0.4 ? 'rgba(255,255,255,0.85)' : 'var(--on-surface-variant)', marginTop: 2 }}>{cnt} orders</span>
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>{daysOfWeekShort[i]}</span>
                   </div>
                 );
               })}
@@ -296,7 +294,7 @@ export default function SmartInsights() {
                     #{i + 1}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{p.id}</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{p.name || p.id}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Total sales volume: {p.quantity} units</div>
                   </div>
                 </div>

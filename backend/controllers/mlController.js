@@ -25,7 +25,7 @@ exports.getSalesForecast = async (req, res) => {
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
     query.createdAt = { $gte: ninetyDaysAgo };
 
-    const orders = await Order.find(query).sort({ createdAt: 1 });
+    const orders = await Order.find(query).populate('medicines.medicine').sort({ createdAt: 1 });
 
     const forecastData = generateSalesForecast(orders, days);
     const seasonalTrends = detectSeasonalTrends(orders);
@@ -105,7 +105,7 @@ exports.getSmartInsights = async (req, res) => {
     orderQuery.createdAt = { $gte: ninetyDaysAgo };
 
     const medicines = await Medicine.find(medicineQuery);
-    const orders = await Order.find(orderQuery).sort({ createdAt: 1 });
+    const orders = await Order.find(orderQuery).populate('medicines.medicine').sort({ createdAt: 1 });
 
     const forecastData = generateSalesForecast(orders, 7);
     const predictions = generateRestockPredictions(medicines, orders);
