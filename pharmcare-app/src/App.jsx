@@ -83,6 +83,10 @@ export default function App() {
                 <Route path="/analytics" element={<SalesAnalytics />} />
                 <Route path="/staff" element={<StaffManagement />} />
                 <Route path="/suppliers" element={<SupplierManagement />} />
+              </Route>
+
+              {/* AI Smart Insights (Pharmacist & Store Assistant) */}
+              <Route element={<ProtectedRoute allowedRoles={['pharmacist', 'assistant']} />}>
                 <Route path="/smart-insights" element={<SmartInsights />} />
               </Route>
               

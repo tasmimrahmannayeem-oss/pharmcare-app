@@ -29,7 +29,6 @@ const navConfig = {
     { icon: 'bar_chart', label: 'Inventory Reports', to: '/inventory/reports' },
     { icon: 'point_of_sale', label: 'POS Billing', to: '/pos' },
     { icon: 'analytics', label: 'Sales Analytics', to: '/analytics' },
-    { icon: 'psychology', label: 'AI Smart Insights', to: '/smart-insights' },
     { icon: 'groups', label: 'Staff Management', to: '/staff' },
     { icon: 'local_shipping', label: 'Supplier Management', to: '/suppliers' },
     { icon: 'description', label: 'Prescription Queue', to: '/prescriptions' },
@@ -44,7 +43,6 @@ const navConfig = {
     { icon: 'manage_accounts', label: 'User Management', to: '/superadmin/users' },
     { icon: 'business', label: 'Pharmacy Management', to: '/superadmin/pharmacies' },
     { icon: 'history', label: 'System Audit Log', to: '/superadmin/audit' },
-    { icon: 'psychology', label: 'AI Smart Insights', to: '/smart-insights' },
   ],
 }
 
