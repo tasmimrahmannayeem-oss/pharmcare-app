@@ -183,22 +183,6 @@ export default function SuperAdminDashboard() {
               </div>
             ))}
           </div>
-
-          {/* System health */}
-          <div style={{ marginTop: 20, borderTop: '1px solid var(--outline-variant)', paddingTop: 16 }}>
-            <h3 className="label-md text-muted" style={{ marginBottom: 12 }}>System Health</h3>
-            {[
-              { svc: 'Database', status: 'Operational', pct: 99.9 },
-              { svc: 'API Gateway', status: 'Operational', pct: 100 },
-              { svc: 'Payment Gateway', status: 'Degraded', pct: 87.2 },
-            ].map(s => (
-              <div key={s.svc} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.pct > 95 ? 'var(--secondary)' : 'var(--tertiary-container)', flexShrink: 0 }} />
-                <span style={{ flex: 1, fontSize: '0.8125rem' }}>{s.svc}</span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: s.pct > 95 ? 'var(--secondary)' : 'var(--tertiary-container)' }}>{s.pct}%</span>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
