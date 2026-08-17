@@ -46,17 +46,17 @@ export default function PrescriptionQueue() {
 
       const data = await res.json()
       const formatted = Array.isArray(data) ? data
-        // Show orders that have an uploaded prescription OR contain a medicine requiring one
         .filter(o =>
           o.prescriptionImage ||
-          o.medicines?.some(m => m.medicine?.requiresPrescription)
+          (o.medicines && o.medicines.some(m => m.medicine?.requiresPrescription || m.requiresPrescription)) ||
+          ['Pending', 'Confirmed', 'Being Processed'].includes(o.status)
         )
         .map(o => ({
           id: o._id,
           displayId: o._id.slice(-6).toUpperCase(),
-          patient: o.customer?.name || 'Walk-in',
-          drug: o.medicines[0]?.medicine?.name || 'Unknown Item',
-          qty: `${o.medicines[0]?.quantity || 0} units`,
+          patient: o.customer?.name || 'Walk-in Patient',
+          drug: (o.medicines && o.medicines[0]?.medicine?.name) || o.medicines[0]?.name || 'Prescription Order',
+          qty: `${o.medicines && o.medicines[0]?.quantity ? o.medicines[0].quantity : 1} units`,
           urgency: 'Urgent',
           status: statusMap[o.status] || o.status,
           time: new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -71,12 +71,13 @@ export default function PrescriptionQueue() {
     }
   }
 
+  const branchLabel = userData?.assignedPharmacy?.name ? `${userData.assignedPharmacy.name} (${userData.assignedPharmacy.location || 'Assigned Branch'})` : 'Assigned Branch'
+
   const filters = ['All', 'Pending Verification', 'Dispensing', 'Ready for Pickup', 'Dispensed']
   const filtered = filter === 'All' ? items : items.filter(q => q.status === filter)
 
   const handleSkip = async (id) => {
     if (window.confirm('Archive this order from the queue?')) {
-      // Mock archival by local filtering
       setItems(prev => prev.filter(rx => rx.id !== id))
     }
   }
@@ -87,7 +88,7 @@ export default function PrescriptionQueue() {
         <div className="page-header" style={{ marginBottom:0 }}>
           <h1 className="page-title">Prescription Fulfillment Queue</h1>
           <p className="page-subtitle">
-            {items.filter(i => i.urgency === 'Urgent').length} urgent · {items.length} total queue — Updated live
+            Branch: {branchLabel} · {items.filter(i => i.urgency === 'Urgent').length} urgent · {items.length} total queue
           </p>
         </div>
         <div style={{ display:'flex', gap:8 }}>

@@ -119,7 +119,7 @@ export default function FulfillmentStatus() {
         <div className="page-header" style={{ marginBottom:0 }}>
           <h1 className="page-title">Fulfillment Status & Pickup</h1>
           <p className="page-subtitle">
-            Real-time order fulfillment tracking
+            Branch: {userData?.assignedPharmacy?.name ? `${userData.assignedPharmacy.name} (${userData.assignedPharmacy.location || 'Assigned Branch'})` : 'Assigned Branch'} · Real-time order tracking
             {loading && <span style={{ marginLeft: 8, fontSize:'0.75rem', color:'var(--primary)' }}>● Refreshing...</span>}
           </p>
         </div>

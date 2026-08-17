@@ -20,19 +20,19 @@ export default function MedicineSearch() {
   const [pendingItem, setPendingItem] = useState(null)
 
   useEffect(() => {
-    if (selectedPharmacy) {
-      fetchMedicines()
-    } else {
-      setMedicines([])
-      setLoading(false)
-    }
-  }, [selectedPharmacy])
+    const activePharm = selectedPharmacy || (typeof userData?.assignedPharmacy === 'object' ? userData.assignedPharmacy : null)
+    const activePharmId = activePharm?._id || (typeof userData?.assignedPharmacy === 'string' ? userData.assignedPharmacy : '')
+    
+    fetchMedicines(activePharmId)
+  }, [selectedPharmacy, userData?.assignedPharmacy])
 
-  const fetchMedicines = async () => {
+  const fetchMedicines = async (pharmId) => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/medicines?pharmacy=${selectedPharmacy?._id || ''}`, {
-        headers: { 'Authorization': `Bearer ${userData?.token}` }
+      const token = userData?.token || localStorage.getItem('token')
+      const queryParam = pharmId ? `?pharmacy=${pharmId}` : ''
+      const res = await fetch(`/api/medicines${queryParam}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await res.json()
       setMedicines(Array.isArray(data) ? data : [])
@@ -155,7 +155,7 @@ export default function MedicineSearch() {
             <tbody>
               {loading ? (
                 <tr><td colSpan="6" style={{ textAlign:'center', padding:40 }}>Loading catalogue...</td></tr>
-              ) : !selectedPharmacy ? (
+              ) : (!selectedPharmacy && userData?.role === 'customer') ? (
                 <tr><td colSpan="6" style={{ textAlign:'center', padding:60 }}>
                   <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
                     <span className="material-icons" style={{ fontSize:48, color:'var(--outline)' }}>location_on</span>
