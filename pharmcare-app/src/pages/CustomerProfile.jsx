@@ -144,7 +144,7 @@ export default function CustomerProfile() {
             <div style={{ color: 'var(--on-surface-variant)', fontSize: '0.9rem' }}>
               {profile.email}{profile.phone ? ` · ${profile.phone}` : ''}
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <span className="badge badge-success">Verified Patient</span>
               <span className="badge badge-info">Member since {memberSince}</span>
               {selectedPharmacy && <span className="badge badge-neutral">{selectedPharmacy.name}</span>}
