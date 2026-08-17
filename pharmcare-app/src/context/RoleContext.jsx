@@ -91,47 +91,30 @@ export function RoleProvider({ children }) {
 
   useEffect(() => {
     const savedToken = localStorage.getItem('token')
-    
-    // Auto-resolve assignedPharmacy for staff roles if missing from session
-    if (['owner', 'pharmacist', 'assistant'].includes(role) && !userData?.assignedPharmacy && userData?._id) {
-      fetch('/api/pharmacies', {
-        headers: savedToken ? { 'Authorization': `Bearer ${savedToken}` } : {}
+    if (savedToken && userData?._id) {
+      fetch(`/api/users/${userData._id}`, {
+        headers: { 'Authorization': `Bearer ${savedToken}` }
       })
-        .then(res => res.json())
-        .then(branches => {
-          if (!Array.isArray(branches) || branches.length === 0) return
-
-          let matched = null
-          if (role === 'owner') {
-            matched = branches.find(b => {
-              const ownerId = b.owner?._id || b.owner
-              return String(ownerId) === String(userData._id)
+        .then(res => res.ok ? res.json() : null)
+        .then(profile => {
+          if (profile && profile.assignedPharmacy) {
+            _setUserData(prev => {
+              const currentId = prev?.assignedPharmacy?._id || prev?.assignedPharmacy
+              const profileId = profile.assignedPharmacy?._id || profile.assignedPharmacy
+              if (currentId === profileId && typeof prev?.assignedPharmacy === 'object') return prev
+              
+              const updated = {
+                ...prev,
+                assignedPharmacy: profile.assignedPharmacy
+              }
+              localStorage.setItem('userData', JSON.stringify(updated))
+              return updated
             })
-          }
-          const resolvedBranch = matched || branches[0]
-          const resolvedId = resolvedBranch._id
-
-          _setUserData(prev => {
-            if (prev?.assignedPharmacy === resolvedId) return prev
-            const updated = { ...prev, assignedPharmacy: resolvedId }
-            localStorage.setItem('userData', JSON.stringify(updated))
-            return updated
-          })
-
-          if (savedToken && userData?._id) {
-            fetch(`/api/users/${userData._id}`, {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${savedToken}`
-              },
-              body: JSON.stringify({ assignedPharmacy: resolvedId })
-            }).catch(() => {})
           }
         })
         .catch(() => {})
     }
-  }, [role, userData?.assignedPharmacy])
+  }, [userData?._id])
 
   return (
     <RoleContext.Provider value={{ role, setRole, roles, userData }}>

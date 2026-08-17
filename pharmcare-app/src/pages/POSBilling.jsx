@@ -24,12 +24,19 @@ export default function POSBilling() {
 
   const fetchPharmacy = async () => {
     try {
+      if (typeof userData.assignedPharmacy === 'object' && userData.assignedPharmacy?.name) {
+        setActivePharmacy(userData.assignedPharmacy)
+        return
+      }
+      const userPharmId = userData.assignedPharmacy?._id || userData.assignedPharmacy
       const res = await fetch('/api/pharmacies', {
-        headers: { 'Authorization': `Bearer ${userData.token}` }
+        headers: { 'Authorization': `Bearer ${userData?.token || localStorage.getItem('token')}` }
       })
       const data = await res.json()
-      const branch = data.find(p => p._id === userData.assignedPharmacy)
-      if (branch) setActivePharmacy(branch)
+      if (Array.isArray(data)) {
+        const branch = data.find(p => String(p._id) === String(userPharmId))
+        if (branch) setActivePharmacy(branch)
+      }
     } catch (err) { console.error('Error fetching branch details', err) }
   }
 

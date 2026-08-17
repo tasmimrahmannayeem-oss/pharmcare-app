@@ -9,7 +9,8 @@ exports.getOrders = async (req, res) => {
       if (req.user.role === 'Customer') {
         filter.customer = req.user._id;
       } else if (req.user.role !== 'Super Admin') {
-        const pharmacyId = req.user.assignedPharmacy || req.query.pharmacy;
+        const rawPharmacy = req.user.assignedPharmacy;
+        const pharmacyId = rawPharmacy?._id ? rawPharmacy._id : (rawPharmacy || req.query.pharmacy);
         if (pharmacyId) {
           filter.pharmacy = pharmacyId;
         }

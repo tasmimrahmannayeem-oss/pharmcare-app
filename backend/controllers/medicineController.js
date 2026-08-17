@@ -5,12 +5,14 @@ const User = require('../models/User');
 exports.getMedicines = async (req, res) => {
   try {
     let filter = {};
-    // Priority 1: user's DB record assignedPharmacy
-    // Priority 2: ?pharmacy= query param (sent by frontend when DB record has no pharmacy set)
-    // Priority 3: Super Admin — see all (no filter)
-    const pharmacyId = req.user?.assignedPharmacy || req.query.pharmacy;
-    if (pharmacyId) {
-      filter.pharmacy = pharmacyId;
+    if (req.user && req.user.role !== 'Super Admin') {
+      const rawPharmacy = req.user.assignedPharmacy;
+      const pharmacyId = rawPharmacy?._id ? rawPharmacy._id : (rawPharmacy || req.query.pharmacy);
+      if (pharmacyId) {
+        filter.pharmacy = pharmacyId;
+      }
+    } else if (req.query.pharmacy) {
+      filter.pharmacy = req.query.pharmacy;
     }
     const medicines = await Medicine.find(filter);
     res.json(medicines);

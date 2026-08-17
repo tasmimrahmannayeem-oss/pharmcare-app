@@ -13,7 +13,7 @@ exports.protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-    req.user = await User.findById(decoded.id);
+    req.user = await User.findById(decoded.id).populate('assignedPharmacy');
     if (!req.user) return res.status(404).json({ message: 'No user found with this id' });
     
     // Check if approved (except for Customer)
