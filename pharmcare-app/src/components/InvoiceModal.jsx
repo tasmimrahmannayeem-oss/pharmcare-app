@@ -4,70 +4,67 @@ export default function InvoiceModal({ order, onClose }) {
   if (!order) return null
 
   const handlePrint = () => {
-    // Create a hidden iframe for clean printing without affecting the main UI
-    const printWindow = window.open('', '_blank', 'width=800,height=900')
-    const invoiceHtml = document.getElementById('printable-invoice').outerHTML
-    
-    // Get all system styles to ensure the invoice looks right in the print window
-    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-      .map(s => s.outerHTML)
-      .join('')
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Invoice - ${order._id?.slice(-8).toUpperCase()}</title>
-          ${styles}
-          <style>
-            @page {
-              size: A4 portrait;
-              margin: 16mm 14mm;
-            }
-            * { box-sizing: border-box; }
-            html, body {
-              width: 210mm;
-              background: white !important;
-              color: #1a1c1e;
-              font-family: 'Inter', sans-serif;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            body { padding: 0; margin: 0; }
-            #printable-invoice {
-              width: 100% !important;
-              max-width: 100% !important;
-              margin: 0 !important;
-              padding: 0 !important;
-            }
-            div[style*="grid"], tr {
-              page-break-inside: avoid;
-              break-inside: avoid;
-            }
-            #printable-invoice > div:last-child {
-              page-break-before: auto;
-              break-before: auto;
-            }
-          </style>
-        </head>
-        <body>
-          ${invoiceHtml}
-          <script>
-            setTimeout(() => {
-              window.print();
-              window.close();
-            }, 600);
-          <\/script>
-        </body>
-      </html>
-    `)
-    printWindow.document.close()
+    window.print()
   }
 
   const subtotal = order.totalAmount ? (order.totalAmount / 1.08) : 0
   const tax = order.totalAmount ? (order.totalAmount - subtotal) : 0
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 999999 }}>
+    <div className="modal-overlay invoice-modal-overlay" onClick={onClose} style={{ zIndex: 999999 }}>
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+          body {
+            background: white !important;
+            color: #0f172a !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .sidebar, .topbar, .mobile-menu-btn, .no-print, header, nav, aside {
+            display: none !important;
+          }
+          .modal-overlay.invoice-modal-overlay {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            z-index: 9999999 !important;
+            display: block !important;
+            overflow: visible !important;
+          }
+          .invoice-modal-overlay .modal-content {
+            box-shadow: none !important;
+            border: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            max-height: none !important;
+            height: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: white !important;
+            overflow: visible !important;
+          }
+          .invoice-modal-header,
+          .invoice-modal-footer {
+            display: none !important;
+          }
+          #printable-invoice {
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            overflow: visible !important;
+          }
+        }
+      `}</style>
       <div 
         className="modal-content fade-up" 
         onClick={e => e.stopPropagation()} 
@@ -85,7 +82,7 @@ export default function InvoiceModal({ order, onClose }) {
         }}
       >
         {/* Top Navbar Header (UI Only) */}
-        <div style={{ padding: '14px 20px', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
+        <div className="invoice-modal-header" style={{ padding: '14px 20px', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span className="material-icons" style={{ color: 'var(--primary-container)', fontSize: 20 }}>receipt_long</span>
             <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>Invoice Preview</span>
@@ -197,7 +194,7 @@ export default function InvoiceModal({ order, onClose }) {
         </div>
 
         {/* Action Buttons Footer (UI Only) */}
-        <div style={{ padding: '14px 20px', background: '#f8fafc', display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid #e2e8f0', flexShrink: 0 }}>
+        <div className="invoice-modal-footer" style={{ padding: '14px 20px', background: '#f8fafc', display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid #e2e8f0', flexShrink: 0 }}>
           <button 
             onClick={onClose}
             className="btn btn-ghost btn-sm"
