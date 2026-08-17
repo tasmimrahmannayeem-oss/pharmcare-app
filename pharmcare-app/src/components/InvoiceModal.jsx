@@ -24,24 +24,27 @@ export default function InvoiceModal({ order, onClose }) {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+          #root {
+            display: none !important;
+          }
           .sidebar, .topbar, .mobile-menu-btn, .no-print, header, nav, aside {
             display: none !important;
           }
           .modal-overlay.invoice-modal-overlay {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            height: auto !important;
+            position: relative !important;
+            inset: auto !important;
             background: white !important;
             padding: 0 !important;
             margin: 0 !important;
             box-shadow: none !important;
             z-index: 9999999 !important;
             display: block !important;
+            width: 100% !important;
+            height: auto !important;
             overflow: visible !important;
           }
           .invoice-modal-overlay .modal-content {
+            position: relative !important;
             box-shadow: none !important;
             border: none !important;
             max-width: 100% !important;
@@ -61,7 +64,10 @@ export default function InvoiceModal({ order, onClose }) {
             padding: 0 !important;
             margin: 0 !important;
             width: 100% !important;
+            max-height: none !important;
+            height: auto !important;
             overflow: visible !important;
+            display: block !important;
           }
         }
       `}</style>
